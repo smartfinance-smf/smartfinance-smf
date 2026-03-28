@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>S-M-F · Research Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root{
     --bg:#02040a;--surface:#060a0f;--surface2:#0b1018;
@@ -350,6 +351,28 @@
   .overlay.open{display:flex;}
   .modal{width:100%;max-width:580px;background:var(--surface);border:1px solid var(--border2);border-radius:12px;overflow:hidden;animation:up .22s ease;margin:auto;}
   @keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ── GATE FLUORESCENCE ── */
+  @keyframes gateGlow{
+    0%,100%{
+      box-shadow:0 0 18px rgba(0,229,160,.15),0 0 40px rgba(0,229,160,.08),inset 0 0 30px rgba(0,229,160,.03);
+      border-color:#1c2430;
+    }
+    50%{
+      box-shadow:0 0 35px rgba(0,229,160,.35),0 0 80px rgba(0,229,160,.18),0 0 140px rgba(0,229,160,.07),inset 0 0 50px rgba(0,229,160,.07);
+      border-color:rgba(0,229,160,.4);
+    }
+  }
+  @keyframes titleFlicker{
+    0%,90%,100%{opacity:1;text-shadow:0 0 10px rgba(0,229,160,.5),0 0 30px rgba(0,229,160,.25),0 0 60px rgba(0,229,160,.1);}
+    91%{opacity:.65;text-shadow:0 0 4px rgba(0,229,160,.2);}
+    93%{opacity:1;text-shadow:0 0 22px rgba(0,229,160,.95),0 0 55px rgba(0,229,160,.45);}
+    94%{opacity:.8;text-shadow:0 0 8px rgba(0,229,160,.35);}
+  }
+  @keyframes hexGatePulse{
+    0%,100%{box-shadow:0 0 12px rgba(0,229,160,.6),0 0 30px rgba(0,229,160,.25);}
+    50%{box-shadow:0 0 22px rgba(0,229,160,.9),0 0 55px rgba(0,229,160,.45),0 0 90px rgba(0,229,160,.15);}
+  }
   .modal-head{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:var(--surface2);position:sticky;top:0;z-index:2;}
   .modal-head-title{font-size:16px;font-weight:700;color:var(--accent);}
   .modal-head-sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;}
@@ -620,11 +643,11 @@
 
 <!-- ====== ÉCRAN D'ACCÈS ====== -->
 <div id="gateScreen" style="position:fixed;inset:0;background:#02040a;z-index:1000;display:flex;align-items:center;justify-content:center;padding:2rem;">
-  <div style="width:100%;max-width:420px;background:#060a0f;border:1px solid #1c2430;border-radius:12px;overflow:hidden;animation:up .3s ease;">
+  <div class="gate-card" style="width:100%;max-width:420px;background:#060a0f;border:1px solid #1c2430;border-radius:12px;overflow:hidden;animation:up .3s ease,gateGlow 3.5s ease-in-out .4s infinite;">
     <!-- Logo -->
     <div style="padding:2rem 2rem 1rem;text-align:center;border-bottom:1px solid #131820;">
-      <div style="width:48px;height:48px;background:#00e5a0;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:16px;font-weight:700;color:#000;">S</div>
-      <div style="font-size:20px;font-weight:800;color:#d0dae8;letter-spacing:-.01em;">S-M-F Research Hub</div>
+      <div class="gate-hex" style="width:48px;height:48px;background:#00e5a0;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:16px;font-weight:700;color:#000;box-shadow:0 0 12px rgba(0,229,160,.6),0 0 30px rgba(0,229,160,.25);animation:hexGatePulse 2.5s ease-in-out infinite;">S</div>
+      <div class="gate-title" style="font-size:18px;font-weight:800;color:#00e5a0;letter-spacing:.06em;white-space:nowrap;font-family:var(--mono);animation:titleFlicker 6s ease-in-out infinite;">SMART FINANCE RESEARCH</div>
       <div style="font-family:var(--mono);font-size:10px;color:#5a6578;letter-spacing:.2em;margin-top:4px;text-transform:uppercase;">Accès privé</div>
     </div>
     <!-- Onglets -->
@@ -635,8 +658,8 @@
     <!-- Connexion -->
     <div id="panelLogin" style="padding:1.75rem;display:flex;flex-direction:column;gap:1rem;">
       <div class="field">
-        <label>Identifiant (admin) ou Téléphone</label>
-        <input type="text" id="lUser" placeholder="smf  ou  +228 90000000..." autocomplete="username">
+        <label>Identifiant admin, Email ou Username</label>
+        <input type="text" id="lUser" placeholder="SMF  ou  email@…  ou  username" autocomplete="username">
       </div>
       <div class="field">
         <label>Mot de passe</label>
@@ -646,51 +669,69 @@
       <button class="btn-submit" onclick="doLogin()" style="margin-top:.25rem;">→ Accéder au Hub</button>
     </div>
     <!-- Inscription invité -->
-    <div id="panelRegister" style="display:none;padding:1.75rem;flex-direction:column;gap:1rem;">
-      <div class="field">
-        <label>Indicatif + Numéro de téléphone</label>
-        <div style="display:flex;gap:.5rem;">
-          <select id="rIndicatif" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:12px;padding:9px 8px;border-radius:5px;outline:none;width:130px;flex-shrink:0;">
-            <option value="+228">🇹🇬 +228</option>
-            <option value="+225">🇨🇮 +225</option>
-            <option value="+237">🇨🇲 +237</option>
-            <option value="+221">🇸🇳 +221</option>
-            <option value="+212">🇲🇦 +212</option>
-            <option value="+213">🇩🇿 +213</option>
-            <option value="+216">🇹🇳 +216</option>
-            <option value="+234">🇳🇬 +234</option>
-            <option value="+233">🇬🇭 +233</option>
-            <option value="+243">🇨🇩 +243</option>
-            <option value="+242">🇨🇬 +242</option>
-            <option value="+241">🇬🇦 +241</option>
-            <option value="+229">🇧🇯 +229</option>
-            <option value="+226">🇧🇫 +226</option>
-            <option value="+223">🇲🇱 +223</option>
-            <option value="+224">🇬🇳 +224</option>
-            <option value="+227">🇳🇪 +227</option>
-            <option value="+222">🇲🇷 +222</option>
-            <option value="+32">🇧🇪 +32</option>
-            <option value="+33">🇫🇷 +33</option>
-            <option value="+41">🇨🇭 +41</option>
-            <option value="+1">🇺🇸 +1</option>
-            <option value="+44">🇬🇧 +44</option>
-            <option value="+49">🇩🇪 +49</option>
-            <option value="+34">🇪🇸 +34</option>
-            <option value="+39">🇮🇹 +39</option>
-          </select>
-          <input type="tel" id="rPhone" placeholder="90000000" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;flex:1;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+    <div id="panelRegister" style="display:none;padding:1.75rem;flex-direction:column;gap:.85rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="field">
+          <label>Nom *</label>
+          <input type="text" id="rNom" placeholder="Dupont" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+        </div>
+        <div class="field">
+          <label>Prénom *</label>
+          <input type="text" id="rPrenom" placeholder="Jean" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="field">
+          <label>Date de naissance *</label>
+          <input type="date" id="rDob" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+        </div>
+        <div class="field">
+          <label>Username *</label>
+          <input type="text" id="rUsername" placeholder="jean_d" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
         </div>
       </div>
       <div class="field">
-        <label>Mot de passe</label>
-        <input type="password" id="rPass" placeholder="Minimum 6 caractères" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+        <label>Email *</label>
+        <input type="email" id="rEmail" placeholder="jean@email.com" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
       </div>
-      <div class="field">
-        <label>Confirmer le mot de passe</label>
-        <input type="password" id="rPass2" placeholder="••••••••" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'" onkeydown="if(event.key==='Enter')doRegister()">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="field">
+          <label>Mot de passe *</label>
+          <input type="password" id="rPass" placeholder="Min. 6 caractères" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+        </div>
+        <div class="field">
+          <label>Confirmer *</label>
+          <input type="password" id="rPass2" placeholder="••••••••" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'" onkeydown="if(event.key==='Enter')doRegister()">
+        </div>
       </div>
       <div id="registerErr" style="display:none;font-family:var(--mono);font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);border-radius:4px;"></div>
-      <button class="btn-submit" onclick="doRegister()" style="margin-top:.25rem;">📱 Créer mon compte</button>
+      <button class="btn-submit" onclick="doRegister()" style="margin-top:.25rem;">✦ Créer mon compte</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== ÉCRAN OTP ====== -->
+<div id="otpScreen" style="position:fixed;inset:0;background:#02040a;z-index:1001;display:none;align-items:center;justify-content:center;padding:2rem;">
+  <div style="width:100%;max-width:400px;background:#060a0f;border:1px solid #1c2430;border-radius:12px;overflow:hidden;animation:up .3s ease;">
+    <div style="padding:2rem;text-align:center;border-bottom:1px solid #131820;">
+      <div style="font-size:32px;margin-bottom:.75rem;">📧</div>
+      <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:#00e5a0;letter-spacing:.08em;">VÉRIFICATION EMAIL</div>
+      <div style="font-family:var(--mono);font-size:10px;color:#5a6578;margin-top:6px;" id="otpSubtitle">Un code à 6 chiffres a été envoyé à votre email</div>
+    </div>
+    <div style="padding:1.75rem;display:flex;flex-direction:column;gap:1rem;">
+      <div class="field">
+        <label>Code de vérification</label>
+        <input type="text" id="otpInput" maxlength="6" placeholder="000000"
+          style="background:#0b1018;border:1px solid #1c2430;color:#00e5a0;font-family:var(--mono);font-size:28px;font-weight:700;padding:12px;border-radius:5px;outline:none;width:100%;text-align:center;letter-spacing:.4em;transition:border-color .2s;"
+          onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'"
+          oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+          onkeydown="if(event.key==='Enter')verifyOtp()">
+      </div>
+      <div id="otpErr" style="display:none;font-family:var(--mono);font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);border-radius:4px;"></div>
+      <button class="btn-submit" onclick="verifyOtp()" id="otpBtn">✓ Confirmer le code</button>
+      <div style="text-align:center;">
+        <button onclick="resendOtp()" id="resendBtn" style="background:transparent;border:none;color:#5a6578;font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.05em;transition:color .2s;" onmouseover="this.style.color='#00e5a0'" onmouseout="this.style.color='#5a6578'">↺ Renvoyer le code</button>
+      </div>
     </div>
   </div>
 </div>
@@ -751,6 +792,103 @@
 
 <script>
 const SK = "smf_hub_v4";
+
+// ── EmailJS ───────────────────────────────────────────────────────────────────
+const EMAILJS_SERVICE  = "service_t71wi0l";
+const EMAILJS_TEMPLATE = "template_oly2fn8";
+const EMAILJS_KEY      = "lVp_Fv1oO6w_s70KW";
+emailjs.init(EMAILJS_KEY);
+
+// ── OTP State ─────────────────────────────────────────────────────────────────
+let pendingOtp      = null;   // code généré
+let pendingOtpData  = null;   // données d'inscription en attente
+let otpExpiry       = null;   // timestamp d'expiration
+
+function generateOtp(){
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function sendOtpEmail(email, prenom, otp){
+  const now = new Date();
+  const expiry = new Date(now.getTime() + 10 * 60000); // +10 min
+  const timeStr = expiry.toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"});
+  await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+    email      : email,
+    to_email   : email,
+    passcode   : otp,
+    time       : timeStr,
+    prenom     : prenom
+  });
+}
+
+async function resendOtp(){
+  if(!pendingOtpData){ return; }
+  const btn = document.getElementById("resendBtn");
+  btn.disabled = true; btn.textContent = "Envoi...";
+  try{
+    pendingOtp    = generateOtp();
+    otpExpiry     = Date.now() + 10 * 60000;
+    await sendOtpEmail(pendingOtpData.email, pendingOtpData.prenom, pendingOtp);
+    toast("✓ Nouveau code envoyé !");
+  }catch(e){ toast("✕ Erreur envoi: "+e.text||e.message, true); }
+  setTimeout(()=>{ btn.disabled=false; btn.textContent="↺ Renvoyer le code"; }, 30000);
+}
+
+async function verifyOtp(){
+  const code   = document.getElementById("otpInput").value.trim();
+  const errEl  = document.getElementById("otpErr");
+  const btn    = document.getElementById("otpBtn");
+  errEl.style.display = "none";
+
+  if(code.length !== 6){ errEl.textContent="✕ Entrez le code à 6 chiffres"; errEl.style.display="block"; return; }
+  if(Date.now() > otpExpiry){ errEl.textContent="✕ Code expiré — cliquez Renvoyer"; errEl.style.display="block"; return; }
+  if(code !== pendingOtp){ errEl.textContent="✕ Code incorrect"; errEl.style.display="block"; return; }
+
+  btn.disabled=true; btn.textContent="Vérification...";
+
+  try{
+    // Créer le compte dans Firestore
+    await db.collection("users").add({
+      ...pendingOtpData,
+      emailVerified: true,
+      online: false,
+      banned: false,
+      status: "pending",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      lastSeen: null
+    });
+
+    // Afficher l'écran de confirmation post-vérification
+    const prenom = pendingOtpData.prenom;
+    const email  = pendingOtpData.email;
+    pendingOtp = null; pendingOtpData = null; otpExpiry = null;
+
+    document.getElementById("otpScreen").innerHTML = `
+      <div style="width:100%;max-width:440px;background:#060a0f;border:1px solid rgba(0,229,160,.25);border-radius:12px;overflow:hidden;animation:up .3s ease;text-align:center;padding:2.5rem 2rem;">
+        <div style="font-size:48px;margin-bottom:1rem;">✅</div>
+        <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:#00e5a0;letter-spacing:.08em;margin-bottom:.5rem;">EMAIL VÉRIFIÉ !</div>
+        <div style="font-size:15px;font-weight:700;color:#d0dae8;margin-bottom:1.25rem;">Bonjour ${prenom} 👋</div>
+        <div style="background:#0b1018;border:1px solid #1c2430;border-radius:8px;padding:1.25rem;margin-bottom:1.5rem;text-align:left;">
+          <div style="font-family:var(--mono);font-size:10px;color:#00e5a0;letter-spacing:.15em;margin-bottom:.75rem;">⏳ EN ATTENTE D'APPROBATION</div>
+          <p style="font-family:var(--mono);font-size:12px;color:#d0dae8;line-height:1.7;margin:0;">
+            Votre compte est en cours d'examen par l'administrateur.<br><br>
+            Vous recevrez une confirmation à <span style="color:#00e5a0;">${email}</span> dès que votre accès sera activé.<br><br>
+            <span style="color:#f7b731;">⏱ Délai estimé : 12 heures maximum.</span>
+          </p>
+        </div>
+        <button onclick="document.getElementById('otpScreen').style.display='none';document.getElementById('gateScreen').style.display='flex';"
+          style="background:transparent;border:1px solid #1c2430;color:#5a6578;font-family:var(--mono);font-size:11px;font-weight:700;padding:9px 24px;border-radius:5px;cursor:pointer;letter-spacing:.08em;transition:all .2s;"
+          onmouseover="this.style.borderColor='#00e5a0';this.style.color='#00e5a0'"
+          onmouseout="this.style.borderColor='#1c2430';this.style.color='#5a6578'">
+          ← Retour à la connexion
+        </button>
+      </div>`;
+  }catch(e){
+    errEl.textContent="✕ Erreur: "+e.message;
+    errEl.style.display="block";
+  }
+  btn.disabled=false; btn.textContent="✓ Confirmer le code";
+}
 const CAT_LABEL = {weekahead:"Week Ahead",hebdo:"Hebdo",mensuel:"Mensuels",banques:"Banques Centrales",ideetrade:"Idée de Trades",trade:"Trades"};
 
 // ── Firebase ─────────────────────────────────────────────────────────────────
@@ -819,9 +957,13 @@ function switchTab(tab){
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 async function doLogin(){
   const u = document.getElementById("lUser").value.trim();
-  const p = document.getElementById("lPass").value;
+  const p = document.getElementById("lPass").value.trim();
   const errEl = document.getElementById("loginErr");
   errEl.style.display="none";
+  // Reset style (peut avoir été coloré en vert après inscription)
+  errEl.style.color="var(--red)";
+  errEl.style.background="rgba(255,77,109,.1)";
+  errEl.style.border="1px solid rgba(255,77,109,.2)";
 
   await loadSettings();
 
@@ -839,77 +981,90 @@ async function doLogin(){
     return;
   }
 
-  // Invité par numéro de téléphone
-  const phone = u.startsWith("+") ? u : null;
-  if(phone){
-    try{
-      const snap = await db.collection("users").where("phone","==",phone).limit(1).get();
-      if(snap.empty){ errEl.textContent="✕ Numéro non trouvé"; errEl.style.display="block"; return; }
-      const userDoc = snap.docs[0];
-      const userData = userDoc.data();
-      if(userData.banned){ errEl.textContent="✕ Compte suspendu par l'administrateur"; errEl.style.display="block"; return; }
-      if(userData.status !== "approved"){ errEl.textContent="✕ Compte en attente de validation par l'admin"; errEl.style.display="block"; return; }
-      if(userData.password !== p){ errEl.textContent="✕ Mot de passe incorrect"; errEl.style.display="block"; return; }
+  // Invité par email ou username
+  const isEmail = u.includes("@");
+  const field   = isEmail ? "email" : "username";
+  const value   = u.toLowerCase();
+  try{
+    const snap = await db.collection("users").where(field,"==",value).limit(1).get();
+    if(snap.empty){ errEl.textContent="✕ "+(isEmail?"Email":"Username")+" introuvable"; errEl.style.display="block"; return; }
+    const userDoc  = snap.docs[0];
+    const userData = userDoc.data();
+    if(userData.banned){ errEl.textContent="✕ Compte suspendu par l'administrateur"; errEl.style.display="block"; return; }
+    if(userData.status !== "approved"){ errEl.textContent="✕ Compte en attente de validation — contactez l'admin"; errEl.style.display="block"; return; }
+    if((userData.password||"").trim() !== p){ errEl.textContent="✕ Mot de passe incorrect"; errEl.style.display="block"; return; }
 
-      // Vérifier limite connectés
-      const activeSnap = await db.collection("users").where("online","==",true).get();
-      if(activeSnap.size >= SETTINGS.maxGuests && !userData.online){
-        errEl.textContent="✕ Nombre maximum d'invités atteint ("+SETTINGS.maxGuests+")"; errEl.style.display="block"; return;
-      }
+    // Vérifier limite connectés
+    const activeSnap = await db.collection("users").where("online","==",true).get();
+    if(activeSnap.size >= SETTINGS.maxGuests && !userData.online){
+      errEl.textContent="✕ Nombre maximum d'invités atteint ("+SETTINGS.maxGuests+")"; errEl.style.display="block"; return;
+    }
 
-      // Marquer online
-      await db.collection("users").doc(userDoc.id).update({online:true, lastSeen: firebase.firestore.FieldValue.serverTimestamp()});
+    // Marquer online
+    await db.collection("users").doc(userDoc.id).update({online:true, lastSeen: firebase.firestore.FieldValue.serverTimestamp()});
 
-      role="guest"; sessionStorage.setItem("smf_role","guest");
-      currentUser={id:userDoc.id, phone};
-      sessionStorage.setItem("smf_user", JSON.stringify(currentUser));
-      document.getElementById("gateScreen").style.display="none";
-      renderHeaderActions(); startRealtimeSync();
-      toast("✓ Bienvenue !");
-    }catch(e){ errEl.textContent="✕ Erreur: "+e.message; errEl.style.display="block"; }
-    return;
-  }
-
-  errEl.textContent="✕ Identifiant ou mot de passe incorrect";
-  errEl.style.display="block";
-  document.getElementById("lPass").value="";
+    role="guest"; sessionStorage.setItem("smf_role","guest");
+    currentUser={id:userDoc.id, username:userData.username, email:userData.email, prenom:userData.prenom||'', nom:userData.nom||''};
+    sessionStorage.setItem("smf_user", JSON.stringify(currentUser));
+    document.getElementById("gateScreen").style.display="none";
+    renderHeaderActions(); startRealtimeSync();
+    toast("✓ Bienvenue "+userData.prenom+" !");
+  }catch(e){ errEl.textContent="✕ Erreur: "+e.message; errEl.style.display="block"; }
 }
 
 async function doRegister(){
-  const indicatif = document.getElementById("rIndicatif").value;
-  const num       = document.getElementById("rPhone").value.trim();
-  const pass      = document.getElementById("rPass").value;
-  const pass2     = document.getElementById("rPass2").value;
-  const errEl     = document.getElementById("registerErr");
+  const nom      = document.getElementById("rNom").value.trim();
+  const prenom   = document.getElementById("rPrenom").value.trim();
+  const dob      = document.getElementById("rDob").value;
+  const email    = document.getElementById("rEmail").value.trim().toLowerCase();
+  const username = document.getElementById("rUsername").value.trim().toLowerCase();
+  const pass     = document.getElementById("rPass").value;
+  const pass2    = document.getElementById("rPass2").value;
+  const errEl    = document.getElementById("registerErr");
   errEl.style.display="none";
 
-  if(!num){ errEl.textContent="✕ Entrez votre numéro"; errEl.style.display="block"; return; }
+  // Validations
+  if(!nom)     { errEl.textContent="✕ Le nom est requis"; errEl.style.display="block"; return; }
+  if(!prenom)  { errEl.textContent="✕ Le prénom est requis"; errEl.style.display="block"; return; }
+  if(!dob)     { errEl.textContent="✕ La date de naissance est requise"; errEl.style.display="block"; return; }
+  if(!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)){ errEl.textContent="✕ Email invalide"; errEl.style.display="block"; return; }
+  if(!username || username.length < 3){ errEl.textContent="✕ Username minimum 3 caractères"; errEl.style.display="block"; return; }
   if(pass.length<6){ errEl.textContent="✕ Mot de passe minimum 6 caractères"; errEl.style.display="block"; return; }
   if(pass!==pass2){ errEl.textContent="✕ Les mots de passe ne correspondent pas"; errEl.style.display="block"; return; }
 
-  const fullPhone = indicatif + num;
+  const btn = document.querySelector("#panelRegister .btn-submit");
+  btn.disabled=true; btn.textContent="Vérification...";
+
   await loadSettings();
 
   try{
-    // Vérifier si déjà inscrit
-    const existing = await db.collection("users").where("phone","==",fullPhone).limit(1).get();
-    if(!existing.empty){ errEl.textContent="✕ Ce numéro est déjà inscrit"; errEl.style.display="block"; return; }
+    // Vérifier unicité email et username
+    const [exEmail, exUser] = await Promise.all([
+      db.collection("users").where("email","==",email).limit(1).get(),
+      db.collection("users").where("username","==",username).limit(1).get()
+    ]);
+    if(!exEmail.empty){ errEl.textContent="✕ Cet email est déjà utilisé"; errEl.style.display="block"; btn.disabled=false; btn.textContent="✦ Créer mon compte"; return; }
+    if(!exUser.empty) { errEl.textContent="✕ Ce username est déjà pris"; errEl.style.display="block"; btn.disabled=false; btn.textContent="✦ Créer mon compte"; return; }
 
-    await db.collection("users").add({
-      phone: fullPhone,
-      password: pass,
-      online: false,
-      banned: false,
-      status: "pending",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      lastSeen: null
-    });
+    // Générer et envoyer OTP
+    pendingOtp     = generateOtp();
+    otpExpiry      = Date.now() + 10 * 60000;
+    pendingOtpData = { nom, prenom, dob, email, username, password: pass.trim() };
 
-    toast("✓ Demande envoyée ! En attente de validation par l'admin.");
-    switchTab("login");
-    document.getElementById("lUser").value="";
-    document.getElementById("registerErr").style.display="none";
-  }catch(e){ errEl.textContent="✕ Erreur: "+e.message; errEl.style.display="block"; }
+    await sendOtpEmail(email, prenom, pendingOtp);
+
+    // Masquer gate, afficher écran OTP
+    document.getElementById("gateScreen").style.display="none";
+    document.getElementById("otpScreen").style.display="flex";
+    document.getElementById("otpSubtitle").textContent="Code envoyé à "+email;
+    document.getElementById("otpInput").value="";
+    document.getElementById("otpErr").style.display="none";
+
+  }catch(e){
+    errEl.textContent="✕ Erreur envoi email: "+(e.text||e.message||"vérifiez votre connexion");
+    errEl.style.display="block";
+  }
+  btn.disabled=false; btn.textContent="✦ Créer mon compte";
 }
 
 async function doLogout(){
@@ -947,8 +1102,11 @@ function renderHeaderActions(){
       <button class="btn-add-header" onclick="openImport()">📂 Nouvel article</button>
       <button class="btn-export" onclick="doLogout()">Déconnexion</button>`;
   } else if(role==="guest"){
+    const displayName = currentUser
+      ? ((currentUser.prenom||"")+" "+(currentUser.nom||"")).trim() || currentUser.username || "INVITÉ"
+      : "INVITÉ";
     div.innerHTML=`
-      <span style="font-family:var(--mono);font-size:10px;color:var(--warn);letter-spacing:.1em;">● INVITÉ</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--warn);letter-spacing:.1em;">● ${displayName}</span>
       <button class="btn-export" onclick="doLogout()">Déconnexion</button>`;
   }
 }
@@ -1023,7 +1181,7 @@ async function refreshGuestList(){
       const banned=u.banned===true;
       return `<div style="display:flex;align-items:center;gap:.75rem;background:#0b1018;border:1px solid ${banned?"rgba(255,77,109,.2)":"#1c2430"};border-radius:6px;padding:.6rem 1rem;">
         <span style="font-size:10px;">${online?"🟢":"⚫"}</span>
-        <span style="font-family:var(--mono);font-size:12px;color:${banned?"#5a6578":"#d0dae8"};flex:1;text-decoration:${banned?"line-through":"none"};">${u.phone}</span>
+        <span style="font-family:var(--mono);font-size:12px;color:${banned?"#5a6578":"#d0dae8"};flex:1;text-decoration:${banned?"line-through":"none"};">${u.prenom||""} ${u.nom||""} <span style="color:#5a6578;font-size:10px;">@${u.username||u.email||"—"}</span> ${u.emailVerified?'<span style="color:#00e5a0;font-size:9px;">✉ vérifié</span>':""}  </span>
         ${banned?`<span style="font-family:var(--mono);font-size:9px;color:var(--red);background:rgba(255,77,109,.1);padding:2px 8px;border-radius:3px;">BANNI</span>`:""}
         <button onclick="banUser('${d.id}',${!banned})" style="background:transparent;border:1px solid ${banned?"#00e5a0":"rgba(255,77,109,.3)"};color:${banned?"#00e5a0":"var(--red)"};font-family:var(--mono);font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;">${banned?"Débloquer":"Bannir"}</button>
         <button onclick="deleteUser('${d.id}')" style="background:transparent;border:1px solid #1c2430;color:#5a6578;font-family:var(--mono);font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;">Supprimer</button>
