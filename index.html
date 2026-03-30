@@ -927,10 +927,10 @@
           <textarea id="abText" style="min-height:130px" placeholder="Résultat du trade, évolution du setup, nouveau SL/TP..."></textarea>
         </div>
         <div class="field">
-          <label>Image (graphique, screenshot)</label>
+          <label>Images (graphiques, screenshots)</label>
           <div class="img-drop" id="abImgDrop">
-            <input type="file" id="abImgInput" accept="image/*" onchange="onAbImg(this.files[0])">
-            <div class="img-drop-txt">📸 Clique ou glisse une image<br><span>JPG · PNG · WebP</span></div>
+            <input type="file" id="abImgInput" accept="image/*" multiple onchange="onAbImgs(this.files)">
+            <div class="img-drop-txt">📸 Clique ou glisse tes images<br><span>JPG · PNG · WebP — plusieurs images acceptées</span></div>
           </div>
           <div id="abImgPreview" style="margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.5rem;"></div>
         </div>
@@ -1486,7 +1486,7 @@ function renderStats(){
 
 function filtered(){
   let l=[...arts].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  if(role==="guest") l=l.filter(a=>SETTINGS.allowedCats.includes(a.cat));
+  if(role==="guest") l=l.filter(a=>SETTINGS.allowedCats.includes(a.cat) || a.cat==="tradeinvites");
   // Exclure ideetrade dans tous les cas (catégorie supprimée)
   l=l.filter(a=>a.cat!=="ideetrade");
   if(filt!=="tous") l=l.filter(a=>a.cat===filt);
@@ -1509,7 +1509,7 @@ function renderGrid(){
     const isAdminTrade = a.cat==="trade" && role==="admin";
     // Thumbnail: first block image, or legacy first image
     let thumbSrc=null;
-    if(isBlocks){ thumbSrc=a.blocks[0].image||null; }
+    if(isBlocks){ thumbSrc=(a.blocks[0].images&&a.blocks[0].images[0])||a.blocks[0].image||null; }
     else if(a.images&&a.images.length){ thumbSrc=a.images[0]; }
     const thumb=thumbSrc?`<img class="card-thumb" src="${thumbSrc}" alt="">`:"";
     const typeLabel=a.type==="html"?"HTML":a.type==="pdf"?"PDF 📑":"Texte/Images";
@@ -1587,7 +1587,9 @@ function openArt(id){
       // Bloc initial vide (article HTML sans blocs au départ) : ne rien afficher
       if(b.isInitial&&!b.text&&!b.image) return sep.replace(/📅.*?<\/div>/,"");
       const txt=b.text?(b.text.replace(/\n/g,"<br>")):"";
-      const img=b.image?`<img src="${b.image}" style="max-width:100%;border-radius:8px;margin:1rem 0;display:block;border:1px solid #21262d;">`:"";
+      // Support both legacy single image and new multiple images array
+      const imgSrcs=Array.isArray(b.images)&&b.images.length>0?b.images:(b.image?[b.image]:[]);
+      const img=imgSrcs.map(src=>`<img src="${src}" style="max-width:100%;border-radius:8px;margin:1rem 0;display:block;border:1px solid #21262d;">`).join("");
       return `${sep}${txt?`<div class="content">${txt}</div>`:""}${img}`;
     }).join("");
     html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${a.titre}</title>
@@ -1693,8 +1695,7 @@ async function submitImport(){
     if(!fc&&pendingImages.length===0){toast("⚠ Ajoute du texte ou au moins une image",true);return;}
     if(cat==="trade"||cat==="tradeinvites"){
       // Structure par blocs — premier bloc uniquement
-      const img1=pendingImages.length>0?pendingImages[0].dataUrl:null;
-      const block1={text:fc,image:img1,date};
+      const block1={text:fc,images:pendingImages.map(i=>i.dataUrl),image:pendingImages[0]?.dataUrl||null,date};
       newArt={type:"manual",titre,desc,date,cat,paire,blocks:[block1],submittedBy:adminUsername};
     } else {
       newArt={type:"manual",titre,desc,date,cat,paire,content:fc,images:pendingImages.map(i=>i.dataUrl),submittedBy:adminUsername};
@@ -1775,10 +1776,14 @@ function closeGuestSubmit(){
 
 function setGuestMode(m){
   guestMode=m;
-  ["text","textimg","pdf"].forEach(mode=>{
-    document.getElementById("gMode"+mode.charAt(0).toUpperCase()+mode.slice(1)).classList.toggle("active",m===mode);
-    const sec=document.getElementById("gSec"+mode.charAt(0).toUpperCase()+mode.slice(1));
-    if(sec) sec.classList.toggle("on",m===mode);
+  // Map mode keys to exact element ID suffixes (case-sensitive)
+  const ID_MAP = { text:"Text", textimg:"TextImg", pdf:"Pdf" };
+  Object.keys(ID_MAP).forEach(key=>{
+    const suffix = ID_MAP[key];
+    const modeBtn = document.getElementById("gMode"+suffix);
+    const sec     = document.getElementById("gSec"+suffix);
+    if(modeBtn) modeBtn.classList.toggle("active", m===key);
+    if(sec)     sec.classList.toggle("on", m===key);
   });
 }
 
@@ -1845,8 +1850,7 @@ async function submitGuestTrade(){
   } else if(guestMode==="textimg"){
     const fc=document.getElementById("gContentImg").value.trim();
     if(!fc&&guestPendingImages.length===0){toast("⚠ Ajoute du texte ou au moins une image",true);return;}
-    const img1=guestPendingImages.length>0?guestPendingImages[0].dataUrl:null;
-    const block1={text:fc,image:img1,date};
+    const block1={text:fc,images:guestPendingImages.map(i=>i.dataUrl),image:guestPendingImages[0]?.dataUrl||null,date};
     newArt={type:"manual",titre,desc,date,cat:"tradeinvites",paire,blocks:[block1],submittedBy,submittedById};
   } else if(guestMode==="pdf"){
     if(!guestPendingPdf){toast("⚠ Sélectionne un fichier PDF",true);return;}
@@ -1862,14 +1866,14 @@ async function submitGuestTrade(){
 
 
 // ── ADD BLOCK (mise à jour chronologique) ─────────────────────────────────────
-let _abTargetId=null, _abImg=null;
+let _abTargetId=null, _abImgs=[];
 
 function openAddBlock(e,id){
   e.stopPropagation();
   const a=arts.find(x=>x.id===id); if(!a)return;
   const blocks=a.blocks||[];
   if(blocks.length>=5){toast("⚠ Maximum 5 blocs atteint pour ce trade",true);return;}
-  _abTargetId=id; _abImg=null;
+  _abTargetId=id; _abImgs=[];
   const next=blocks.length+1;
   const acc=a.cat==="tradeinvites"?"#7c3aed":"#ff4d6d";
   document.getElementById("abModalTitle").textContent=`➕ Bloc ${next} — Suite du trade`;
@@ -1887,27 +1891,35 @@ function openAddBlock(e,id){
 function closeAddBlock(){
   document.getElementById("addBlockOv").classList.remove("open");
   document.body.style.overflow="";
-  _abTargetId=null; _abImg=null;
+  _abTargetId=null; _abImgs=[];
 }
 
-function onAbImg(file){
-  if(!file||!file.type.startsWith("image/"))return;
-  const r=new FileReader();
-  r.onload=async e=>{
-    _abImg=await compressImage(e.target.result);
-    document.getElementById("abImgPreview").innerHTML=`
-      <div class="img-thumb-wrap" style="width:90px;height:90px;">
-        <img src="${_abImg}" style="width:90px;height:90px;object-fit:cover;border-radius:5px;border:1px solid var(--border2);">
-        <button class="img-thumb-del" onclick="_abImg=null;document.getElementById('abImgPreview').innerHTML='';document.getElementById('abImgInput').value='';">✕</button>
-      </div>`;
-  };
-  r.readAsDataURL(file);
+function onAbImgs(files){
+  Array.from(files).forEach(file=>{
+    if(!file||!file.type.startsWith("image/"))return;
+    const r=new FileReader();
+    r.onload=async e=>{
+      const compressed=await compressImage(e.target.result);
+      _abImgs.push({name:file.name,dataUrl:compressed});
+      renderAbImgPreviews();
+    };
+    r.readAsDataURL(file);
+  });
+  document.getElementById("abImgInput").value="";
+}
+
+function renderAbImgPreviews(){
+  document.getElementById("abImgPreview").innerHTML=_abImgs.map((img,i)=>`
+    <div class="img-thumb-wrap" style="width:90px;height:90px;">
+      <img src="${img.dataUrl}" style="width:90px;height:90px;object-fit:cover;border-radius:5px;border:1px solid var(--border2);">
+      <button class="img-thumb-del" onclick="_abImgs.splice(${i},1);renderAbImgPreviews();">✕</button>
+    </div>`).join("");
 }
 
 async function submitAddBlock(){
   const text=document.getElementById("abText").value.trim();
   const date=document.getElementById("abDate").value;
-  if(!text&&!_abImg){toast("⚠ Ajoute du texte ou une image",true);return;}
+  if(!text&&_abImgs.length===0){toast("⚠ Ajoute du texte ou au moins une image",true);return;}
   if(!date){toast("⚠ La date est obligatoire",true);return;}
   if(!_abTargetId){toast("⚠ Erreur interne",true);return;}
   const a=arts.find(x=>x.id===_abTargetId);
@@ -1915,7 +1927,7 @@ async function submitAddBlock(){
   const existingBlocks=a.blocks||[];
   if(existingBlocks.length>=5){toast("⚠ Maximum 5 blocs atteint",true);return;}
   const adminUsername = sessionStorage.getItem("smf_username") || "Admin";
-  const newBlock={text,image:_abImg||null,date,addedBy:adminUsername};
+  const newBlock={text,images:_abImgs.map(i=>i.dataUrl),image:_abImgs[0]?.dataUrl||null,date,addedBy:adminUsername};
   // Si l'article n'avait pas encore de blocs (ex: HTML), on initialise avec un bloc vide initial
   let updated;
   if(existingBlocks.length===0){
@@ -1953,7 +1965,7 @@ const abd=document.getElementById("abImgDrop");
 if(abd){
   abd.addEventListener("dragover",e=>{e.preventDefault();abd.classList.add("drag");});
   abd.addEventListener("dragleave",()=>abd.classList.remove("drag"));
-  abd.addEventListener("drop",e=>{e.preventDefault();abd.classList.remove("drag");const f=e.dataTransfer.files[0];if(f)onAbImg(f);});
+  abd.addEventListener("drop",e=>{e.preventDefault();abd.classList.remove("drag");onAbImgs(e.dataTransfer.files);});
 }
 // Guest PDF drop
 const gpdf=document.getElementById("gPdfDropZone");
