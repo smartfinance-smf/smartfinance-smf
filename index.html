@@ -1185,8 +1185,16 @@
       <div class="ab-block-form">
         <div class="ab-block-num" id="abBlockNum" style="color:var(--accent);">BLOC 2 · MISE À JOUR</div>
         <div class="field">
-          <label>Texte / Analyse</label>
-          <textarea id="abText" style="min-height:130px" placeholder="Résultat du trade, évolution du setup, nouveau SL/TP..."></textarea>
+          <label>Titre du bloc <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
+          <input type="text" id="abTitle" placeholder="Ex: Mise à jour SL · Résultat final · Analyse post-trade…" maxlength="80">
+        </div>
+        <div class="field">
+          <label>Paragraphe 1</label>
+          <textarea id="abText" style="min-height:110px" placeholder="Résultat du trade, évolution du setup, nouveau SL/TP..."></textarea>
+        </div>
+        <div class="field">
+          <label>Paragraphe 2 <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
+          <textarea id="abText2" style="min-height:110px" placeholder="Analyse complémentaire, contexte macro, conclusion..."></textarea>
         </div>
         <div class="field">
           <label>Images (graphiques, screenshots)</label>
@@ -1895,14 +1903,45 @@ function delOwnArt(e,id){
   fbDel(id).then(()=>toast("✓ Ton post a été supprimé"));
 }
 
+// ── MIGRATION : détecte un ancien HTML et extrait les blocs ──────────────────
+function tryRegenArticle(a){
+  if(!a.html||!a.cat||a.cat==="trade"||a.cat==="tradeinvites") return null;
+  try{
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(a.html,"text/html");
+    // Si le HTML contient déjà le nouveau template (.topbar + .tb-hex), pas besoin de migrer
+    if(doc.querySelector(".topbar .tb-hex")) return null;
+    // Extrait les blocs de l'ancien HTML
+    const rawBlocks=[...doc.querySelectorAll(".para-block")].map(block=>{
+      const titleEl=block.querySelector(".para-title");
+      const bodyEl =block.querySelector(".art-body");
+      const imgEl  =block.querySelector(".art-fig img");
+      // Extrait le texte en préservant les sauts de ligne
+      const rawText=bodyEl
+        ? bodyEl.innerHTML
+            .replace(/<\/p>\s*<p[^>]*>/gi,"\n\n")
+            .replace(/<br\s*\/?>/gi,"\n")
+            .replace(/<[^>]+>/g,"")
+            .trim()
+        : "";
+      return{
+        type:"para",
+        title:titleEl?titleEl.textContent.trim():"",
+        text:rawText,
+        image:imgEl?{dataUrl:imgEl.getAttribute("src"),name:"image"}:null
+      };
+    });
+    // Si aucun bloc trouvé, créer un bloc vide pour ne pas perdre le desc
+    if(!rawBlocks.length) rawBlocks.push({type:"para",title:"",text:"",image:null});
+    return rawBlocks;
+  }catch(e){return null;}
+}
+
 // ── OPEN ARTICLE ──────────────────────────────────────────────────────────────
 function openArt(id){
   const a=arts.find(x=>x.id===id); if(!a)return;
   let html="";
-  if(a.type==="html"){
-    html=a.html;
-  } else if(a.type==="pdf"){
-    // Open PDF in new tab directly from base64
+  if(a.type==="pdf"){
     const byteStr=atob(a.pdfData.split(",")[1]);
     const ab=new ArrayBuffer(byteStr.length);
     const ia=new Uint8Array(ab);
@@ -1911,27 +1950,52 @@ function openArt(id){
     window.open(URL.createObjectURL(blob),"_blank");
     return;
   } else if(Array.isArray(a.blocks)&&a.blocks.length>0){
-    const fdate = fmtD(a.date, a.time||"");
-    const by    = a.submittedBy||"Admin";
+    // Articles Trade (type:"manual") — régénération avec tplTrade/tplTradeInvites
+    const fdate=fmtD(a.date,a.time||"");
+    const by=a.submittedBy||"Admin";
     if(a.cat==="tradeinvites"){
-      html = tplTradeInvites(a.titre, a.desc||"", fdate, a.paire||"", a.blocks, by);
+      html=tplTradeInvites(a.titre,a.desc||"",fdate,a.paire||"",a.blocks,by);
     } else {
-      html = tplTrade(a.titre, a.desc||"", fdate, a.paire||"", a.blocks, by);
+      html=tplTrade(a.titre,a.desc||"",fdate,a.paire||"",a.blocks,by);
+    }
+  } else if(a.type==="html"&&Array.isArray(a.artBlocks)&&a.artBlocks.length>0){
+    // Articles avec blocs sauvegardés → régénération avec le template actuel
+    const fdate=fmtD(a.date,a.time||"");
+    const by=a.submittedBy||"Admin";
+    const acc=CAT_COLORS[a.cat]||"#00e5a0";
+    const catLbl=CAT_LABEL[a.cat]||a.cat;
+    const oldWizCat=wizCat; wizCat=a.cat;
+    html=generateArticleTemplate(a.titre,a.desc||"",catLbl,acc,fdate,a.paire||"",a.artBlocks,by);
+    wizCat=oldWizCat;
+  } else if(a.type==="html"){
+    // Tente de migrer l'ancien HTML vers le nouveau template
+    const migratedBlocks=tryRegenArticle(a);
+    if(migratedBlocks){
+      const fdate=fmtD(a.date,a.time||"");
+      const by=a.submittedBy||"Admin";
+      const acc=CAT_COLORS[a.cat]||"#00e5a0";
+      const catLbl=CAT_LABEL[a.cat]||a.cat;
+      const oldWizCat=wizCat; wizCat=a.cat;
+      html=generateArticleTemplate(a.titre,a.desc||"",catLbl,acc,fdate,a.paire||"",
+        [{type:"header",subtitle:a.desc||"",image:null},...migratedBlocks],by);
+      wizCat=oldWizCat;
+    } else {
+      // HTML déjà nouveau template ou article importé manuellement → affichage direct
+      html=a.html;
     }
   } else {
-    const fdate = fmtD(a.date, a.time||"");
-    const by    = a.submittedBy||"Admin";
-    const acc   = CAT_COLORS[a.cat]||"#00e5a0";
-    const catLbl= CAT_LABEL[a.cat]||a.cat;
-    const hb    = {subtitle:a.desc||"",image:null};
-    const paraBlocks = a.content
-      ? [{type:"para",text:a.content,image:null}]
-      : (a.images||[]).map((src,i)=>({type:"para",text:"",image:{dataUrl:src,name:"image-"+(i+1)}}));
-    const oldWizCat = wizCat;
-    wizCat = a.cat;
-    html = generateArticleTemplate(a.titre,a.desc||"",catLbl,acc,fdate,a.paire||"",
+    const fdate=fmtD(a.date,a.time||"");
+    const by=a.submittedBy||"Admin";
+    const acc=CAT_COLORS[a.cat]||"#00e5a0";
+    const catLbl=CAT_LABEL[a.cat]||a.cat;
+    const hb={subtitle:a.desc||"",image:null};
+    const paraBlocks=a.content
+      ?[{type:"para",text:a.content,image:null}]
+      :(a.images||[]).map((src,i)=>({type:"para",text:"",image:{dataUrl:src,name:"image-"+(i+1)}}));
+    const oldWizCat=wizCat; wizCat=a.cat;
+    html=generateArticleTemplate(a.titre,a.desc||"",catLbl,acc,fdate,a.paire||"",
       [{type:"header",titre:a.titre,subtitle:a.desc||"",image:null},...paraBlocks],by);
-    wizCat = oldWizCat;
+    wizCat=oldWizCat;
   }
   const blob=new Blob([html],{type:"text/html"});
   window.open(URL.createObjectURL(blob),"_blank");
@@ -1959,7 +2023,7 @@ function initBlocks(){
 }
 
 function addParaBlock(){
-  wizBlocks.push({ type:"para", text:"", image:null });
+  wizBlocks.push({ type:"para", title:"", text:"", text2:"", image:null });
   renderBlocks();
   // Scroll to new block
   setTimeout(()=>{
@@ -1999,6 +2063,12 @@ function removeBlockImg(idx){
 
 function syncBlockText(idx, val){
   if(wizBlocks[idx]) wizBlocks[idx].text = val;
+}
+function syncBlockText2(idx, val){
+  if(wizBlocks[idx]) wizBlocks[idx].text2 = val;
+}
+function syncBlockParaTitle(idx, val){
+  if(wizBlocks[idx]) wizBlocks[idx].title = val;
 }
 function syncBlockSubtitle(val){
   if(wizBlocks[0]) wizBlocks[0].subtitle = val;
@@ -2064,15 +2134,28 @@ function renderBlocks(){
           </div>
         </div>
         <div class="wb-body">
-          <div class="wiz-field" style="margin-bottom:0;">
-            <label>Texte du paragraphe</label>
+          <div class="wiz-field" style="margin-bottom:.75rem;">
+            <label>Titre du paragraphe <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
+            <input class="wiz-input" type="text" maxlength="80"
+              placeholder="Ex: Sentiment de marché · Zone clé · Biais directionnel…"
+              oninput="syncBlockParaTitle(${i},this.value)"
+              value="${(b.title||'').replace(/"/g,'&quot;')}">
+          </div>
+          <div class="wiz-field" style="margin-bottom:.75rem;">
+            <label>Paragraphe 1</label>
             <textarea class="wiz-textarea" style="min-height:110px;"
               placeholder="Écris ton analyse ici..."
               oninput="syncBlockText(${i},this.value)">${b.text||""}</textarea>
           </div>
-          <div class="wiz-field" style="margin-bottom:0;">
-            <label>Image associée à ce paragraphe (optionnel)</label>
+          <div class="wiz-field" style="margin-bottom:.75rem;">
+            <label>Image associée (optionnel)</label>
             ${imgZone}
+          </div>
+          <div class="wiz-field" style="margin-bottom:0;">
+            <label>Paragraphe 2 <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
+            <textarea class="wiz-textarea" style="min-height:110px;"
+              placeholder="Suite de l'analyse, contexte, conclusion..."
+              oninput="syncBlockText2(${i},this.value)">${b.text2||""}</textarea>
           </div>
         </div>
       </div>`;
@@ -2273,7 +2356,9 @@ async function wizPublish(){
       const acc=CAT_COLORS[wizCat]||"#00e5a0";
       const catLbl=CAT_LABEL[wizCat]||wizCat;
       const generatedHTML=generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,wizBlocks,adminUsername);
-      newArt={type:"html",titre,desc,date,time,cat:wizCat,paire,html:generatedHTML,submittedBy:adminUsername};
+      // On stocke aussi les blocs pour pouvoir régénérer avec le dernier template à l'ouverture
+      newArt={type:"html",titre,desc,date,time,cat:wizCat,paire,html:generatedHTML,
+              artBlocks:wizBlocks,submittedBy:adminUsername};
     }
   }
 
@@ -2302,8 +2387,31 @@ function generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,blocks,author
     case "weekahead":    return tplWeekAhead(titre,desc,fdate,paire,headerBlock,paraBlocks,by);
     case "mensuel":      return tplMonthly(titre,desc,fdate,paire,headerBlock,paraBlocks,by);
     case "banques":      return tplBankMeeting(titre,desc,fdate,paire,headerBlock,paraBlocks,by);
-    case "trade":        return tplTrade(titre,desc,fdate,paire,paraBlocks.map(b=>({text:b.text,image:b.image?.dataUrl||null,images:b.image?[b.image.dataUrl]:[],date:""})),by);
-    case "tradeinvites": return tplTradeInvites(titre,desc,fdate,paire,paraBlocks.map(b=>({text:b.text,image:b.image?.dataUrl||null,images:b.image?[b.image.dataUrl]:[],date:""})),by);
+    case "trade": {
+      // Construire les blocs trade avec l'image header comme bloc initial
+      const coverFromHeader = headerBlock.image ? [{
+        isInitial:true, text:headerBlock.subtitle||"",
+        image:headerBlock.image.dataUrl, images:[headerBlock.image.dataUrl], date:""
+      }] : [];
+      const tradeBlocks = [...coverFromHeader, ...paraBlocks.map(b=>({
+        text:b.text, text2:b.text2||"", title:b.title||"",
+        image:b.image?.dataUrl||null, images:b.image?[b.image.dataUrl]:[], date:""
+      }))];
+      if(tradeBlocks.length===0) tradeBlocks.push({text:"",images:[],image:null,date:""});
+      return tplTrade(titre,desc,fdate,paire,tradeBlocks,by);
+    }
+    case "tradeinvites": {
+      const coverFromHeader = headerBlock.image ? [{
+        isInitial:true, text:headerBlock.subtitle||"",
+        image:headerBlock.image.dataUrl, images:[headerBlock.image.dataUrl], date:""
+      }] : [];
+      const tradeBlocks = [...coverFromHeader, ...paraBlocks.map(b=>({
+        text:b.text, text2:b.text2||"", title:b.title||"",
+        image:b.image?.dataUrl||null, images:b.image?[b.image.dataUrl]:[], date:""
+      }))];
+      if(tradeBlocks.length===0) tradeBlocks.push({text:"",images:[],image:null,date:""});
+      return tplTradeInvites(titre,desc,fdate,paire,tradeBlocks,by);
+    }
     default:             return tplDefault(titre,desc,fdate,paire,acc,catLbl,headerBlock,paraBlocks,by);
   }
 }
@@ -2323,10 +2431,11 @@ function hexToRgb(hex){
 // Renders paragraphs blocks: text then image underneath each block
 function renderParaHTML(paraBlocks){
   return paraBlocks.map(b=>{
+    const paraTitle = b.title ? `<div class="para-title">${b.title}</div>` : "";
     const txt = b.text ? `<div class="art-body">${fmtText(b.text)}</div>` : "";
     const img = b.image ? `<figure class="art-fig"><img src="${b.image.dataUrl}" alt=""><figcaption>${b.image.name}</figcaption></figure>` : "";
     if(!txt && !img) return "";
-    return `<div class="para-block">${txt}${img}</div>`;
+    return `<div class="para-block">${paraTitle}${txt}${img}</div>`;
   }).join("");
 }
 
@@ -2337,6 +2446,7 @@ const FONTS=`<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wgh
 const PARA_CSS=`
 .para-block{margin-bottom:2.5rem;}
 .para-block:last-child{margin-bottom:0;}
+.para-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:var(--acc,#00e5a0);margin-bottom:.55rem;letter-spacing:.01em;}
 .art-body{font-size:15px;line-height:1.9;color:#c9d1d9;margin-bottom:1rem;}
 .art-body p{margin-bottom:1.1rem;}
 .art-body strong{color:#fff;}
@@ -2362,10 +2472,12 @@ function mkCoverImg(hb,padding="4rem"){
 }
 function mkParaBlocks(paraBlocks,acc){
   return paraBlocks.map(b=>{
+    const paraTitle = b.title ? `<div class="para-title" style="color:${acc}">${b.title}</div>` : "";
     const txt = b.text ? `<div class="art-body">${fmtText(b.text)}</div>` : "";
     const img = b.image ? `<figure class="art-fig"><img src="${b.image.dataUrl}" alt=""><figcaption>${b.image.name}</figcaption></figure>` : "";
-    if(!txt&&!img) return "";
-    return `<div class="para-block" style="--acc:${acc}">${txt}${img}</div>`;
+    const txt2 = b.text2 ? `<div class="art-body" style="margin-top:.85rem;">${fmtText(b.text2)}</div>` : "";
+    if(!txt&&!img&&!txt2) return "";
+    return `<div class="para-block" style="--acc:${acc}">${paraTitle}${txt}${img}${txt2}</div>`;
   }).join("");
 }
 
@@ -2496,11 +2608,12 @@ function tplMonthly(titre,desc,fdate,paire,hb,paraBlocks,by){
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
 <style>
 ${sharedCSS(acc,"0.02")}
-/* Monthly spécifique — watermark */
-body::before{content:'${monthLabel.toUpperCase()||"MONTHLY"}';position:fixed;right:-2rem;bottom:2rem;
-  font-family:'Space Mono',monospace;font-size:8rem;font-weight:700;
-  color:rgba(0,255,255,.022);letter-spacing:-.02em;white-space:nowrap;pointer-events:none;z-index:0;line-height:1;}
-h1{font-family:'Space Mono',monospace !important;letter-spacing:.03em !important;}
+/* Monthly spécifique */
+.topbar{border-bottom:3px solid ${acc} !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
+.para-block:first-child .art-body p:first-child::first-letter{
+  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
+  float:left;line-height:.82;margin:.04em .14em 0 0;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
@@ -2534,16 +2647,13 @@ function tplBankMeeting(titre,desc,fdate,paire,hb,paraBlocks,by){
   const blocks = mkParaBlocks(paraBlocks,acc);
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
 <style>
-${sharedCSS(acc,"0.02")}
+${sharedCSS(acc,"0.025")}
 /* Bank Meeting spécifique */
-h1{font-family:'Syne',sans-serif !important;font-weight:800 !important;}
-/* Barre de classification */
-.class-bar{background:rgba(0,229,160,.05);border-bottom:1px solid rgba(0,229,160,.1);
-  padding:.35rem 2.5rem;display:flex;justify-content:space-between;}
-.class-txt{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.22em;color:rgba(0,229,160,.45);text-transform:uppercase;}
-/* Ligne décorative sous le titre */
-.h1-accent{width:56px;height:3px;background:${acc};border-radius:2px;margin:.75rem 0 1rem;animation:widen .8s .4s cubic-bezier(.22,1,.36,1) both;}
-@keyframes widen{from{width:0}to{width:56px}}
+.topbar{border-bottom:3px solid ${acc} !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
+.para-block:first-child .art-body p:first-child::first-letter{
+  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
+  float:left;line-height:.82;margin:.04em .14em 0 0;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
@@ -2552,13 +2662,8 @@ h1{font-family:'Syne',sans-serif !important;font-weight:800 !important;}
   </div>
   <div class="tb-chip">${chip}</div>
 </div>
-<div class="class-bar">
-  <span class="class-txt">Rapport institutionnel · Usage interne</span>
-  <span class="class-txt">${paire||"Banques Centrales"}</span>
-</div>
 <div class="hero">
   <h1>${titre}</h1>
-  <div class="h1-accent"></div>
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
 ${coverImg}
@@ -2576,8 +2681,13 @@ ${coverImg}
 // ════════════════════════════════════════════════════════════════════
 function tplTrade(titre,desc,fdate,paire,blocks,by){
   const acc="#ff4d6d";
+  const subtitle=desc||"";
+  const chip = mkChip("TRADES ADMINS",by,fdate,paire);
   const coverBlock = blocks.find(b=>b.isInitial)||blocks[0]||{};
-  const coverImg = coverBlock.image?`<div class="cover-img-wrap" style="padding:0 4rem"><img src="${coverBlock.image}" alt="" class="cover-img"></div>`:"";
+  const coverImgSrc = coverBlock.image||null;
+  const coverImg = coverImgSrc
+    ? `<div class="cover-img-wrap" style="padding:0 4rem"><img src="${coverImgSrc}" alt="" class="cover-img"></div>`
+    : "";
   const tradeBlocks = blocks.map((b,i)=>{
     const isFirst = i===0;
     const bDate = b.date?new Date(b.date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}):"";
@@ -2585,37 +2695,42 @@ function tplTrade(titre,desc,fdate,paire,blocks,by){
       ? `<div class="blk-sep first"><span>PUBLICATION INITIALE</span><span class="sep-date">${bDate}</span></div>`
       : `<div class="blk-sep"><span>MISE À JOUR ${i+1}${b.addedBy?" · "+b.addedBy:""}</span><span class="sep-date">${bDate}</span></div>`;
     if(b.isInitial&&!b.text&&!b.image) return "";
-    const txt = b.text?`<div class="art-body">${b.text.replace(/\n/g,"<br>")}</div>`:"";
-    // Pour le 1er bloc : ne pas ré-afficher l'image déjà montrée en cover
+    const txt = b.text?`<div class="art-body">${fmtText(b.text)}</div>`:"";
+    const txt2 = b.para2?`<div class="art-body" style="margin-top:.85rem;">${fmtText(b.para2)}</div>`:"";
+    const blockTitle = (!isFirst&&b.title)?`<div class="blk-title">${b.title}</div>`:"";
     const imgSrcs = isFirst ? [] : (Array.isArray(b.images)&&b.images.length?b.images:(b.image?[b.image]:[]));
     const imgs = imgSrcs.map(src=>`<figure class="art-fig"><img src="${src}" alt=""></figure>`).join("");
-    if(!txt&&!imgs&&isFirst) return sep;
-    return `<div class="para-block">${sep}${txt}${imgs}</div>`;
+    if(!txt&&!txt2&&!imgs&&isFirst) return `<div class="para-block para-sep-only">${sep}</div>`;
+    return `<div class="para-block">${sep}${blockTitle}${txt}${txt2}${imgs}</div>`;
   }).join("");
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
 <style>
-${sharedCSS(acc,"0.02")}
-h1{font-family:'Space Mono',monospace !important;font-size:clamp(1.4rem,3.2vw,2.2rem) !important;letter-spacing:.02em !important;}
+${sharedCSS(acc,"0.025")}
+/* Trade Admin spécifique */
+.topbar{border-bottom:3px solid ${acc} !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
+.para-block:not(.para-sep-only) .art-body p:first-child::first-letter{
+  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
+  float:left;line-height:.82;margin:.04em .14em 0 0;}
+.para-sep-only{padding:.5rem 1.5rem !important;margin-bottom:.5rem;}
+.para-sep-only::before,.para-sep-only::after{display:none;}
 .blk-sep{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;
-  font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,77,109,.6);letter-spacing:.15em;text-transform:uppercase;
-  margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(255,77,109,.12);}
-.blk-sep.first{color:rgba(255,77,109,.85);}
+  font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,77,109,.65);letter-spacing:.15em;text-transform:uppercase;
+  margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(255,77,109,.15);}
+.blk-sep.first{color:rgba(255,77,109,.9);}
 .sep-date{color:rgba(208,218,232,.35);letter-spacing:.06em;text-transform:none;}
-/* Blocks count badge */
-.blk-count{font-family:'Space Mono',monospace;font-size:8px;color:${acc};background:rgba(255,77,109,.08);
-  border:1px solid rgba(255,77,109,.2);padding:2px 10px;border-radius:12px;margin-left:.6rem;letter-spacing:.1em;}
+.blk-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:rgba(255,77,109,.9);margin-bottom:.6rem;letter-spacing:.01em;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
     <div class="tb-hex">SMF</div>
     <div class="tb-brand"><em>S·M·F</em> RESEARCH</div>
   </div>
-  <div class="tb-chip">TRADES ADMINS · ${by||"Admin"} · ${fdate}</div>
+  <div class="tb-chip">${chip}</div>
 </div>
 <div class="hero">
   <h1>${titre}</h1>
-  ${desc?`<p class="hero-desc">${desc}</p>`:""}
-  ${paire?`<div style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,77,109,.6);letter-spacing:.12em;margin-top:.5rem;">📊 ${paire}</div>`:""}
+  ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
 ${coverImg}
 <div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
@@ -2632,8 +2747,13 @@ ${coverImg}
 // ════════════════════════════════════════════════════════════════════
 function tplTradeInvites(titre,desc,fdate,paire,blocks,by){
   const acc="#7c3aed";
+  const subtitle=desc||"";
+  const chip = mkChip("TRADES INVITÉS",by,fdate,paire);
   const coverBlock = blocks.find(b=>b.isInitial)||blocks[0]||{};
-  const coverImg = coverBlock.image?`<div class="cover-img-wrap" style="padding:0 4rem"><img src="${coverBlock.image}" alt="" class="cover-img"></div>`:"";
+  const coverImgSrc = coverBlock.image||null;
+  const coverImg = coverImgSrc
+    ? `<div class="cover-img-wrap" style="padding:0 4rem"><img src="${coverImgSrc}" alt="" class="cover-img"></div>`
+    : "";
   const tradeBlocks = blocks.map((b,i)=>{
     const isFirst = i===0;
     const bDate = b.date?new Date(b.date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}):"";
@@ -2641,37 +2761,42 @@ function tplTradeInvites(titre,desc,fdate,paire,blocks,by){
       ? `<div class="blk-sep first"><span>PUBLICATION INITIALE</span><span class="sep-date">${bDate}</span></div>`
       : `<div class="blk-sep"><span>MISE À JOUR ${i+1}${b.addedBy?" · "+b.addedBy:""}</span><span class="sep-date">${bDate}</span></div>`;
     if(b.isInitial&&!b.text&&!b.image) return "";
-    const txt = b.text?`<div class="art-body">${b.text.replace(/\n/g,"<br>")}</div>`:"";
-    // Pour le 1er bloc : ne pas ré-afficher l'image déjà montrée en cover
+    const txt = b.text?`<div class="art-body">${fmtText(b.text)}</div>`:"";
+    const txt2 = b.para2?`<div class="art-body" style="margin-top:.85rem;">${fmtText(b.para2)}</div>`:"";
+    const blockTitle = (!isFirst&&b.title)?`<div class="blk-title">${b.title}</div>`:"";
     const imgSrcs = isFirst ? [] : (Array.isArray(b.images)&&b.images.length?b.images:(b.image?[b.image]:[]));
     const imgs = imgSrcs.map(src=>`<figure class="art-fig"><img src="${src}" alt=""></figure>`).join("");
-    if(!txt&&!imgs&&isFirst) return sep;
-    return `<div class="para-block">${sep}${txt}${imgs}</div>`;
+    if(!txt&&!txt2&&!imgs&&isFirst) return `<div class="para-block para-sep-only">${sep}</div>`;
+    return `<div class="para-block">${sep}${blockTitle}${txt}${txt2}${imgs}</div>`;
   }).join("");
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
 <style>
-${sharedCSS(acc,"0.018")}
-h1{font-family:'Syne',sans-serif !important;font-weight:800 !important;}
+${sharedCSS(acc,"0.025")}
+/* Trades Invités spécifique */
+.topbar{border-bottom:3px solid ${acc} !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
+.para-block:not(.para-sep-only) .art-body p:first-child::first-letter{
+  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
+  float:left;line-height:.82;margin:.04em .14em 0 0;}
+.para-sep-only{padding:.5rem 1.5rem !important;margin-bottom:.5rem;}
+.para-sep-only::before,.para-sep-only::after{display:none;}
 .blk-sep{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;
-  font-family:'Space Mono',monospace;font-size:9px;color:rgba(124,58,237,.6);letter-spacing:.15em;text-transform:uppercase;
-  margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(124,58,237,.12);}
+  font-family:'Space Mono',monospace;font-size:9px;color:rgba(124,58,237,.65);letter-spacing:.15em;text-transform:uppercase;
+  margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(124,58,237,.15);}
 .blk-sep.first{color:rgba(124,58,237,.9);}
 .sep-date{color:rgba(208,218,232,.35);letter-spacing:.06em;text-transform:none;}
-.submitted-by{font-family:'Space Mono',monospace;font-size:10px;color:rgba(124,58,237,.7);
-  margin-top:.4rem;letter-spacing:.06em;}
+.blk-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:rgba(124,58,237,.9);margin-bottom:.6rem;letter-spacing:.01em;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
     <div class="tb-hex">SMF</div>
     <div class="tb-brand"><em>S·M·F</em> RESEARCH</div>
   </div>
-  <div class="tb-chip">TRADES INVITÉS · ${by||"Invité"} · ${fdate}</div>
+  <div class="tb-chip">${chip}</div>
 </div>
 <div class="hero">
   <h1>${titre}</h1>
-  ${desc?`<p class="hero-desc">${desc}</p>`:""}
-  ${by?`<div class="submitted-by">✍ Soumis par ${by}</div>`:""}
-  ${paire?`<div style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(124,58,237,.6);letter-spacing:.12em;margin-top:.4rem;">📊 ${paire}</div>`:""}
+  ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
 ${coverImg}
 <div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
@@ -2692,7 +2817,14 @@ function tplDefault(titre,desc,fdate,paire,acc,catLbl,hb,paraBlocks,by){
   const coverImg = mkCoverImg(hb);
   const blocks = mkParaBlocks(paraBlocks,acc);
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
-<style>${sharedCSS(acc)}</style></head><body>
+<style>
+${sharedCSS(acc,"0.025")}
+.topbar{border-bottom:3px solid ${acc} !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
+.para-block:first-child .art-body p:first-child::first-letter{
+  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
+  float:left;line-height:.82;margin:.04em .14em 0 0;}
+</style></head><body>
 <div class="topbar">
   <div class="tb-left"><div class="tb-hex">SMF</div><div class="tb-brand"><em>S·M·F</em> RESEARCH</div></div>
   <div class="tb-chip">${chip}</div>
@@ -2711,198 +2843,19 @@ ${coverImg}
 </body></html>`;
 }
 function tplWeekAhead(titre,desc,fdate,paire,hb,paraBlocks,by){
-  const subtitle  = hb.subtitle||(desc||"");
-  const coverImg  = hb.image ? `<div class="cover-img-wrap"><img src="${hb.image.dataUrl}" alt="" class="cover-img"></div>` : "";
-  // Chip topbar: WEEK AHEAD · author · date · heure
-  const chipParts = ["WEEK AHEAD"];
-  if(by && by !== "Admin") chipParts.push(by);
-  if(fdate) chipParts.push(fdate);
-  if(paire) chipParts.push(paire);
-  const chip = chipParts.join(" · ");
+  const acc="#a064ff";
+  const subtitle = hb.subtitle||(desc||"");
+  const chip = mkChip("WEEK AHEAD",by,fdate,paire);
+  const coverImg = mkCoverImg(hb);
+  const blocks = mkParaBlocks(paraBlocks,acc);
 
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-
-/* ── BODY & GRID BG ── */
-body{
-  background:#02040a;color:#d0dae8;font-family:'Syne',sans-serif;min-height:100vh;
-  background-image:
-    linear-gradient(rgba(0,229,160,.022) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,229,160,.022) 1px,transparent 1px);
-  background-size:36px 36px;
-}
-
-/* ── SCAN LINE overlay ── */
-body::after{
-  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:repeating-linear-gradient(
-    0deg,
-    transparent,transparent 2px,
-    rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px
-  );
-}
-
-/* ── TOPBAR ── */
-.topbar{
-  background:rgba(2,4,10,.96);border-bottom:1px solid rgba(0,229,160,.12);
-  padding:.8rem 2rem;display:flex;justify-content:space-between;align-items:center;
-  position:sticky;top:0;z-index:100;
-  backdrop-filter:blur(14px);
-}
-.tb-left{display:flex;align-items:center;gap:.8rem;}
-.tb-hex{
-  width:28px;height:28px;background:#00e5a0;
-  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Space Mono',monospace;font-size:7px;font-weight:700;color:#000;
-  box-shadow:0 0 10px rgba(0,229,160,.4);
-  animation:hexPulse 3s ease-in-out infinite;
-}
-@keyframes hexPulse{0%,100%{box-shadow:0 0 8px rgba(0,229,160,.35);}50%{box-shadow:0 0 20px rgba(0,229,160,.7),0 0 40px rgba(0,229,160,.2);}}
-.tb-brand{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.15em;color:#5a6578;}
-.tb-brand em{color:#00e5a0;font-style:normal;}
-.tb-chip{
-  font-family:'Space Mono',monospace;font-size:8.5px;color:#00e5a0;
-  background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.25);
-  padding:4px 12px;border-radius:20px;letter-spacing:.09em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55vw;
-  animation:chipGlow 4s ease-in-out infinite;
-}
-@keyframes chipGlow{0%,100%{border-color:rgba(0,229,160,.2);}50%{border-color:rgba(0,229,160,.55);box-shadow:0 0 12px rgba(0,229,160,.12);}}
-
-/* ── HERO ── */
-.hero{
-  padding:3.5rem 4rem 2.5rem;max-width:980px;margin:0 auto;
-  position:relative;z-index:1;
-}
-/* Crochet haut-gauche — écarté du titre */
-.hero::before{
-  content:'';position:absolute;
-  top:1.75rem;left:2.5rem;
-  width:28px;height:28px;
-  border-top:2px solid rgba(0,229,160,.45);
-  border-left:2px solid rgba(0,229,160,.45);
-  pointer-events:none;
-}
-/* Crochet haut-droit — miroir */
-.hero::after{
-  content:'';position:absolute;
-  top:1.75rem;right:2.5rem;
-  width:28px;height:28px;
-  border-top:2px solid rgba(0,229,160,.45);
-  border-right:2px solid rgba(0,229,160,.45);
-  pointer-events:none;
-}
-h1{
-  font-family:'Space Mono',monospace;
-  font-size:clamp(1.6rem,3.8vw,2.5rem);
-  font-weight:700;color:#00e5a0;
-  line-height:1.2;margin-bottom:1.25rem;
-  letter-spacing:.02em;
-  animation:titleReveal .9s cubic-bezier(.22,1,.36,1) both;
-  text-shadow:0 0 30px rgba(0,229,160,.25);
-}
-@keyframes titleReveal{
-  from{opacity:0;filter:blur(8px);transform:translateY(12px);}
-  to{opacity:1;filter:none;transform:none;}
-}
-.hero-desc{
-  font-size:15px;color:rgba(208,218,232,.6);line-height:1.8;
-  max-width:660px;
-  animation:fadeUp .8s .15s cubic-bezier(.22,1,.36,1) both;
-}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
-
-/* ── COVER IMAGE ── */
-.cover-img-wrap{
-  max-width:980px;margin:2rem auto 0;
-  padding:0 4rem;
-  animation:fadeUp .8s .25s cubic-bezier(.22,1,.36,1) both;
-}
-.cover-img{
-  width:100%;border-radius:10px;
-  border:1px solid rgba(0,229,160,.15);
-  max-height:400px;object-fit:cover;display:block;
-  box-shadow:0 4px 40px rgba(0,229,160,.08);
-}
-
-/* ── DIVIDER ── */
-.divider{
-  max-width:980px;margin:2.5rem auto 0;padding:0 4rem;
-  display:flex;align-items:center;gap:1rem;
-  animation:fadeUp .6s .3s both;
-}
-.div-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(0,229,160,.5),rgba(0,229,160,0));}
-.div-line.r{background:linear-gradient(90deg,rgba(0,229,160,0),rgba(0,229,160,.5));}
-.div-dot{
-  width:6px;height:6px;background:#00e5a0;border-radius:50%;
-  box-shadow:0 0 8px rgba(0,229,160,.8);
-  animation:dotPulse 2s ease-in-out infinite;
-}
-@keyframes dotPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.5);opacity:.6;}}
-
-/* ── CONTENT ── */
-.content{
-  max-width:980px;margin:0 auto;
-  padding:2rem 4rem 4rem;
-  position:relative;z-index:1;
-}
-.content-inner{
-  padding:0 1.25rem;
-}
-${PARA_CSS}
-/* Barre verte gauche + droite sur chaque bloc individuellement */
-.para-block{
-  position:relative;
-  padding:1.25rem 1.5rem;
-  margin-bottom:1.5rem;
-}
-.para-block:last-child{ margin-bottom:0; }
-/* Barre gauche du bloc */
-.para-block::before{
-  content:'';
-  position:absolute;
-  left:0;top:0;bottom:0;
-  width:3px;
-  background:linear-gradient(
-    180deg,
-    #00e5a0 0%,
-    rgba(0,229,160,.5) 70%,
-    rgba(0,229,160,.1) 100%
-  );
-  border-radius:2px;
-}
-/* Barre droite du bloc */
-.para-block::after{
-  content:'';
-  position:absolute;
-  right:0;top:0;bottom:0;
-  width:3px;
-  background:linear-gradient(
-    180deg,
-    #00e5a0 0%,
-    rgba(0,229,160,.5) 70%,
-    rgba(0,229,160,.1) 100%
-  );
-  border-radius:2px;
-}
-
-/* ── FOOTER ── */
-.footer{
-  border-top:1px solid rgba(0,229,160,.08);
-  padding:1rem 4rem;display:flex;justify-content:space-between;align-items:center;
-  max-width:980px;margin:0 auto;position:relative;z-index:1;
-}
-.footer span{font-family:'Space Mono',monospace;font-size:9px;color:#323d4d;letter-spacing:.12em;}
-.footer em{color:#00e5a0;font-style:normal;}
-.footer-pulse{
-  width:6px;height:6px;border-radius:50%;background:#00e5a0;
-  animation:dotPulse 2s ease-in-out infinite;
-  box-shadow:0 0 6px rgba(0,229,160,.6);
-}
+${sharedCSS(acc,"0.02")}
+/* Week Ahead spécifique */
+h1{font-family:'Space Mono',monospace !important;font-size:clamp(1.6rem,3.8vw,2.5rem) !important;letter-spacing:.02em !important;}
+.topbar{border-bottom:3px solid ${acc} !important;}
 </style></head><body>
-
 <div class="topbar">
   <div class="tb-left">
     <div class="tb-hex">SMF</div>
@@ -2910,167 +2863,20 @@ ${PARA_CSS}
   </div>
   <div class="tb-chip">${chip}</div>
 </div>
-
 <div class="hero">
   <h1>${titre}</h1>
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
-
 ${coverImg}
-
-<div class="divider">
-  <div class="div-line"></div>
-  <div class="div-dot"></div>
-  <div class="div-line r"></div>
-</div>
-
-<div class="content">
-  <div class="content-inner">${renderParaHTML(paraBlocks)}</div>
-</div>
-
+<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+<div class="content">${blocks}</div>
 <div class="footer">
-  <span><em>S·M·F</em> · Smart Finance Research</span>
-  <div style="display:flex;align-items:center;gap:.5rem;">
-    <div class="footer-pulse"></div>
-    <span>${fdate}</span>
-  </div>
-</div>
-
-</body></html>`;
-}
-
-// ════════════════════════════════════════════════════════════════════
-// TEMPLATE 3 — MONTHLY RECAP  (cyan · watermark · rapport mensuel)
-// ════════════════════════════════════════════════════════════════════
-function tplMonthly(titre,desc,fdate,paire,hb,paraBlocks){
-  const month = fdate?fdate.split(" ").filter(w=>w.length>3).slice(-2).join(" "):"";
-  const coverImg = hb.image ? `<div style="max-width:860px;margin:0 auto;padding:0 2rem 2rem;"><img src="${hb.image.dataUrl}" alt="" style="width:100%;border-radius:10px;border:1px solid #1c2430;max-height:400px;object-fit:cover;display:block;"></div>` : "";
-  const subtitle = hb.subtitle||(desc||"");
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:#02040a;color:#d0dae8;font-family:'Syne',sans-serif;min-height:100vh;}
-.cover{background:#060a0f;border-bottom:1px solid #131820;padding:3rem 2rem 2rem;position:relative;overflow:hidden;}
-.cover::before{content:'MONTHLY';position:absolute;right:-1rem;top:50%;transform:translateY(-50%);font-family:'Space Mono',monospace;font-size:6rem;font-weight:700;color:rgba(0,255,255,.025);letter-spacing:-.02em;white-space:nowrap;pointer-events:none;}
-.cover-inner{max-width:860px;margin:0 auto;position:relative;}
-.cover-tag{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:#0ff;margin-bottom:.75rem;display:flex;align-items:center;gap:.6rem;}
-.cover-tag::before{content:'';display:inline-block;width:24px;height:2px;background:#0ff;}
-.cover-month{font-family:'Space Mono',monospace;font-size:clamp(1.4rem,3.5vw,2.3rem);font-weight:700;color:#fff;letter-spacing:.04em;margin-bottom:.5rem;}
-.cover-month em{color:#0ff;font-style:normal;}
-.cover-sub{font-size:14px;color:rgba(208,218,232,.55);line-height:1.5;margin-bottom:1.5rem;max-width:620px;}
-.cover-meta{display:inline-flex;align-items:center;gap:.6rem;background:rgba(0,255,255,.06);border:1px solid rgba(0,255,255,.15);border-radius:4px;padding:.5rem 1rem;font-family:'Space Mono',monospace;font-size:10px;color:#0ff;letter-spacing:.08em;}
-.content{max-width:860px;margin:0 auto;padding:2.5rem 2rem 3rem;}
-.section-label{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#0ff;margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem;}
-.section-label::after{content:'';flex:1;height:1px;background:rgba(0,255,255,.12);}
-${PARA_CSS}
-.footer{background:#060a0f;border-top:1px solid #131820;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;}
-.footer span{font-family:'Space Mono',monospace;font-size:9px;color:#323d4d;letter-spacing:.15em;}
-.footer em{color:#0ff;font-style:normal;}
-.footer-stamp{font-family:'Space Mono',monospace;font-size:8px;color:rgba(0,255,255,.2);border:1px solid rgba(0,255,255,.08);padding:2px 8px;border-radius:2px;}
-</style></head><body>
-<div class="cover"><div class="cover-inner">
-  <div class="cover-tag">Monthly Recap · S·M·F Research</div>
-  <div class="cover-month"><em>${month||fdate}</em></div>
-  ${subtitle?`<p class="cover-sub">${subtitle}</p>`:""}
-  <div class="cover-meta">${fdate?`📅 ${fdate}`:""} ${paire?`&nbsp;·&nbsp; 📊 ${paire}`:""}</div>
-</div></div>
-${coverImg}
-<div class="content">
-  <div class="section-label">Bilan du mois</div>
-  ${renderParaHTML(paraBlocks)}
-</div>
-<div class="footer"><span><em>S·M·F</em> · Smart Finance Research</span><span class="footer-stamp">CONFIDENTIEL</span></div>
-</body></html>`;
-}
-
-// ════════════════════════════════════════════════════════════════════
-// TEMPLATE 4 — BANK MEETING  (vert émeraude · rapport institutionnel)
-// ════════════════════════════════════════════════════════════════════
-function tplBankMeeting(titre,desc,fdate,paire,hb,paraBlocks){
-  const coverImg = hb.image ? `<div style="max-width:860px;margin:0 auto;padding:0 2rem 1.5rem;"><img src="${hb.image.dataUrl}" alt="" style="width:100%;border-radius:8px;border:1px solid #1c2430;max-height:380px;object-fit:cover;display:block;"></div>` : "";
-  const subtitle = hb.subtitle||(desc||"");
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:#02040a;color:#d0dae8;font-family:'Syne',sans-serif;min-height:100vh;}
-.header{background:#060a0f;border-bottom:1px solid #131820;padding:.9rem 2rem;display:flex;justify-content:space-between;align-items:center;}
-.header-left{display:flex;align-items:center;gap:1rem;}
-.header-brand{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.15em;color:#5a6578;}
-.header-brand em{color:#00e5a0;font-style:normal;}
-.dv{width:1px;height:16px;background:#1c2430;}
-.header-type{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#00e5a0;}
-.header-date{font-family:'Space Mono',monospace;font-size:9px;color:#5a6578;}
-.class-bar{background:rgba(0,229,160,.05);border-bottom:1px solid rgba(0,229,160,.1);padding:.3rem 2rem;display:flex;justify-content:space-between;}
-.class-text{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.22em;color:rgba(0,229,160,.5);text-transform:uppercase;}
-.cover{max-width:860px;margin:0 auto;padding:3rem 2rem 2rem;}
-.doc-ref{font-family:'Space Mono',monospace;font-size:9px;color:#5a6578;letter-spacing:.15em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem;}
-.doc-ref::before{content:'■';color:#00e5a0;font-size:8px;}
-h1{font-family:'Syne',sans-serif;font-size:clamp(1.6rem,3.8vw,2.3rem);font-weight:800;color:#fff;line-height:1.22;margin-bottom:1rem;}
-.h1-line{width:48px;height:3px;background:#00e5a0;border-radius:2px;margin-bottom:1.5rem;}
-.hero-desc{font-size:14.5px;color:rgba(208,218,232,.65);line-height:1.75;max-width:640px;margin-bottom:2rem;padding:.75rem 1rem;background:#060a0f;border-left:3px solid #00e5a0;border-radius:0 6px 6px 0;}
-.meta-tbl{display:grid;grid-template-columns:repeat(3,auto);gap:.4rem 2rem;padding:1rem 1.25rem;background:#060a0f;border:1px solid #131820;border-radius:6px;width:fit-content;}
-.mt-k{font-family:'Space Mono',monospace;font-size:9px;color:#5a6578;letter-spacing:.1em;text-transform:uppercase;}
-.mt-v{font-family:'Space Mono',monospace;font-size:10px;color:#d0dae8;}
-.s-rule{max-width:860px;margin:2.5rem auto 0;padding:0 2rem;display:flex;align-items:center;gap:1rem;}
-.s-rule-line{flex:1;height:1px;background:#131820;}
-.s-rule-label{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:#00e5a0;white-space:nowrap;}
-.content{max-width:860px;margin:0 auto;padding:1.75rem 2rem 3rem;}
-${PARA_CSS}
-.footer{background:#060a0f;border-top:1px solid #131820;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;}
-.footer span{font-family:'Space Mono',monospace;font-size:9px;color:#323d4d;letter-spacing:.15em;}
-.footer em{color:#00e5a0;font-style:normal;}
-.footer-conf{font-family:'Space Mono',monospace;font-size:8px;color:rgba(0,229,160,.2);border:1px solid rgba(0,229,160,.08);padding:2px 8px;border-radius:2px;}
-</style></head><body>
-<div class="header"><div class="header-left"><div class="header-brand"><em>S·M·F</em> RESEARCH</div><div class="dv"></div><div class="header-type">Bank Meeting Note</div></div><div class="header-date">${fdate}</div></div>
-<div class="class-bar"><div class="class-text">Rapport institutionnel · Usage interne</div><div class="class-text">${paire||"Banques Centrales"}</div></div>
-<div class="cover">
-  <div class="doc-ref">BANK MEETING · S-M-F RESEARCH · ${fdate||"—"}</div>
-  <h1>${titre}</h1>
-  <div class="h1-line"></div>
-  ${subtitle?`<div class="hero-desc">${subtitle}</div>`:""}
-  <div class="meta-tbl">
-    <span class="mt-k">Date</span><span class="mt-k">Instrument</span><span class="mt-k">Type</span>
-    <span class="mt-v">${fdate||"—"}</span><span class="mt-v">${paire||"—"}</span><span class="mt-v">Bank Meeting</span>
-  </div>
-</div>
-${coverImg}
-<div class="s-rule"><div class="s-rule-line"></div><div class="s-rule-label">Note d'analyse</div><div class="s-rule-line"></div></div>
-<div class="content">${renderParaHTML(paraBlocks)}</div>
-<div class="footer"><span><em>S·M·F</em> · Smart Finance Research · ${fdate}</span><span class="footer-conf">CONFIDENTIEL</span></div>
-</body></html>`;
-}
-
-// ════════════════════════════════════════════════════════════════════
-// TEMPLATE DEFAULT  (fallback générique)
-// ════════════════════════════════════════════════════════════════════
-function tplDefault(titre,desc,fdate,paire,acc,catLbl,hb,paraBlocks){
-  const r=hexToRgb(acc);
-  const coverImg = hb.image ? `<img src="${hb.image.dataUrl}" alt="" style="width:100%;border-radius:8px;border:1px solid #1c2430;max-height:380px;object-fit:cover;display:block;margin:1.5rem 0;">` : "";
-  const subtitle = hb.subtitle||(desc||"");
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:#02040a;color:#d0dae8;font-family:'Syne',sans-serif;min-height:100vh;padding:3rem 1.5rem 4rem;}
-.wrap{max-width:780px;margin:0 auto;}
-.badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(${r},.1);border:1px solid rgba(${r},.3);color:${acc};font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;padding:5px 14px;border-radius:3px;margin-bottom:1.5rem;}
-h1{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;color:#fff;line-height:1.2;margin-bottom:1rem;}
-.desc{font-size:1rem;color:rgba(208,218,232,.65);line-height:1.7;border-left:3px solid ${acc};padding-left:1.2rem;margin-bottom:1.5rem;}
-.meta{display:flex;gap:1.5rem;font-family:'Space Mono',monospace;font-size:10px;color:#5a6578;letter-spacing:.08em;border-top:1px solid #131820;border-bottom:1px solid #131820;padding:.7rem 0;margin-bottom:2rem;}
-${PARA_CSS}
-.footer{margin-top:3rem;padding-top:1rem;border-top:1px solid #131820;display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:9px;color:#323d4d;}
-.footer em{color:${acc};font-style:normal;}
-</style></head><body>
-<div class="wrap">
-  <div class="badge">${catLbl}</div>
-  <h1>${titre}</h1>
-  ${subtitle?`<p class="desc">${subtitle}</p>`:""}
-  ${coverImg}
-  <div class="meta">${fdate?`<span>📅 ${fdate}</span>`:""} ${paire?`<span>📊 ${paire}</span>`:""}</div>
-  ${renderParaHTML(paraBlocks)}
-  <div class="footer"><span><em>S·M·F</em> · Smart Finance Research</span><span>${fdate}</span></div>
+  <span><em>S·M·F</em> · Week Ahead</span>
+  <div style="display:flex;align-items:center;gap:.5rem;"><div class="footer-pulse"></div><span>${fdate}</span></div>
 </div>
 </body></html>`;
 }
+
 let guestMode="text", guestPendingImages=[], guestPendingPdf=null;
 
 function openGuestSubmit(){
@@ -3202,7 +3008,9 @@ function openAddBlock(e,id){
   document.getElementById("abModalSub").textContent=a.titre;
   document.getElementById("abBlockNum").textContent=`BLOC ${next} · MISE À JOUR`;
   document.getElementById("abBlockNum").style.color=acc;
+  document.getElementById("abTitle").value="";
   document.getElementById("abText").value="";
+  document.getElementById("abText2").value="";
   document.getElementById("abDate").value=new Date().toISOString().slice(0,10);
   document.getElementById("abImgPreview").innerHTML="";
   document.getElementById("abImgInput").value="";
@@ -3239,9 +3047,11 @@ function renderAbImgPreviews(){
 }
 
 async function submitAddBlock(){
+  const title=document.getElementById("abTitle").value.trim();
   const text=document.getElementById("abText").value.trim();
+  const text2=document.getElementById("abText2").value.trim();
   const date=document.getElementById("abDate").value;
-  if(!text&&_abImgs.length===0){toast("⚠ Ajoute du texte ou au moins une image",true);return;}
+  if(!text&&!text2&&_abImgs.length===0){toast("⚠ Ajoute du texte ou au moins une image",true);return;}
   if(!date){toast("⚠ La date est obligatoire",true);return;}
   if(!_abTargetId){toast("⚠ Erreur interne",true);return;}
   const a=arts.find(x=>x.id===_abTargetId);
@@ -3249,7 +3059,7 @@ async function submitAddBlock(){
   const existingBlocks=a.blocks||[];
   if(existingBlocks.length>=5){toast("⚠ Maximum 5 blocs atteint",true);return;}
   const adminUsername = sessionStorage.getItem("smf_username") || "Admin";
-  const newBlock={text,images:_abImgs.map(i=>i.dataUrl),image:_abImgs[0]?.dataUrl||null,date,addedBy:adminUsername};
+  const newBlock={title,text,para2:text2,images:_abImgs.map(i=>i.dataUrl),image:_abImgs[0]?.dataUrl||null,date,addedBy:adminUsername};
   // Si l'article n'avait pas encore de blocs (ex: HTML), on initialise avec un bloc vide initial
   let updated;
   if(existingBlocks.length===0){
