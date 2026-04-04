@@ -21,6 +21,82 @@
   /* HEADER */
   header{position:sticky;top:0;z-index:100;background:rgba(8,12,16,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 2rem;}
   .header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:68px;gap:2rem;}
+
+  /* ── PROFILE AVATAR ── */
+  .profile-wrap{position:relative;display:flex;align-items:center;}
+  .profile-avatar{
+    width:36px;height:36px;border-radius:50%;cursor:pointer;
+    border:2px solid var(--border2);overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:13px;font-weight:700;
+    transition:border-color .2s,box-shadow .2s;
+    background:var(--surface2);flex-shrink:0;
+    position:relative;
+  }
+  .profile-avatar:hover{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,160,.15);}
+  .profile-avatar.guest-av:hover{border-color:var(--warn);box-shadow:0 0 0 3px rgba(247,183,49,.15);}
+  .profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+  .profile-avatar .av-initials{pointer-events:none;}
+  .profile-online-dot{
+    position:absolute;bottom:0;right:0;
+    width:9px;height:9px;border-radius:50%;
+    background:#00f70a;border:2px solid #080c10;
+  }
+  /* Dropdown menu */
+  .profile-menu{
+    position:absolute;top:calc(100% + 10px);right:0;
+    width:230px;background:var(--surface);
+    border:1px solid var(--border2);border-radius:12px;
+    box-shadow:0 16px 48px rgba(0,0,0,.6);
+    z-index:500;
+    opacity:0;pointer-events:none;
+    transform:translateY(-8px) scale(.97);
+    transition:opacity .18s,transform .18s;
+    overflow:hidden;
+  }
+  .profile-menu.open{opacity:1;pointer-events:all;transform:translateY(0) scale(1);}
+  .pm-header{
+    padding:1rem 1rem .75rem;
+    display:flex;flex-direction:column;align-items:center;gap:.6rem;
+    border-bottom:1px solid var(--border);
+    background:var(--surface2);
+  }
+  .pm-big-avatar{
+    width:64px;height:64px;border-radius:50%;
+    border:2px solid var(--border2);overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:22px;font-weight:700;
+    background:var(--surface);cursor:pointer;position:relative;
+    transition:border-color .2s;
+  }
+  .pm-big-avatar:hover{border-color:var(--accent);}
+  .pm-big-avatar:hover .pm-av-overlay{opacity:1;}
+  .pm-big-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+  .pm-av-overlay{
+    position:absolute;inset:0;border-radius:50%;
+    background:rgba(0,0,0,.55);
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;opacity:0;transition:opacity .18s;pointer-events:none;
+  }
+  .pm-av-input{display:none;}
+  .pm-name{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);letter-spacing:.06em;text-align:center;}
+  .pm-role{font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;margin-top:1px;}
+  .pm-role.admin{color:var(--accent);}
+  .pm-role.guest{color:var(--warn);}
+  .pm-hint{font-family:var(--mono);font-size:9px;color:var(--dimmed);margin-top:-2px;}
+  .pm-actions{padding:.5rem;}
+  .pm-btn{
+    width:100%;background:transparent;border:none;cursor:pointer;
+    padding:8px 12px;border-radius:7px;
+    display:flex;align-items:center;gap:.65rem;
+    font-family:var(--mono);font-size:11px;font-weight:700;
+    color:var(--muted);letter-spacing:.05em;
+    transition:background .15s,color .15s;text-align:left;
+  }
+  .pm-btn:hover{background:var(--surface2);color:var(--text);}
+  .pm-btn.danger{color:#ff4d6d;}
+  .pm-btn.danger:hover{background:rgba(255,77,109,.08);color:#ff4d6d;}
+  .pm-btn .pm-ico{font-size:14px;width:20px;text-align:center;}
   .logo{display:flex;align-items:center;gap:.75rem;text-decoration:none;}
   .logo-mark{width:32px;height:32px;background:var(--accent);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;color:#000;}
   .logo-text{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);letter-spacing:.1em;}
@@ -1597,7 +1673,7 @@ async function doLogin(){
     await db.collection("users").doc(userDoc.id).update({online:true, lastSeen: firebase.firestore.FieldValue.serverTimestamp()});
 
     role="guest"; sessionStorage.setItem("smf_role","guest");
-    currentUser={id:userDoc.id, username:userData.username, email:userData.email, prenom:userData.prenom||'', nom:userData.nom||''};
+    currentUser={id:userDoc.id, username:userData.username, email:userData.email, prenom:userData.prenom||'', nom:userData.nom||'', photoURL:userData.photoURL||null};
     sessionStorage.setItem("smf_user", JSON.stringify(currentUser));
     document.getElementById("gateScreen").style.display="none";
     renderHeaderActions(); startRealtimeSync();
@@ -1685,27 +1761,127 @@ window.addEventListener("beforeunload",()=>{
 });
 
 // ── HEADER ────────────────────────────────────────────────────────────────────
+function getInitials(name){
+  if(!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if(parts.length>=2) return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+  return name.slice(0,2).toUpperCase();
+}
+
+function getProfilePhoto(){
+  // Priorité : photo du currentUser (Firestore) > sessionStorage
+  if(currentUser && currentUser.photoURL) return currentUser.photoURL;
+  return sessionStorage.getItem("smf_photo") || null;
+}
+
+function buildAvatar(initials, color, isGuest){
+  const photo = getProfilePhoto();
+  const colorStyle = isGuest ? `color:var(--warn);` : `color:var(--accent);`;
+  const avatarClass = isGuest ? "profile-avatar guest-av" : "profile-avatar";
+  const inner = photo
+    ? `<img src="${photo}" alt="photo">`
+    : `<span class="av-initials" style="${colorStyle}">${initials}</span>`;
+  return `
+    <div class="profile-wrap" id="profileWrap">
+      <div class="${avatarClass}" onclick="toggleProfileMenu(event)" title="Mon profil">
+        ${inner}
+        <div class="profile-online-dot"></div>
+      </div>
+      <div class="profile-menu" id="profileMenu">
+        ${buildProfileMenuContent(initials, isGuest)}
+      </div>
+    </div>`;
+}
+
+function buildProfileMenuContent(initials, isGuest){
+  const photo = getProfilePhoto();
+  const bigInner = photo ? `<img src="${photo}" alt="">` : `<span style="${isGuest?'color:var(--warn)':'color:var(--accent)'};font-size:22px;font-weight:700;">${initials}</span>`;
+  const isGuest_ = role==="guest";
+  let name, roleLabel, roleClass;
+  if(role==="admin"){
+    name = sessionStorage.getItem("smf_username") || "ADMIN";
+    roleLabel = "Administrateur"; roleClass = "admin";
+  } else {
+    name = currentUser ? (((currentUser.prenom||"")+" "+(currentUser.nom||"")).trim() || currentUser.username || "INVITÉ") : "INVITÉ";
+    roleLabel = "Invité"; roleClass = "guest";
+  }
+  const gestionBtn = (role==="admin" && name!=="SMF")
+    ? `<button class="pm-btn" onclick="closeProfileMenu();openAdminPanel()"><span class="pm-ico">⚙</span>Gestion</button>` : "";
+  const submitBtn = role==="guest"
+    ? `<button class="pm-btn" onclick="closeProfileMenu();openGuestSubmit()"><span class="pm-ico">📤</span>Soumettre un Trade</button>` : "";
+  return `
+    <div class="pm-header">
+      <div class="pm-big-avatar" onclick="document.getElementById('pmPhotoInput').click()" title="Changer la photo">
+        ${bigInner}
+        <div class="pm-av-overlay">📷</div>
+      </div>
+      <input type="file" id="pmPhotoInput" class="pm-av-input" accept="image/*" onchange="onProfilePhotoChange(event)">
+      <div class="pm-name">${name}</div>
+      <div class="pm-role ${roleClass}">● ${roleLabel}</div>
+      <div class="pm-hint">Cliquer sur la photo pour changer</div>
+    </div>
+    <div class="pm-actions">
+      ${gestionBtn}
+      ${submitBtn}
+      <button class="pm-btn danger" onclick="closeProfileMenu();doLogout()"><span class="pm-ico">🚪</span>Déconnexion</button>
+    </div>`;
+}
+
+function toggleProfileMenu(e){
+  e.stopPropagation();
+  const menu = document.getElementById("profileMenu");
+  if(!menu) return;
+  menu.classList.toggle("open");
+}
+function closeProfileMenu(){
+  const menu = document.getElementById("profileMenu");
+  if(menu) menu.classList.remove("open");
+}
+document.addEventListener("click", ()=>closeProfileMenu());
+
+async function onProfilePhotoChange(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 2*1024*1024){ toast("⚠ Image trop lourde (max 2 Mo)", true); return; }
+  const reader = new FileReader();
+  reader.onload = async function(ev){
+    const dataUrl = ev.target.result;
+    // Sauvegarde locale
+    sessionStorage.setItem("smf_photo", dataUrl);
+    // Si guest → sauvegarder dans Firestore
+    if(role==="guest" && currentUser){
+      try{ await db.collection("users").doc(currentUser.id).update({photoURL: dataUrl}); }catch(ex){}
+      currentUser.photoURL = dataUrl;
+      sessionStorage.setItem("smf_user", JSON.stringify(currentUser));
+    }
+    toast("✓ Photo de profil mise à jour !");
+    renderHeaderActions();
+  };
+  reader.readAsDataURL(file);
+}
+
 function renderHeaderActions(){
   const div=document.getElementById("headerActions");
   const fab=document.getElementById("fabAdd");
   if(role==="admin"){
     const username = sessionStorage.getItem("smf_username") || "ADMIN";
+    const initials = getInitials(username);
     const gestionBtn = username==="SMF" ? "" : `<button class="btn-export" onclick="openAdminPanel()">⚙ Gestion</button>`;
     div.innerHTML=`
-      <span style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.1em;">● ${username}</span>
       ${gestionBtn}
-      <button class="btn-export" onclick="doLogout()">Déconnexion</button>`;
+      ${buildAvatar(initials, "var(--accent)", false)}`;
     if(fab) fab.style.display="flex";
   } else if(role==="guest"){
     const displayName = currentUser
       ? ((currentUser.prenom||"")+" "+(currentUser.nom||"")).trim() || currentUser.username || "INVITÉ"
       : "INVITÉ";
+    const initials = getInitials(displayName);
     div.innerHTML=`
-      <span style="font-family:var(--mono);font-size:10px;color:var(--warn);letter-spacing:.1em;">● ${displayName}</span>
       <button class="btn-add-header" onclick="openGuestSubmit()" style="background:#0005ff;">📤 Soumettre un Trade</button>
-      <button class="btn-export" onclick="doLogout()">Déconnexion</button>`;
+      ${buildAvatar(initials, "var(--warn)", true)}`;
     if(fab) fab.style.display="none";
   } else {
+    div.innerHTML="";
     if(fab) fab.style.display="none";
   }
 }
