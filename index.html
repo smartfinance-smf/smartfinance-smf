@@ -10,7 +10,7 @@
   :root{
     --bg:#02040a;--surface:#060a0f;--surface2:#0b1018;
     --border:#131820;--border2:#1c2430;
-    --accent:#00e5a0;--accent2:#0ff;--warn:#f7b731;--red:#ff4d6d;
+    --accent:#00e5a0;--accent2:#0ff;--warn:#f7b731;--red:#ff4d6d;--trade:#00f70a;--tradeinv:#0005ff;--weekahead:#f7b731;
     --text:#d0dae8;--muted:#5a6578;--dimmed:#323d4d;
     --mono:'Space Mono',monospace;--sans:'Syne',sans-serif;
   }
@@ -282,9 +282,9 @@
   .filter-btn:hover,.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
   .filter-btn[data-cat="hebdo"].active{background:var(--warn);border-color:var(--warn);}
   .filter-btn[data-cat="mensuel"].active{background:var(--accent2);border-color:var(--accent2);}
-  .filter-btn[data-cat="trade"].active{background:var(--red);border-color:var(--red);color:#fff;}
-  .filter-btn[data-cat="tradeinvites"].active{background:#7c3aed;border-color:#7c3aed;color:#fff;}
-  .search-wrap{position:relative;margin-left:auto;}
+  .filter-btn[data-cat="trade"].active{background:var(--trade);border-color:var(--trade);color:#000;}
+  .filter-btn[data-cat="tradeinvites"].active{background:#0005ff;border-color:#0005ff;color:#fff;}
+  .search-wrap{position:relative;margin-left:auto;margin-right:.5rem;}
   .search-wrap input{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:6px 12px 6px 30px;border-radius:4px;width:200px;outline:none;transition:border-color .2s,width .3s;}
   .search-wrap input:focus{border-color:var(--accent);width:260px;}
   .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--dimmed);font-size:12px;pointer-events:none;}
@@ -301,10 +301,10 @@
   /* Barre top selon catégorie */
   .article-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);}
   .article-card[data-cat="hebdo"]::before{background:var(--warn);}
-  .article-card[data-cat="weekahead"]::before{background:#a064ff;}
+  .article-card[data-cat="weekahead"]::before{background:#f7b731;}
   .article-card[data-cat="mensuel"]::before{background:var(--accent2);}
-  .article-card[data-cat="trade"]::before{background:var(--red);}
-  .article-card[data-cat="tradeinvites"]::before{background:#7c3aed;}
+  .article-card[data-cat="trade"]::before{background:var(--trade);}
+  .article-card[data-cat="tradeinvites"]::before{background:#0005ff;}
   .article-card[data-cat="banques"]::before{background:var(--accent);}
 
   /* Corps horizontal */
@@ -318,14 +318,14 @@
   .card-top{display:flex;align-items:center;justify-content:space-between;gap:.4rem;margin-bottom:.05rem;}
   .cat-badge{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:3px 8px;border-radius:3px;}
   .cat-badge.hebdo{background:rgba(247,183,49,.15);color:var(--warn);}
-  .cat-badge.weekahead{background:rgba(160,100,255,.15);color:#a064ff;}
+  .cat-badge.weekahead{background:rgba(247,183,49,.15);color:#f7b731;}
   .cat-badge.mensuel{background:rgba(0,255,255,.12);color:var(--accent2);}
   .cat-badge.banques{background:rgba(0,229,160,.1);color:var(--accent);}
-  .cat-badge.trade{background:rgba(255,77,109,.15);color:var(--red);}
-  .cat-badge.tradeinvites{background:rgba(124,58,237,.15);color:#7c3aed;}
-  .filter-btn[data-cat="weekahead"].active{background:#a064ff;border-color:#a064ff;color:#fff;}
+  .cat-badge.trade{background:rgba(0,247,10,.12);color:var(--trade);}
+  .cat-badge.tradeinvites{background:rgba(0,5,255,.15);color:#0005ff;}
+  .filter-btn[data-cat="weekahead"].active{background:#f7b731;border-color:#f7b731;color:#000;}
   .filter-btn[data-cat="ideetrade"].active{background:#ffa032;border-color:#ffa032;color:#000;}
-  .pill.weekahead input:checked+label{background:rgba(160,100,255,.15);border-color:#a064ff;color:#a064ff;font-weight:700;}
+  .pill.weekahead input:checked+label{background:rgba(247,183,49,.15);border-color:#f7b731;color:#f7b731;font-weight:700;}
   .card-date{font-family:var(--mono);font-size:9px;color:var(--dimmed);letter-spacing:.03em;white-space:nowrap;}
   .card-title{font-size:14px;font-weight:700;color:var(--text);line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
   .card-desc{font-size:11.5px;color:var(--muted);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1;}
@@ -333,24 +333,61 @@
   .card-author{display:flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:9px;color:var(--muted);min-width:0;}
   .card-author-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;background:var(--accent);}
   .card-author-dot.hebdo{background:var(--warn);}
-  .card-author-dot.trade{background:var(--red);}
-  .card-author-dot.tradeinvites{background:#7c3aed;}
+  .card-author-dot.trade{background:var(--trade);}
+  .card-author-dot.tradeinvites{background:#0005ff;}
   .card-author-dot.mensuel{background:var(--accent2);}
+  /* ── EDIT TAGS ── */
+  .btn-edit-tag{background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:10px;cursor:pointer;padding:2px 6px;border-radius:3px;transition:all .15s;line-height:1;font-family:var(--mono);}
+  .btn-edit-tag:hover{border-color:var(--accent);color:var(--accent);}
+  .card-top-badges{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap;flex:1;}
+  .cat-badge-extra{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;opacity:.8;}
+  .cat-badge-extra.hebdo{background:rgba(247,183,49,.12);color:var(--warn);}
+  .cat-badge-extra.weekahead{background:rgba(247,183,49,.12);color:#f7b731;}
+  .cat-badge-extra.mensuel{background:rgba(0,255,255,.1);color:var(--accent2);}
+  .cat-badge-extra.banques{background:rgba(0,229,160,.1);color:var(--accent);}
+  .cat-badge-extra.trade{background:rgba(0,247,10,.10);color:var(--trade);}
+  .cat-badge-extra.tradeinvites{background:rgba(0,5,255,.12);color:#0005ff;}
+  /* Overlay édition tags */
+  .edit-tags-ov{position:fixed;inset:0;background:rgba(2,4,10,.88);backdrop-filter:blur(16px);z-index:500;display:none;align-items:center;justify-content:center;padding:1.5rem;}
+  .edit-tags-ov.open{display:flex;}
+  .edit-tags-modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:480px;padding:1.75rem;display:flex;flex-direction:column;gap:1.25rem;animation:up .25s cubic-bezier(.34,1.56,.64,1);}
+  .edit-tags-title{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);letter-spacing:.06em;}
+  .edit-tags-sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;}
+  .edit-tags-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem;}
+  .et-pill{position:relative;cursor:pointer;}
+  .et-pill input[type=checkbox]{position:absolute;opacity:0;width:0;height:0;}
+  .et-pill label{display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.75rem .5rem;border:2px solid var(--border2);border-radius:8px;cursor:pointer;transition:all .18s;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+  .et-pill label .ep-ico{font-size:18px;}
+  .et-pill label .ep-primary{font-size:8px;letter-spacing:.1em;color:var(--accent);opacity:0;margin-top:2px;transition:opacity .15s;}
+  .et-pill input:checked+label .ep-primary{opacity:1;}
+  .et-pill.hebdo input:checked+label{background:rgba(247,183,49,.08);border-color:var(--warn);color:var(--warn);}
+  .et-pill.weekahead input:checked+label{background:rgba(247,183,49,.08);border-color:#f7b731;color:#f7b731;}
+  .et-pill.mensuel input:checked+label{background:rgba(0,255,255,.07);border-color:var(--accent2);color:var(--accent2);}
+  .et-pill.banques input:checked+label{background:rgba(0,229,160,.08);border-color:var(--accent);color:var(--accent);}
+  .et-pill.trade input:checked+label{background:rgba(0,247,10,.07);border-color:var(--trade);color:var(--trade);}
+  .et-pill.tradeinvites input:checked+label{background:rgba(0,5,255,.08);border-color:#0005ff;color:#0005ff;}
+  .et-pill.tous input:checked+label{background:rgba(0,229,160,.08);border-color:var(--accent);color:var(--accent);}
+  .edit-tags-hint{font-family:var(--mono);font-size:9px;color:var(--dimmed);text-align:center;line-height:1.7;}
+  .edit-tags-actions{display:flex;gap:.75rem;}
+  .btn-et-save{flex:1;background:var(--accent);border:none;color:#000;font-family:var(--mono);font-size:12px;font-weight:700;padding:11px;border-radius:6px;cursor:pointer;letter-spacing:.08em;transition:opacity .15s;}
+  .btn-et-save:hover{opacity:.85;}
+  .btn-et-cancel{background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:12px;padding:11px 18px;border-radius:6px;cursor:pointer;transition:all .15s;}
+  .btn-et-cancel:hover{border-color:var(--red);color:var(--red);}
   .card-author-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
   .card-actions{display:flex;align-items:center;gap:.4rem;flex-shrink:0;}
   .card-open{font-family:var(--mono);font-size:9.5px;color:var(--accent);font-weight:700;letter-spacing:.06em;white-space:nowrap;}
   .btn-del{background:transparent;border:none;color:var(--dimmed);font-size:13px;cursor:pointer;padding:2px 5px;border-radius:3px;transition:color .15s;line-height:1;}
   .btn-del:hover{color:var(--red);}
   .blocks-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;border:1px solid;white-space:nowrap;}
-  .blocks-badge.trade{background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.3);color:var(--red);}
-  .blocks-badge.tradeinvites{background:rgba(124,58,237,.1);border-color:rgba(124,58,237,.3);color:#7c3aed;}
+  .blocks-badge.trade{background:rgba(0,247,10,.08);border-color:rgba(0,247,10,.25);color:var(--trade);}
+  .blocks-badge.tradeinvites{background:rgba(0,5,255,.1);border-color:rgba(0,5,255,.3);color:#0005ff;}
   .empty-state{grid-column:1/-1;padding:5rem 2rem;text-align:center;}
   .empty-icon{font-size:48px;margin-bottom:1.5rem;opacity:.4;}
   .empty-text{font-family:var(--mono);font-size:13px;color:var(--dimmed);line-height:2;}
   .empty-cta{display:inline-block;margin-top:1.5rem;background:var(--accent);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:10px 24px;border-radius:4px;cursor:pointer;letter-spacing:.08em;border:none;transition:opacity .15s;}
   .empty-cta:hover{opacity:.85;}
   /* VIEW TOGGLE */
-  .view-toggle{display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:2px;margin-left:auto;}
+  .view-toggle{display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:2px;}
   .view-btn{background:transparent;border:none;color:var(--muted);width:30px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;transition:all .15s;flex-shrink:0;}
   .view-btn.active{background:var(--accent);color:#000;}
   .view-btn svg{width:14px;height:14px;fill:currentColor;}
@@ -445,8 +482,8 @@
   .pill.banques input:checked+label{background:rgba(0,229,160,.15);border-color:var(--accent);color:var(--accent);font-weight:700;}
   .pill.hebdo   input:checked+label{background:rgba(247,183,49,.15);border-color:var(--warn);color:var(--warn);font-weight:700;}
   .pill.mensuel input:checked+label{background:rgba(0,255,255,.12);border-color:var(--accent2);color:var(--accent2);font-weight:700;}
-  .pill.trade   input:checked+label{background:rgba(255,77,109,.15);border-color:var(--red);color:var(--red);font-weight:700;}
-  .pill.tradeinvites input:checked+label{background:rgba(124,58,237,.15);border-color:#7c3aed;color:#7c3aed;font-weight:700;}
+  .pill.trade   input:checked+label{background:rgba(0,247,10,.12);border-color:var(--trade);color:var(--trade);font-weight:700;}
+  .pill.tradeinvites input:checked+label{background:rgba(0,5,255,.15);border-color:#0005ff;color:#0005ff;font-weight:700;}
   .mode-switcher.three-col{grid-template-columns:1fr 1fr 1fr;}
   .mode-switcher.three-col .mode-btn:first-child{border-right:1px solid var(--border2);}
   .mode-switcher.three-col .mode-btn:nth-child(2){border-right:1px solid var(--border2);}
@@ -470,13 +507,13 @@
   .btn-submit:disabled{opacity:.35;cursor:not-allowed;}
   /* ── TRADE BLOCKS SYSTEM ────────────────────────────────── */
   .blocks-badge{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.04em;border:1px solid;}
-  .blocks-badge.trade{background:rgba(255,77,109,.12);border-color:rgba(255,77,109,.3);color:var(--red);}
-  .blocks-badge.tradeinvites{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.3);color:#7c3aed;}
+  .blocks-badge.trade{background:rgba(0,247,10,.08);border-color:rgba(0,247,10,.25);color:var(--trade);}
+  .blocks-badge.tradeinvites{background:rgba(0,5,255,.12);border-color:rgba(0,5,255,.3);color:#0005ff;}
   .btn-add-block{background:transparent;border:1px dashed;font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 9px;border-radius:3px;cursor:pointer;letter-spacing:.05em;transition:all .15s;white-space:nowrap;}
-  .btn-add-block.trade{border-color:var(--red);color:var(--red);}
-  .btn-add-block.trade:hover{background:rgba(255,77,109,.1);}
-  .btn-add-block.tradeinvites{border-color:#7c3aed;color:#7c3aed;}
-  .btn-add-block.tradeinvites:hover{background:rgba(124,58,237,.1);}
+  .btn-add-block.trade{border-color:var(--trade);color:var(--trade);}
+  .btn-add-block.trade:hover{background:rgba(0,247,10,.08);}
+  .btn-add-block.tradeinvites{border-color:#0005ff;color:#0005ff;}
+  .btn-add-block.tradeinvites:hover{background:rgba(0,5,255,.1);}
   .ab-block-form{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:1.25rem;display:flex;flex-direction:column;gap:1rem;}
   .ab-block-num{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.1rem;}
 
@@ -745,13 +782,13 @@
 
   <div class="filters">
     <span class="filter-label">Filtre :</span>
-    <button class="filter-btn active" data-cat="hebdo">Hebdo <span class="fcount" id="fc-hebdo"></span></button>
+    <button class="filter-btn active" data-cat="tous">All <span class="fcount" id="fc-tous"></span></button>
+    <button class="filter-btn" data-cat="hebdo">Hebdo <span class="fcount" id="fc-hebdo"></span></button>
     <button class="filter-btn" data-cat="weekahead">Week Ahead <span class="fcount" id="fc-weekahead"></span></button>
     <button class="filter-btn" data-cat="mensuel">Monthly Recap <span class="fcount" id="fc-mensuel"></span></button>
     <button class="filter-btn" data-cat="banques">Bank Meeting <span class="fcount" id="fc-banques"></span></button>
     <button class="filter-btn" data-cat="trade">Trades Admins <span class="fcount" id="fc-trade"></span></button>
     <button class="filter-btn" data-cat="tradeinvites">Trades Invites <span class="fcount" id="fc-tradeinvites"></span></button>
-    <button class="filter-btn" data-cat="tous">Tous <span class="fcount" id="fc-tous"></span></button>
     <div class="search-wrap">
       <span class="search-icon">⌕</span>
       <input type="text" id="searchInput" placeholder="Rechercher...">
@@ -799,12 +836,17 @@
       <!-- ── STEP 1 : Catégorie ── -->
       <div class="wiz-panel active" id="wp1">
         <div class="cat-grid">
+          <div class="cat-card" data-cat="tous" style="--cc:#00e5a0" onclick="selectCat('tous',this)">
+            <span class="cc-ico">🌐</span>
+            <span class="cc-lbl">All</span>
+            <span class="cc-dot"></span>
+          </div>
           <div class="cat-card" data-cat="hebdo" style="--cc:#f7b731" onclick="selectCat('hebdo',this)">
             <span class="cc-ico">📈</span>
             <span class="cc-lbl">Hebdo</span>
             <span class="cc-dot"></span>
           </div>
-          <div class="cat-card" data-cat="weekahead" style="--cc:#00e5a0" onclick="selectCat('weekahead',this)">
+          <div class="cat-card" data-cat="weekahead" style="--cc:#f7b731" onclick="selectCat('weekahead',this)">
             <span class="cc-ico">🗓️</span>
             <span class="cc-lbl">Week Ahead</span>
             <span class="cc-dot"></span>
@@ -819,7 +861,7 @@
             <span class="cc-lbl">Bank Meeting</span>
             <span class="cc-dot"></span>
           </div>
-          <div class="cat-card" data-cat="trade" style="--cc:#ff4d6d" onclick="selectCat('trade',this)">
+          <div class="cat-card" data-cat="trade" style="--cc:#00f70a" onclick="selectCat('trade',this)">
             <span class="cc-ico">⚡</span>
             <span class="cc-lbl">Trades Admins</span>
             <span class="cc-dot"></span>
@@ -1069,6 +1111,18 @@
       </div>
       <div id="guestList" style="display:flex;flex-direction:column;gap:.5rem;max-height:300px;overflow-y:auto;"></div>
     </div>
+
+    <!-- 🎨 Couleurs par tag — KGB uniquement -->
+    <div id="kgbColorPanel" style="display:none;background:#060a0f;border:1px solid #f7b731;border-radius:10px;padding:1.25rem;margin-top:1rem;">
+      <div style="font-family:var(--mono);font-size:11px;color:#f7b731;letter-spacing:.15em;margin-bottom:1rem;">🎨 COULEURS PAR TAG <span style="color:#5a6578;font-size:9px;font-weight:400;">(KGB uniquement)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;" id="colorGrid">
+        <!-- rempli par renderColorPanel() -->
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:1rem;align-items:center;">
+        <button onclick="saveColors()" style="background:#f7b731;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 20px;border-radius:4px;cursor:pointer;">💾 Sauvegarder les couleurs</button>
+        <button onclick="resetColors()" style="background:transparent;border:1px solid #323d4d;color:#5a6578;font-family:var(--mono);font-size:11px;padding:8px 14px;border-radius:4px;cursor:pointer;">↺ Réinitialiser</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1214,6 +1268,54 @@
   </div>
 </div>
 
+<!-- ====== MODAL ÉDITION TAGS ====== -->
+<div class="edit-tags-ov" id="editTagsOv">
+  <div class="edit-tags-modal">
+    <div>
+      <div class="edit-tags-title">🏷️ Modifier les tags de l'article</div>
+      <div class="edit-tags-sub" id="etArtTitle"></div>
+    </div>
+    <div class="edit-tags-grid">
+      <div class="et-pill tous">
+        <input type="checkbox" id="et-tous" value="tous">
+        <label for="et-tous"><span class="ep-ico">🌐</span>All<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
+      <div class="et-pill hebdo">
+        <input type="checkbox" id="et-hebdo" value="hebdo">
+        <label for="et-hebdo"><span class="ep-ico">📅</span>Hebdo<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
+      <div class="et-pill weekahead">
+        <input type="checkbox" id="et-weekahead" value="weekahead">
+        <label for="et-weekahead"><span class="ep-ico">🔭</span>Week Ahead<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
+      <div class="et-pill mensuel">
+        <input type="checkbox" id="et-mensuel" value="mensuel">
+        <label for="et-mensuel"><span class="ep-ico">📊</span>Monthly<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
+      <div class="et-pill banques">
+        <input type="checkbox" id="et-banques" value="banques">
+        <label for="et-banques"><span class="ep-ico">🏦</span>Banques<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
+      <div class="et-pill trade">
+        <input type="checkbox" id="et-trade" value="trade">
+        <label for="et-trade"><span class="ep-ico">📈</span>Trades<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
+      <div class="et-pill tradeinvites">
+        <input type="checkbox" id="et-tradeinvites" value="tradeinvites">
+        <label for="et-tradeinvites"><span class="ep-ico">🤝</span>Invités<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
+    </div>
+    <div class="edit-tags-hint">
+      Le <strong style="color:var(--accent)">premier tag coché</strong> est le tag principal — il détermine la couleur et le template.<br>
+      Les autres tags permettent à l'article d'apparaître dans plusieurs filtres.
+    </div>
+    <div class="edit-tags-actions">
+      <button class="btn-et-cancel" onclick="closeEditTags()">Annuler</button>
+      <button class="btn-et-save" onclick="saveEditTags()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1315,7 +1417,7 @@ async function verifyOtp(){
   }
   btn.disabled=false; btn.textContent="✓ Confirmer le code";
 }
-const CAT_LABEL = {hebdo:"Hebdo",weekahead:"Week Ahead",mensuel:"Monthly Recap",banques:"Bank Meeting",trade:"Trades Admins",tradeinvites:"Trades Invites",tous:"Tous"};
+const CAT_LABEL = {hebdo:"Hebdo",weekahead:"Week Ahead",mensuel:"Monthly Recap",banques:"Bank Meeting",trade:"Trades Admins",tradeinvites:"Trades Invites",tous:"All"};
 
 // ── Firebase ─────────────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -1334,14 +1436,58 @@ let SETTINGS = {
   adminPass : "trading2026",
   guestPass : "smfhub2026",
   maxGuests : 10,
-  allowedCats: ["hebdo","weekahead","mensuel","banques","trade","tradeinvites"]
+  allowedCats: ["hebdo","weekahead","mensuel","banques","trade","tradeinvites"],
+  colors: {
+    hebdo:       "#f7b731",
+    weekahead:   "#f7b731",
+    mensuel:     "#00ffff",
+    banques:     "#00e5a0",
+    trade:       "#00f70a",
+    tradeinvites:"#0005ff"
+  }
 };
+
+// Couleurs par défaut (référence pour reset)
+const DEFAULT_COLORS = {
+  tous:"#00e5a0", hebdo:"#f7b731", weekahead:"#f7b731", mensuel:"#00ffff",
+  banques:"#00e5a0", trade:"#00f70a", tradeinvites:"#0005ff"
+};
+
+// Injecte les couleurs dans les CSS variables du document
+function applyColors(colors){
+  const c = {...DEFAULT_COLORS, ...colors};
+  // Met à jour les variables CSS sur :root via style tag
+  let style = document.getElementById("smf-color-vars");
+  if(!style){ style=document.createElement("style"); style.id="smf-color-vars"; document.head.appendChild(style); }
+  style.textContent=`:root{
+    --col-tous:${c.tous};
+    --col-hebdo:${c.hebdo};
+    --col-weekahead:${c.weekahead};
+    --col-mensuel:${c.mensuel};
+    --col-banques:${c.banques};
+    --col-trade:${c.trade};
+    --col-tradeinv:${c.tradeinvites};
+    --trade:${c.trade};
+    --tradeinv:${c.tradeinvites};
+    --weekahead:${c.weekahead};
+  }`;
+  // Met à jour aussi CAT_COLORS (utilisé par les templates)
+  CAT_COLORS.tous        = c.tous;
+  CAT_COLORS.hebdo       = c.hebdo;
+  CAT_COLORS.weekahead   = c.weekahead;
+  CAT_COLORS.mensuel     = c.mensuel;
+  CAT_COLORS.banques     = c.banques;
+  CAT_COLORS.trade       = c.trade;
+  CAT_COLORS.tradeinvites= c.tradeinvites;
+}
 
 async function loadSettings(){
   try{
     const snap = await db.collection("config").doc("settings").get();
     if(snap.exists) SETTINGS = {...SETTINGS,...snap.data()};
   }catch(e){console.warn("settings load",e);}
+  // Applique les couleurs sauvegardées
+  if(SETTINGS.colors) applyColors(SETTINGS.colors);
 }
 
 async function pushSettings(){
@@ -1352,7 +1498,7 @@ async function pushSettings(){
 let role        = sessionStorage.getItem("smf_role") || null;
 let currentUser = JSON.parse(sessionStorage.getItem("smf_user")||"null");
 let arts        = [];
-let filt="hebdo", sq="";
+let filt="tous", sq="";
 let mode="html";
 let pendingHTML=null, pendingImages=[];
 let unsubscribe = null;
@@ -1544,9 +1690,10 @@ function renderHeaderActions(){
   const fab=document.getElementById("fabAdd");
   if(role==="admin"){
     const username = sessionStorage.getItem("smf_username") || "ADMIN";
+    const gestionBtn = username==="SMF" ? "" : `<button class="btn-export" onclick="openAdminPanel()">⚙ Gestion</button>`;
     div.innerHTML=`
       <span style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.1em;">● ${username}</span>
-      <button class="btn-export" onclick="openAdminPanel()">⚙ Gestion</button>
+      ${gestionBtn}
       <button class="btn-export" onclick="doLogout()">Déconnexion</button>`;
     if(fab) fab.style.display="flex";
   } else if(role==="guest"){
@@ -1555,7 +1702,7 @@ function renderHeaderActions(){
       : "INVITÉ";
     div.innerHTML=`
       <span style="font-family:var(--mono);font-size:10px;color:var(--warn);letter-spacing:.1em;">● ${displayName}</span>
-      <button class="btn-add-header" onclick="openGuestSubmit()" style="background:#7c3aed;">📤 Soumettre un Trade</button>
+      <button class="btn-add-header" onclick="openGuestSubmit()" style="background:#0005ff;">📤 Soumettre un Trade</button>
       <button class="btn-export" onclick="doLogout()">Déconnexion</button>`;
     if(fab) fab.style.display="none";
   } else {
@@ -1565,6 +1712,10 @@ function renderHeaderActions(){
 
 // ── ADMIN PANEL ───────────────────────────────────────────────────────────────
 async function openAdminPanel(){
+  const username = sessionStorage.getItem("smf_username")||"";
+  // SMF n'a pas accès à la gestion
+  if(username==="SMF"){ toast("⚠ Accès à la gestion non autorisé", true); return; }
+
   await loadSettings();
   document.getElementById("newAdminPass").value="";
   document.getElementById("newGuestPass").value="";
@@ -1582,6 +1733,15 @@ async function openAdminPanel(){
       padding:6px 14px;border-radius:4px;cursor:pointer;
       letter-spacing:.08em;text-transform:uppercase;">${v}</button>`;
   }).join("");
+
+  // Panel couleurs — KGB uniquement
+  const colorPanel = document.getElementById("kgbColorPanel");
+  if(username==="KGB"){
+    colorPanel.style.display="block";
+    renderColorPanel();
+  } else {
+    colorPanel.style.display="none";
+  }
 
   // Liste invités
   await refreshGuestList();
@@ -1672,6 +1832,73 @@ async function savePasswords(){
   toast("✓ Mots de passe sauvegardés");
   document.getElementById("newAdminPass").value="";
   document.getElementById("newGuestPass").value="";
+}
+
+// ── COULEURS PAR TAG (KGB uniquement) ──────────────────────────────────────────
+const CAT_LABELS_COLORS = {
+  tous:        {label:"All",           ico:"🌐"},
+  hebdo:       {label:"Hebdo",         ico:"📅"},
+  weekahead:   {label:"Week Ahead",    ico:"🔭"},
+  mensuel:     {label:"Monthly",       ico:"📊"},
+  banques:     {label:"Bank Meeting",  ico:"🏦"},
+  trade:       {label:"Trades Admins", ico:"📈"},
+  tradeinvites:{label:"Trades Invités",ico:"🤝"}
+};
+
+function renderColorPanel(){
+  const c = {...DEFAULT_COLORS, ...(SETTINGS.colors||{})};
+  document.getElementById("colorGrid").innerHTML = Object.entries(CAT_LABELS_COLORS).map(([k,v])=>`
+    <div style="background:#0b1018;border:1px solid #1c2430;border-radius:8px;padding:.85rem 1rem;display:flex;align-items:center;gap:.75rem;">
+      <div style="font-size:18px;flex-shrink:0;">${v.ico}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:#d0dae8;letter-spacing:.06em;margin-bottom:.35rem;">${v.label}</div>
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <input type="color" id="col-${k}" value="${c[k]}"
+            style="width:36px;height:28px;border:1px solid #1c2430;border-radius:4px;background:transparent;cursor:pointer;padding:1px;"
+            oninput="previewColor('${k}',this.value)">
+          <input type="text" id="coltxt-${k}" value="${c[k]}" maxlength="7"
+            style="flex:1;background:#060a0f;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;"
+            oninput="syncColorPicker('${k}',this.value)"
+            onfocus="this.style.borderColor='${c[k]}'" onblur="this.style.borderColor='#1c2430'">
+          <div id="colpreview-${k}" style="width:20px;height:20px;border-radius:50%;background:${c[k]};border:1px solid #1c2430;flex-shrink:0;"></div>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function previewColor(cat, val){
+  document.getElementById("coltxt-"+cat).value = val;
+  document.getElementById("colpreview-"+cat).style.background = val;
+}
+
+function syncColorPicker(cat, val){
+  if(/^#[0-9a-fA-F]{6}$/.test(val)){
+    document.getElementById("col-"+cat).value = val;
+    document.getElementById("colpreview-"+cat).style.background = val;
+  }
+}
+
+async function saveColors(){
+  const newColors = {};
+  Object.keys(CAT_LABELS_COLORS).forEach(k=>{
+    const val = document.getElementById("col-"+k).value;
+    if(/^#[0-9a-fA-F]{6}$/.test(val)) newColors[k]=val;
+  });
+  SETTINGS.colors = newColors;
+  applyColors(newColors);
+  await pushSettings();
+  toast("✓ Couleurs sauvegardées et appliquées !");
+  renderGrid(); // Refresh cards avec nouvelles couleurs
+}
+
+async function resetColors(){
+  if(!confirm("Réinitialiser toutes les couleurs aux valeurs par défaut ?")) return;
+  SETTINGS.colors = {...DEFAULT_COLORS};
+  applyColors(DEFAULT_COLORS);
+  renderColorPanel();
+  await pushSettings();
+  toast("✓ Couleurs réinitialisées");
+  renderGrid();
 }
 
 async function saveMaxGuests(){
@@ -1787,10 +2014,29 @@ async function fbDel(id){
 }
 
 // ── STATS & GRID ──────────────────────────────────────────────────────────────
+// ── MULTI-TAGS HELPER ─────────────────────────────────────────────────────────
+// Retourne le tableau de tags d'un article (compatible anciens articles)
+function artCats(a){ return (Array.isArray(a.cats)&&a.cats.length) ? a.cats : [a.cat]; }
+// Si un article a le tag "tous", il apparaît dans tous les filtres
+function artMatchesFilt(a, f){
+  const cats = artCats(a);
+  if(cats.includes("tous")) return true;
+  if(f==="tous") return true;
+  return cats.includes(f);
+}
+
 function renderStats(){
-  const counts={hebdo:0,weekahead:0,mensuel:0,banques:0,trade:0,tradeinvites:0};
-  arts.forEach(a=>{ if(counts[a.cat]!==undefined) counts[a.cat]++; });
-  const total=Object.entries(counts).filter(([k])=>k!=="tradeinvites").reduce((s,[,v])=>s+v,0);
+  const counts={tous:0,hebdo:0,weekahead:0,mensuel:0,banques:0,trade:0,tradeinvites:0};
+  arts.forEach(a=>{
+    const cats = artCats(a);
+    if(cats.includes("tous")){
+      // Un article "All" compte dans toutes les catégories
+      Object.keys(counts).forEach(k=>counts[k]++);
+    } else {
+      cats.forEach(c=>{ if(counts[c]!==undefined) counts[c]++; });
+    }
+  });
+  const total=counts.tous||Object.entries(counts).filter(([k])=>k!=="tradeinvites"&&k!=="tous").reduce((s,[,v])=>s+v,0);
   Object.keys(counts).forEach(k=>{
     const el=document.getElementById("fc-"+k); if(el) el.textContent=counts[k]>0?"("+counts[k]+")":"";
   });
@@ -1803,11 +2049,10 @@ function filtered(){
     const db2= new Date((b.date||"1970-01-01")+"T"+(b.time||"00:00"));
     return db2 - da;
   });
-  if(role==="guest") l=l.filter(a=>SETTINGS.allowedCats.includes(a.cat) || a.cat==="tradeinvites");
-  // Exclure ideetrade dans tous les cas (catégorie supprimée)
-  l=l.filter(a=>a.cat!=="ideetrade");
-  if(filt!=="tous") l=l.filter(a=>a.cat===filt);
-  else l=l.filter(a=>a.cat!=="tradeinvites");
+  if(role==="guest") l=l.filter(a=>artCats(a).some(c=>SETTINGS.allowedCats.includes(c)) || artCats(a).includes("tradeinvites") || artCats(a).includes("tous"));
+  l=l.filter(a=>!artCats(a).includes("ideetrade")||artCats(a).length>1);
+  if(filt!=="tous") l=l.filter(a=>artMatchesFilt(a, filt));
+  else l=l.filter(a=>!artCats(a).includes("tradeinvites")||artCats(a).length>1||artCats(a).includes("tous"));
   if(sq){ const lq=sq.toLowerCase(); l=l.filter(a=>a.titre.toLowerCase().includes(lq)||a.desc.toLowerCase().includes(lq)||(a.paire&&a.paire.toLowerCase().includes(lq))); }
   return l;
 }
@@ -1820,11 +2065,12 @@ function renderGrid(){
     return;
   }
   g.innerHTML=l.map(a=>{
-    // Detect blocks-based trade articles
-    const isBlocks=(a.cat==="trade"||a.cat==="tradeinvites")&&Array.isArray(a.blocks)&&a.blocks.length>0;
-    // Pour les Trades Admins : les admins peuvent toujours ajouter des blocs (même sur article HTML)
-    const isAdminTrade = a.cat==="trade" && role==="admin";
-    // Thumbnail: blocks > legacy images > HTML embedded img
+    const cats = artCats(a);
+    const primaryCat = cats[0];
+    const extraCats  = cats.slice(1);
+    const isBlocks=(primaryCat==="trade"||primaryCat==="tradeinvites"||cats.includes("trade")||cats.includes("tradeinvites"))&&Array.isArray(a.blocks)&&a.blocks.length>0;
+    const isAdminTrade = cats.includes("trade") && role==="admin";
+    // Thumbnail
     let thumbSrc=null;
     if(isBlocks){ thumbSrc=(a.blocks[0].images&&a.blocks[0].images[0])||a.blocks[0].image||null; }
     else if(a.images&&a.images.length){ thumbSrc=a.images[0]; }
@@ -1833,25 +2079,26 @@ function renderGrid(){
       if(m) thumbSrc=m[1];
     }
     const thumb=thumbSrc?`<img class="card-thumb" src="${thumbSrc}" alt="">`:"";
-    const typeLabel=a.type==="html"?"HTML":a.type==="pdf"?"PDF 📑":"Texte/Images";
     const authorName=a.submittedBy||"";
-    const authorIcon="✍ ";
-    // Blocks badge
     let blocksBadge="", addBtn="";
     const nbBlocks=isBlocks?a.blocks.length:0;
     if(isBlocks){
-      const nb=nbBlocks;
-      blocksBadge=`<span class="blocks-badge ${a.cat}">🔗 ${nb}/5 bloc${nb>1?"s":""}</span>`;
+      blocksBadge=`<span class="blocks-badge ${primaryCat}">🔗 ${nbBlocks}/5 bloc${nbBlocks>1?"s":""}</span>`;
     }
-    const canAdd = (isBlocks&&nbBlocks<5||isAdminTrade&&!isBlocks) && (
-      role==="admin"||(role==="guest"&&a.cat==="tradeinvites"&&currentUser&&a.submittedById===currentUser.id)
+    const canAdd=(isBlocks&&nbBlocks<5||isAdminTrade&&!isBlocks)&&(
+      role==="admin"||(role==="guest"&&cats.includes("tradeinvites")&&currentUser&&a.submittedById===currentUser.id)
     );
-    if(canAdd) addBtn=`<button class="btn-add-block ${a.cat}" onclick="openAddBlock(event,'${a.id}')" title="Ajouter le prochain bloc">➕ Suite</button>`;
-    return `<div class="article-card" data-cat="${a.cat}" onclick="openArt('${a.id}')">
+    if(canAdd) addBtn=`<button class="btn-add-block ${primaryCat}" onclick="openAddBlock(event,'${a.id}')" title="Ajouter le prochain bloc">➕ Suite</button>`;
+    const extraBadges = extraCats.map(c=>`<span class="cat-badge-extra ${c}">${CAT_LABEL[c]||c}</span>`).join("");
+    const editTagBtn = role==="admin" ? `<button class="btn-edit-tag" onclick="openEditTags(event,'${a.id}')" title="Modifier les tags">✏️</button>` : "";
+    return `<div class="article-card" data-cat="${primaryCat}" onclick="openArt('${a.id}')">
       <div class="card-body">
         <div class="card-left">
           <div class="card-top">
-            <span class="cat-badge ${a.cat}">${CAT_LABEL[a.cat]||a.cat||"?"}</span>
+            <div class="card-top-badges">
+              <span class="cat-badge ${primaryCat}">${CAT_LABEL[primaryCat]||primaryCat||"?"}</span>
+              ${extraBadges}
+            </div>
             <span class="card-date">${fmtD(a.date,a.time||"")}</span>
           </div>
           <div class="card-title">${a.titre}</div>
@@ -1863,12 +2110,13 @@ function renderGrid(){
       </div>
       <div class="card-footer">
         <div class="card-author">
-          <div class="card-author-dot ${a.cat}"></div>
+          <div class="card-author-dot ${primaryCat}"></div>
           <span class="card-author-name">${authorName||"S·M·F"}</span>
           ${blocksBadge}
         </div>
         <div class="card-actions">
           ${addBtn}
+          ${editTagBtn}
           ${role==="admin"?`<button class="btn-del" onclick="delArt(event,'${a.id}')" title="Supprimer">🗑</button>`:""}
           ${isMyPost(a)?`<button class="btn-del" onclick="delOwnArt(event,'${a.id}')" title="Supprimer" style="color:var(--red);">🗑</button>`:""}
           <span class="card-open">Lire →</span>
@@ -1881,13 +2129,80 @@ function renderGrid(){
 // Vérifie si l'article appartient à l'invité connecté (double vérif ID + username)
 function isMyPost(a){
   if(role!=="guest"||!currentUser) return false;
-  if(a.cat!=="tradeinvites") return false;
+  if(!artCats(a).includes("tradeinvites")) return false;
   const byId       = currentUser.id       && a.submittedById       && a.submittedById===currentUser.id;
   const byUsername = currentUser.username  && a.submittedByUsername && a.submittedByUsername===currentUser.username;
   return byId||byUsername;
 }
 
 function render(){ renderStats(); renderGrid(); }
+
+// ── EDIT TAGS ─────────────────────────────────────────────────────────────────
+let _etTargetId = null;
+// Mémorise l'ordre de sélection pour déterminer le tag principal
+let _etSelectionOrder = [];
+
+function openEditTags(e, id){
+  e.stopPropagation();
+  if(role!=="admin"){ toast("⚠ Accès réservé",true); return; }
+  const a = arts.find(x=>x.id===id); if(!a) return;
+  _etTargetId = id;
+  _etSelectionOrder = [...artCats(a)];
+  // Affiche le titre de l'article
+  document.getElementById("etArtTitle").textContent = `"${a.titre}"`;
+  // Coche les tags actuels
+  const allCats = ["tous","hebdo","weekahead","mensuel","banques","trade","tradeinvites"];
+  allCats.forEach(c=>{
+    const cb = document.getElementById("et-"+c);
+    if(cb) cb.checked = _etSelectionOrder.includes(c);
+  });
+  // Mise à jour des labels PRINCIPAL à chaque changement
+  allCats.forEach(c=>{
+    const cb = document.getElementById("et-"+c);
+    if(cb) cb.addEventListener("change", syncEtPrimary);
+  });
+  syncEtPrimary();
+  document.getElementById("editTagsOv").classList.add("open");
+  document.body.style.overflow="hidden";
+}
+
+function syncEtPrimary(){
+  const allCats=["tous","hebdo","weekahead","mensuel","banques","trade","tradeinvites"];
+  // Recalcule l'ordre : garde ceux déjà cochés dans l'ordre mémorisé, ajoute les nouveaux
+  const checked = allCats.filter(c=> document.getElementById("et-"+c)?.checked);
+  // Préserve l'ordre : ceux déjà dans _etSelectionOrder d'abord, puis les nouveaux
+  const next = [..._etSelectionOrder.filter(c=>checked.includes(c)), ...checked.filter(c=>!_etSelectionOrder.includes(c))];
+  _etSelectionOrder = next;
+  // Met à jour le label PRINCIPAL sur le premier coché
+  allCats.forEach(c=>{
+    const lbl = document.querySelector(`#et-${c} ~ label .ep-primary, label[for='et-${c}'] .ep-primary`);
+    const labelEl = document.querySelector(`label[for='et-${c}'] .ep-primary`);
+    if(labelEl) labelEl.textContent = (_etSelectionOrder[0]===c) ? "★ PRINCIPAL" : "secondaire";
+    if(labelEl) labelEl.style.opacity = checked.includes(c) ? "1" : "0";
+  });
+}
+
+function closeEditTags(){
+  document.getElementById("editTagsOv").classList.remove("open");
+  document.body.style.overflow="";
+  _etTargetId=null; _etSelectionOrder=[];
+}
+
+async function saveEditTags(){
+  if(!_etTargetId){ closeEditTags(); return; }
+  if(_etSelectionOrder.length===0){ toast("⚠ Sélectionne au moins un tag",true); return; }
+  const primaryCat = _etSelectionOrder[0];
+  const btn = document.querySelector(".btn-et-save");
+  btn.disabled=true; btn.textContent="Enregistrement...";
+  const ok = await fbUpdate(_etTargetId, { cat: primaryCat, cats: _etSelectionOrder });
+  btn.disabled=false; btn.textContent="✓ Enregistrer";
+  if(ok){
+    closeEditTags();
+    toast(`✓ Tags mis à jour — principal : ${CAT_LABEL[primaryCat]||primaryCat}`);
+  } else {
+    toast("✕ Erreur lors de la mise à jour", true);
+  }
+}
 function delArt(e,id){
   e.stopPropagation();
   if(!confirm("Supprimer cet article ?"))return;
@@ -1940,6 +2255,7 @@ function tryRegenArticle(a){
 // ── OPEN ARTICLE ──────────────────────────────────────────────────────────────
 function openArt(id){
   const a=arts.find(x=>x.id===id); if(!a)return;
+  const primaryCat=artCats(a)[0];
   let html="";
   if(a.type==="pdf"){
     const byteStr=atob(a.pdfData.split(",")[1]);
@@ -1950,49 +2266,45 @@ function openArt(id){
     window.open(URL.createObjectURL(blob),"_blank");
     return;
   } else if(Array.isArray(a.blocks)&&a.blocks.length>0){
-    // Articles Trade (type:"manual") — régénération avec tplTrade/tplTradeInvites
     const fdate=fmtD(a.date,a.time||"");
     const by=a.submittedBy||"Admin";
-    if(a.cat==="tradeinvites"){
+    if(primaryCat==="tradeinvites"){
       html=tplTradeInvites(a.titre,a.desc||"",fdate,a.paire||"",a.blocks,by);
     } else {
       html=tplTrade(a.titre,a.desc||"",fdate,a.paire||"",a.blocks,by);
     }
   } else if(a.type==="html"&&Array.isArray(a.artBlocks)&&a.artBlocks.length>0){
-    // Articles avec blocs sauvegardés → régénération avec le template actuel
     const fdate=fmtD(a.date,a.time||"");
     const by=a.submittedBy||"Admin";
-    const acc=CAT_COLORS[a.cat]||"#00e5a0";
-    const catLbl=CAT_LABEL[a.cat]||a.cat;
-    const oldWizCat=wizCat; wizCat=a.cat;
+    const acc=CAT_COLORS[primaryCat]||"#00e5a0";
+    const catLbl=CAT_LABEL[primaryCat]||primaryCat;
+    const oldWizCat=wizCat; wizCat=primaryCat;
     html=generateArticleTemplate(a.titre,a.desc||"",catLbl,acc,fdate,a.paire||"",a.artBlocks,by);
     wizCat=oldWizCat;
   } else if(a.type==="html"){
-    // Tente de migrer l'ancien HTML vers le nouveau template
     const migratedBlocks=tryRegenArticle(a);
     if(migratedBlocks){
       const fdate=fmtD(a.date,a.time||"");
       const by=a.submittedBy||"Admin";
-      const acc=CAT_COLORS[a.cat]||"#00e5a0";
-      const catLbl=CAT_LABEL[a.cat]||a.cat;
-      const oldWizCat=wizCat; wizCat=a.cat;
+      const acc=CAT_COLORS[primaryCat]||"#00e5a0";
+      const catLbl=CAT_LABEL[primaryCat]||primaryCat;
+      const oldWizCat=wizCat; wizCat=primaryCat;
       html=generateArticleTemplate(a.titre,a.desc||"",catLbl,acc,fdate,a.paire||"",
         [{type:"header",subtitle:a.desc||"",image:null},...migratedBlocks],by);
       wizCat=oldWizCat;
     } else {
-      // HTML déjà nouveau template ou article importé manuellement → affichage direct
       html=a.html;
     }
   } else {
     const fdate=fmtD(a.date,a.time||"");
     const by=a.submittedBy||"Admin";
-    const acc=CAT_COLORS[a.cat]||"#00e5a0";
-    const catLbl=CAT_LABEL[a.cat]||a.cat;
+    const acc=CAT_COLORS[primaryCat]||"#00e5a0";
+    const catLbl=CAT_LABEL[primaryCat]||primaryCat;
     const hb={subtitle:a.desc||"",image:null};
     const paraBlocks=a.content
       ?[{type:"para",text:a.content,image:null}]
       :(a.images||[]).map((src,i)=>({type:"para",text:"",image:{dataUrl:src,name:"image-"+(i+1)}}));
-    const oldWizCat=wizCat; wizCat=a.cat;
+    const oldWizCat=wizCat; wizCat=primaryCat;
     html=generateArticleTemplate(a.titre,a.desc||"",catLbl,acc,fdate,a.paire||"",
       [{type:"header",titre:a.titre,subtitle:a.desc||"",image:null},...paraBlocks],by);
     wizCat=oldWizCat;
@@ -2014,7 +2326,7 @@ let wizBlocks = [];
 
 const WIZ_TITLES = ["Choisir une catégorie","Construire l'article","Aperçu & Publication"];
 const WIZ_SUBS   = ["Étape 1 sur 3","Étape 2 sur 3 · Titre · Blocs · Date","Étape 3 sur 3"];
-const CAT_COLORS = {hebdo:"#f7b731",weekahead:"#00e5a0",mensuel:"#0ff",banques:"#00e5a0",trade:"#ff4d6d",tradeinvites:"#7c3aed"};
+const CAT_COLORS = {hebdo:"#f7b731",weekahead:"#f7b731",mensuel:"#0ff",banques:"#00e5a0",trade:"#00f70a",tradeinvites:"#0005ff"};
 
 // ── BLOCK EDITOR ─────────────────────────────────────────────────────────────
 function initBlocks(){
@@ -2680,7 +2992,7 @@ ${coverImg}
 // TEMPLATE 5 — TRADE ADMIN  (rouge · terminal trading)
 // ════════════════════════════════════════════════════════════════════
 function tplTrade(titre,desc,fdate,paire,blocks,by){
-  const acc="#ff4d6d";
+  const acc="#00f70a";
   const subtitle=desc||"";
   const chip = mkChip("TRADES ADMINS",by,fdate,paire);
   const coverBlock = blocks.find(b=>b.isInitial)||blocks[0]||{};
@@ -2715,11 +3027,11 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
 .para-sep-only{padding:.5rem 1.5rem !important;margin-bottom:.5rem;}
 .para-sep-only::before,.para-sep-only::after{display:none;}
 .blk-sep{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;
-  font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,77,109,.65);letter-spacing:.15em;text-transform:uppercase;
-  margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(255,77,109,.15);}
-.blk-sep.first{color:rgba(255,77,109,.9);}
+  font-family:'Space Mono',monospace;font-size:9px;color:rgba(0,247,10,.65);letter-spacing:.15em;text-transform:uppercase;
+  margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(0,247,10,.12);}
+.blk-sep.first{color:rgba(0,247,10,.9);}
 .sep-date{color:rgba(208,218,232,.35);letter-spacing:.06em;text-transform:none;}
-.blk-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:rgba(255,77,109,.9);margin-bottom:.6rem;letter-spacing:.01em;}
+.blk-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:rgba(0,247,10,.9);margin-bottom:.6rem;letter-spacing:.01em;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
@@ -2746,7 +3058,7 @@ ${coverImg}
 // TEMPLATE 6 — TRADE INVITÉS  (violet · communauté)
 // ════════════════════════════════════════════════════════════════════
 function tplTradeInvites(titre,desc,fdate,paire,blocks,by){
-  const acc="#7c3aed";
+  const acc="#0005ff";
   const subtitle=desc||"";
   const chip = mkChip("TRADES INVITÉS",by,fdate,paire);
   const coverBlock = blocks.find(b=>b.isInitial)||blocks[0]||{};
@@ -2781,11 +3093,11 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
 .para-sep-only{padding:.5rem 1.5rem !important;margin-bottom:.5rem;}
 .para-sep-only::before,.para-sep-only::after{display:none;}
 .blk-sep{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;
-  font-family:'Space Mono',monospace;font-size:9px;color:rgba(124,58,237,.65);letter-spacing:.15em;text-transform:uppercase;
-  margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(124,58,237,.15);}
-.blk-sep.first{color:rgba(124,58,237,.9);}
+  font-family:'Space Mono',monospace;font-size:9px;color:rgba(0,5,255,.65);letter-spacing:.15em;text-transform:uppercase;
+  margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(0,5,255,.15);}
+.blk-sep.first{color:rgba(0,5,255,.9);}
 .sep-date{color:rgba(208,218,232,.35);letter-spacing:.06em;text-transform:none;}
-.blk-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:rgba(124,58,237,.9);margin-bottom:.6rem;letter-spacing:.01em;}
+.blk-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:rgba(0,5,255,.9);margin-bottom:.6rem;letter-spacing:.01em;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
@@ -2843,7 +3155,7 @@ ${coverImg}
 </body></html>`;
 }
 function tplWeekAhead(titre,desc,fdate,paire,hb,paraBlocks,by){
-  const acc="#a064ff";
+  const acc="#f7b731";
   const subtitle = hb.subtitle||(desc||"");
   const chip = mkChip("WEEK AHEAD",by,fdate,paire);
   const coverImg = mkCoverImg(hb);
@@ -3003,7 +3315,7 @@ function openAddBlock(e,id){
   if(blocks.length>=5){toast("⚠ Maximum 5 blocs atteint pour ce trade",true);return;}
   _abTargetId=id; _abImgs=[];
   const next=blocks.length+1;
-  const acc=a.cat==="tradeinvites"?"#7c3aed":"#ff4d6d";
+  const acc=a.cat==="tradeinvites"?"#0005ff":"#00f70a";
   document.getElementById("abModalTitle").textContent=`➕ Bloc ${next} — Suite du trade`;
   document.getElementById("abModalSub").textContent=a.titre;
   document.getElementById("abBlockNum").textContent=`BLOC ${next} · MISE À JOUR`;
