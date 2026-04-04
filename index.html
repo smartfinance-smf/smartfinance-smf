@@ -3167,6 +3167,10 @@ ${sharedCSS(acc,"0.02")}
 /* Week Ahead spécifique */
 h1{font-family:'Space Mono',monospace !important;font-size:clamp(1.6rem,3.8vw,2.5rem) !important;letter-spacing:.02em !important;}
 .topbar{border-bottom:3px solid ${acc} !important;}
+/* Grande initiale sur 1er paragraphe */
+.para-block:first-child .art-body p:first-child::first-letter{
+  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
+  float:left;line-height:.82;margin:.04em .14em 0 0;text-shadow:0 0 20px rgba(247,183,49,.35);}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
