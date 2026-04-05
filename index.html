@@ -440,6 +440,70 @@
     overflow:hidden;
   }
   .card-av img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+  /* ── AUTHOR PROFILE POPUP ── */
+  .card-author{cursor:pointer;transition:opacity .15s;}
+  .card-author:hover{opacity:.8;}
+  #authorProfileOverlay{
+    position:fixed;inset:0;background:rgba(2,4,10,.7);backdrop-filter:blur(8px);
+    z-index:400;display:none;align-items:center;justify-content:center;padding:2rem;
+  }
+  #authorProfileOverlay.open{display:flex;}
+  #authorProfileCard{
+    width:100%;max-width:360px;background:#060a0f;
+    border:1px solid #1c2430;border-radius:14px;overflow:hidden;
+    animation:up .2s ease;
+  }
+  .apcard-head{
+    background:#0b1018;padding:1.5rem 1.5rem 1rem;
+    display:flex;flex-direction:column;align-items:center;gap:.65rem;
+    border-bottom:1px solid #131820;position:relative;
+  }
+  .apcard-close{
+    position:absolute;top:.75rem;right:.75rem;
+    background:transparent;border:1px solid #1c2430;color:#5a6578;
+    font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:3px;
+    cursor:pointer;transition:all .15s;
+  }
+  .apcard-close:hover{border-color:var(--red);color:var(--red);}
+  /* Author filter banner */
+  #authorFilterBanner{
+    display:none;background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.2);
+    border-radius:7px;padding:.55rem 1rem;margin-bottom:.75rem;
+    font-family:var(--mono);font-size:11px;color:var(--accent);
+    display:none;align-items:center;justify-content:space-between;gap:.75rem;
+  }
+  #authorFilterBanner.on{display:flex;}
+  #authorFilterBanner .afb-clear{
+    background:transparent;border:1px solid rgba(0,229,160,.3);color:var(--accent);
+    font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 10px;
+    border-radius:4px;cursor:pointer;white-space:nowrap;transition:all .15s;
+  }
+  #authorFilterBanner .afb-clear:hover{background:rgba(0,229,160,.12);}
+  .apcard-stat-val.clickable{cursor:pointer;transition:opacity .15s;text-decoration:underline;text-underline-offset:3px;}
+  .apcard-stat-val.clickable:hover{opacity:.7;}
+  .apcard-avatar{
+    width:68px;height:68px;border-radius:50%;
+    border:2px solid #1c2430;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:22px;font-weight:700;
+    background:#0b1018;
+  }
+  .apcard-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+  .apcard-name{font-family:var(--mono);font-size:13px;font-weight:700;color:#d0dae8;letter-spacing:.06em;text-align:center;}
+  .apcard-username{font-family:var(--mono);font-size:10px;color:#5a6578;letter-spacing:.1em;text-align:center;}
+  .apcard-body{padding:1rem 1.5rem 1.25rem;display:flex;flex-direction:column;gap:.75rem;}
+  .apcard-bio{
+    font-family:var(--mono);font-size:11px;color:#8a9ab0;line-height:1.7;
+    background:#0b1018;border:1px solid #131820;border-radius:6px;
+    padding:.65rem .85rem;min-height:48px;
+  }
+  .apcard-stats{display:flex;gap:.5rem;}
+  .apcard-stat{
+    flex:1;background:#0b1018;border:1px solid #131820;border-radius:6px;
+    padding:.55rem .5rem;text-align:center;
+  }
+  .apcard-stat-val{font-family:var(--mono);font-size:16px;font-weight:700;color:#00e5a0;}
+  .apcard-stat-lbl{font-family:var(--mono);font-size:9px;color:#5a6578;letter-spacing:.08em;margin-top:2px;}
   /* ── HEADER ONLINE BADGE ── */
   .profile-name-wrap{display:flex;align-items:center;gap:.45rem;}
   .profile-username{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.07em;}
@@ -495,6 +559,8 @@
   .card-author-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
   .card-actions{display:flex;align-items:center;gap:.4rem;flex-shrink:0;}
   .card-open{font-family:var(--mono);font-size:9.5px;color:var(--accent);font-weight:700;letter-spacing:.06em;white-space:nowrap;}
+  .btn-edit-art{background:transparent;border:1px solid rgba(0,229,160,.2);color:var(--accent);font-family:var(--mono);font-size:9px;font-weight:700;cursor:pointer;padding:3px 8px;border-radius:3px;transition:all .15s;line-height:1;letter-spacing:.05em;}
+  .btn-edit-art:hover{background:rgba(0,229,160,.12);border-color:var(--accent);}
   .btn-del{background:transparent;border:none;color:var(--dimmed);font-size:13px;cursor:pointer;padding:2px 5px;border-radius:3px;transition:color .15s;line-height:1;}
   .btn-del:hover{color:var(--red);}
   .blocks-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;border:1px solid;white-space:nowrap;}
@@ -922,7 +988,11 @@
     </div>
   </div>
 
-  <div class="articles-grid" id="articlesGrid"></div>
+  <div id="authorFilterBanner">
+  <span id="authorFilterLabel">🔍 Filtre auteur actif</span>
+  <button class="afb-clear" onclick="clearAuthorFilter()">✕ Effacer</button>
+</div>
+<div class="articles-grid" id="articlesGrid"></div>
 </div>
 
 <!-- ====== FAB ====== -->
@@ -1094,7 +1164,7 @@
     <div id="panelLogin" style="padding:1.75rem;display:flex;flex-direction:column;gap:1rem;">
       <div class="field">
         <label>Identifiant admin, Email ou Username</label>
-        <input type="text" id="lUser" placeholder="SMF  ou  email@…  ou  username" autocomplete="username">
+        <input type="text" id="lUser" placeholder="SMF  ou  email@…  ou  username" autocomplete="username" oninput="checkLoginContactBtn()">
       </div>
       <div class="field">
         <label>Mot de passe</label>
@@ -1102,17 +1172,22 @@
       </div>
       <div id="loginErr" style="display:none;font-family:var(--mono);font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);border-radius:4px;"></div>
       <button class="btn-submit" onclick="doLogin()" style="margin-top:.25rem;">→ Accéder au Hub</button>
+      <div id="loginContactWrap" style="display:none;text-align:center;margin-top:.25rem;">
+        <button onclick="openContactAdmin()" style="background:transparent;border:1px solid rgba(255,77,109,.35);color:#ff4d6d;font-family:var(--mono);font-size:10px;font-weight:700;padding:8px 18px;border-radius:5px;cursor:pointer;letter-spacing:.08em;width:100%;transition:all .2s;" onmouseover="this.style.background='rgba(255,77,109,.08)'" onmouseout="this.style.background='transparent'">
+          💬 Problème de connexion ? Contacter l'admin
+        </button>
+      </div>
     </div>
     <!-- Inscription invité -->
     <div id="panelRegister" style="display:none;padding:1.75rem;flex-direction:column;gap:.85rem;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
         <div class="field">
           <label>Nom *</label>
-          <input type="text" id="rNom" placeholder="Dupont" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+          <input type="text" id="rNom" placeholder="Nom de famille" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
         </div>
         <div class="field">
           <label>Prénom *</label>
-          <input type="text" id="rPrenom" placeholder="Jean" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+          <input type="text" id="rPrenom" placeholder="Prénom" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
@@ -1122,25 +1197,45 @@
         </div>
         <div class="field">
           <label>Username *</label>
-          <input type="text" id="rUsername" placeholder="jean_d" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+          <input type="text" id="rUsername" placeholder="Nom d'utilisateur" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
         </div>
       </div>
-      <div class="field">
-        <label>Email *</label>
-        <input type="email" id="rEmail" placeholder="jean@email.com" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="field">
+          <label>Email *</label>
+          <input type="email" id="rEmail" placeholder="Adresse e-mail" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+        </div>
+        <div class="field">
+          <label>Pays *</label>
+          <select id="rCountry" onchange="onCountryChange()" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;cursor:pointer;appearance:none;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+            <option value="" disabled selected>Sélectionner un pays</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-top:0;">
+        <label>Téléphone *</label>
+        <div style="display:flex;gap:.5rem;align-items:stretch;">
+          <div id="rDialCode" style="background:#0b1018;border:1px solid #1c2430;color:#00e5a0;font-family:var(--mono);font-size:13px;font-weight:700;padding:9px 14px;border-radius:5px;white-space:nowrap;min-width:72px;text-align:center;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;">+—</div>
+          <input type="tel" id="rPhone" placeholder="Numéro de téléphone" oninput="formatPhoneInput()" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;flex:1;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
         <div class="field">
           <label>Mot de passe *</label>
-          <input type="password" id="rPass" placeholder="Min. 6 caractères" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+          <input type="password" id="rPass" placeholder="Mot de passe" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
         </div>
         <div class="field">
           <label>Confirmer *</label>
-          <input type="password" id="rPass2" placeholder="••••••••" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'" onkeydown="if(event.key==='Enter')doRegister()">
+          <input type="password" id="rPass2" placeholder="Confirmer le mot de passe">
         </div>
       </div>
       <div id="registerErr" style="display:none;font-family:var(--mono);font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);border-radius:4px;"></div>
       <button class="btn-submit" onclick="doRegister()" style="margin-top:.25rem;">✦ Créer mon compte</button>
+      <div id="registerContactWrap" style="display:none;text-align:center;margin-top:.25rem;">
+        <button onclick="openContactAdmin()" style="background:transparent;border:1px solid rgba(255,77,109,.35);color:#ff4d6d;font-family:var(--mono);font-size:10px;font-weight:700;padding:8px 18px;border-radius:5px;cursor:pointer;letter-spacing:.08em;width:100%;transition:all .2s;" onmouseover="this.style.background='rgba(255,77,109,.08)'" onmouseout="this.style.background='transparent'">
+          💬 Problème d'inscription ? Contacter l'admin
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1195,6 +1290,17 @@
       <button onclick="savePasswords()" style="margin-top:1rem;background:#00e5a0;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 20px;border-radius:4px;cursor:pointer;">💾 Sauvegarder</button>
     </div>
 
+    <!-- Lien de contact -->
+    <div style="background:#060a0f;border:1px solid #1c2430;border-radius:10px;padding:1.25rem;margin-bottom:1rem;">
+      <div style="font-family:var(--mono);font-size:11px;color:#00e5a0;letter-spacing:.15em;margin-bottom:.5rem;">💬 LIEN DE CONTACT UTILISATEURS</div>
+      <div style="font-family:var(--mono);font-size:10px;color:#5a6578;margin-bottom:.75rem;">WhatsApp, Telegram, Email, Discord… Les utilisateurs verront un bouton pour te contacter directement.</div>
+      <div style="display:flex;gap:.75rem;align-items:center;">
+        <input type="text" id="adminContactLink" placeholder="https://wa.me/22890000000  ·  https://t.me/username" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:12px;padding:8px 12px;border-radius:5px;outline:none;flex:1;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+        <button onclick="saveContactLink()" style="background:#00e5a0;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 18px;border-radius:4px;cursor:pointer;white-space:nowrap;">💾 Sauvegarder</button>
+      </div>
+      <div id="contactLinkPreview" style="margin-top:.6rem;font-family:var(--mono);font-size:10px;color:#5a6578;display:none;"></div>
+    </div>
+
     <!-- Limite connexions -->
     <div style="background:#060a0f;border:1px solid #1c2430;border-radius:10px;padding:1.25rem;margin-bottom:1rem;">
       <div style="font-family:var(--mono);font-size:11px;color:#00e5a0;letter-spacing:.15em;margin-bottom:1rem;">🔢 LIMITE D'INVITÉS SIMULTANÉS</div>
@@ -1202,6 +1308,17 @@
         <input type="number" id="maxGuests" min="1" max="100" value="10" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:14px;padding:8px 12px;border-radius:5px;outline:none;width:100px;">
         <span style="font-family:var(--mono);font-size:11px;color:#5a6578;">invités maximum en même temps</span>
         <button onclick="saveMaxGuests()" style="background:#00e5a0;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 16px;border-radius:4px;cursor:pointer;margin-left:auto;">Sauvegarder</button>
+      </div>
+    </div>
+
+    <!-- Durée d'accès par défaut -->
+    <div style="background:#060a0f;border:1px solid #1c2430;border-radius:10px;padding:1.25rem;margin-bottom:1rem;">
+      <div style="font-family:var(--mono);font-size:11px;color:#00e5a0;letter-spacing:.15em;margin-bottom:.4rem;">⏱ DURÉE D'ACCÈS PAR DÉFAUT</div>
+      <div style="font-family:var(--mono);font-size:10px;color:#5a6578;margin-bottom:.85rem;">Appliquée automatiquement aux nouveaux inscrits. Chaque invité peut avoir sa propre durée depuis sa fiche.</div>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <input type="number" id="defaultAccessDays" min="1" max="3650" value="30" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:14px;padding:8px 12px;border-radius:5px;outline:none;width:110px;">
+        <span style="font-family:var(--mono);font-size:11px;color:#5a6578;">jours d'accès après inscription</span>
+        <button onclick="saveDefaultAccess()" style="background:#00e5a0;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 16px;border-radius:4px;cursor:pointer;margin-left:auto;">💾 Sauvegarder</button>
       </div>
     </div>
 
@@ -1224,11 +1341,39 @@
 
     <!-- Liste invités -->
     <div style="background:#060a0f;border:1px solid #1c2430;border-radius:10px;padding:1.25rem;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-        <div style="font-family:var(--mono);font-size:11px;color:#00e5a0;letter-spacing:.15em;">👥 COMPTES INVITÉS <span id="guestCountBadge" style="background:rgba(0,229,160,.15);color:#00e5a0;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:.5rem;"></span></div>
-        <div style="font-family:var(--mono);font-size:10px;color:#5a6578;">🟢 = connecté maintenant</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:.85rem;">
+        <div style="font-family:var(--mono);font-size:11px;color:#00e5a0;letter-spacing:.15em;">
+          👥 COMPTES INVITÉS
+          <span id="guestCountBadge" style="background:rgba(0,229,160,.15);color:#00e5a0;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:.5rem;"></span>
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+          <span style="font-family:var(--mono);font-size:9px;color:#5a6578;">🟢 connecté &nbsp;⏸ en pause</span>
+          <button id="btnPauseAll" onclick="pauseAllUsers(true)" style="background:rgba(247,183,49,.1);border:1px solid rgba(247,183,49,.35);color:#f7b731;font-family:var(--mono);font-size:9px;font-weight:700;padding:4px 12px;border-radius:4px;cursor:pointer;letter-spacing:.06em;">⏸ Tout mettre en pause</button>
+          <button id="btnResumeAll" onclick="pauseAllUsers(false)" style="background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);color:#00e5a0;font-family:var(--mono);font-size:9px;font-weight:700;padding:4px 12px;border-radius:4px;cursor:pointer;letter-spacing:.06em;">▶ Tout reprendre</button>
+        </div>
       </div>
-      <div id="guestList" style="display:flex;flex-direction:column;gap:.5rem;max-height:300px;overflow-y:auto;"></div>
+      <div id="guestList" style="display:flex;flex-direction:column;gap:.5rem;max-height:460px;overflow-y:auto;"></div>
+
+      <!-- Fiche détail utilisateur -->
+      <div id="userDetailCard" style="display:none;margin-top:1rem;background:#0b1018;border:1px solid #1c2430;border-radius:8px;padding:1.1rem;position:relative;">
+        <button onclick="closeUserDetail()" style="position:absolute;top:.6rem;right:.6rem;background:transparent;border:none;color:#5a6578;font-size:14px;cursor:pointer;line-height:1;">✕</button>
+        <div style="font-family:var(--mono);font-size:10px;color:#00e5a0;letter-spacing:.15em;margin-bottom:.85rem;">🔍 FICHE UTILISATEUR</div>
+        <div id="userDetailContent" style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem;"></div>
+      </div>
+    </div>
+
+    <!-- 💾 Export HTML hors-ligne -->
+    <div style="background:#060a0f;border:1px solid #1c2430;border-radius:10px;padding:1.25rem;margin-top:1rem;">
+      <div style="font-family:var(--mono);font-size:11px;color:#00e5a0;letter-spacing:.15em;margin-bottom:.6rem;">💾 SAUVEGARDE HORS-LIGNE</div>
+      <div style="font-family:var(--mono);font-size:10px;color:#5a6578;margin-bottom:1rem;line-height:1.6;">
+        Génère un fichier <span style="color:#d0dae8;">HTML autonome</span> contenant tous les articles publiés. Le fichier peut être ouvert dans n'importe quel navigateur, même sans connexion internet.
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <button onclick="exportHubHTML()" id="btnExportHTML" style="background:#00e5a0;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 20px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:.5rem;">
+          <span>⬇</span> Exporter en HTML
+        </button>
+        <span id="exportStatus" style="font-family:var(--mono);font-size:10px;color:#5a6578;"></span>
+      </div>
     </div>
 
     <!-- 🎨 Couleurs par tag — KGB uniquement -->
@@ -1241,6 +1386,80 @@
         <button onclick="saveColors()" style="background:#f7b731;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 20px;border-radius:4px;cursor:pointer;">💾 Sauvegarder les couleurs</button>
         <button onclick="resetColors()" style="background:transparent;border:1px solid #323d4d;color:#5a6578;font-family:var(--mono);font-size:11px;padding:8px 14px;border-radius:4px;cursor:pointer;">↺ Réinitialiser</button>
       </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ====== MODAL ÉDITION ARTICLE (KGB uniquement) ====== -->
+<div class="overlay" id="editArtOv">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-head">
+      <div>
+        <div class="modal-head-title">✏ Modifier l'article</div>
+        <div class="modal-head-sub" id="editArtSub">—</div>
+      </div>
+      <button class="btn-x" onclick="closeEditArt()">✕ Fermer</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Titre -->
+      <div class="field">
+        <label>Titre *</label>
+        <input type="text" id="eaTitre" placeholder="Titre de l'article" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--sans);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
+      </div>
+
+      <!-- Description -->
+      <div class="field">
+        <label>Description courte</label>
+        <textarea id="eaDesc" rows="2" placeholder="Résumé en 1-2 phrases…" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--sans);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;resize:vertical;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'"></textarea>
+      </div>
+
+      <!-- Date / Heure / Paire -->
+      <div style="display:grid;grid-template-columns:1fr 120px 1fr;gap:.75rem;">
+        <div class="field">
+          <label>Date *</label>
+          <input type="date" id="eaDate" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
+        </div>
+        <div class="field">
+          <label>Heure</label>
+          <input type="time" id="eaTime" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
+        </div>
+        <div class="field">
+          <label>Paire / Instrument</label>
+          <input type="text" id="eaPaire" placeholder="EUR/USD, XAU/USD…" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
+        </div>
+      </div>
+
+      <!-- Contenu HTML -->
+      <div class="field" id="eaHtmlSection">
+        <label style="display:flex;align-items:center;justify-content:space-between;">
+          <span>Contenu HTML</span>
+          <span style="font-size:9px;color:var(--muted);font-weight:400;">Éditer directement le source de l'article</span>
+        </label>
+        <textarea id="eaHtml" rows="10" placeholder="Code HTML du contenu…" style="background:#010508;border:1px solid var(--border2);color:#7ec8a0;font-family:var(--mono);font-size:11px;line-height:1.6;padding:10px 12px;border-radius:5px;outline:none;width:100%;resize:vertical;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'"></textarea>
+      </div>
+
+      <!-- Remplacer le fichier HTML -->
+      <div class="field" id="eaHtmlFileSection">
+        <label>Remplacer par un nouveau fichier HTML</label>
+        <div class="drop-zone" id="eaDropZone" style="cursor:pointer;padding:1.2rem;">
+          <input type="file" id="eaFileInput" accept=".html,.htm" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;" onchange="onEaHtmlFile(this.files[0])">
+          <span class="drop-icon" style="font-size:22px;">📄</span>
+          <div class="drop-title" style="font-size:12px;">Glisse un fichier HTML ici ou clique</div>
+        </div>
+        <div class="file-prev" id="eaFilePrev">
+          <div class="file-ico">📄</div>
+          <div class="file-inf">
+            <div class="file-nm" id="eaFileName">—</div>
+            <div class="file-sz" id="eaFileSize">—</div>
+          </div>
+          <button class="btn-chg" onclick="resetEaHtml()">Changer</button>
+        </div>
+      </div>
+
+      <!-- Bouton sauvegarder -->
+      <button id="eaSaveBtn" onclick="saveEditArt()" style="background:var(--accent);border:none;color:#000;font-family:var(--mono);font-size:12px;font-weight:700;padding:12px;border-radius:6px;cursor:pointer;letter-spacing:.08em;width:100%;transition:opacity .15s;">💾 Sauvegarder les modifications</button>
     </div>
   </div>
 </div>
@@ -1258,7 +1477,7 @@
     <div class="modal-body">
 
       <!-- MODE SWITCHER INVITÉ -->
-      <div class="mode-switcher three-col">
+      <div class="mode-switcher">
         <button class="mode-btn active" id="gModeText" onclick="setGuestMode('text')">
           <span class="mico">✏️</span>
           <span class="mlbl">Texte seul</span>
@@ -1268,11 +1487,6 @@
           <span class="mico">✏️ 🖼️</span>
           <span class="mlbl">Texte + Images</span>
           <span class="msub">texte & graphiques</span>
-        </button>
-        <button class="mode-btn" id="gModePdf" onclick="setGuestMode('pdf')">
-          <span class="mico">📑</span>
-          <span class="mlbl">PDF uniquement</span>
-          <span class="msub">fichier PDF</span>
         </button>
       </div>
 
@@ -1300,25 +1514,6 @@
         </div>
       </div>
 
-      <!-- Mode : PDF uniquement -->
-      <div class="section" id="gSecPdf">
-        <div class="drop-zone" id="gPdfDropZone" style="cursor:pointer;" onclick="document.getElementById('gPdfInput').click()">
-          <input type="file" id="gPdfInput" accept=".pdf" style="display:none" onchange="onGuestPdfFile(this.files[0])">
-          <span class="drop-icon">📑</span>
-          <div class="drop-title">Glisse ton fichier PDF ici</div>
-          <div class="drop-sub">ou clique pour ouvrir l'explorateur</div>
-          <div class="drop-btn-lbl">Choisir un fichier .pdf</div>
-        </div>
-        <div class="file-prev" id="gPdfPrev">
-          <div class="file-ico">📑</div>
-          <div class="file-inf">
-            <div class="file-nm" id="gPdfName">—</div>
-            <div class="file-sz" id="gPdfSize">—</div>
-          </div>
-          <button class="btn-chg" onclick="resetGuestPdf()">Changer</button>
-        </div>
-      </div>
-
       <!-- Champs communs -->
       <div class="field">
         <label>Titre *</label>
@@ -1330,13 +1525,17 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Date *</label>
-          <input type="date" id="gDate">
+          <label>Date de publication <span style="font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.06em;">● AUTO</span></label>
+          <input type="date" id="gDate" readonly style="opacity:.6;cursor:not-allowed;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;">
         </div>
         <div class="field">
-          <label>Paire / Instrument</label>
-          <input type="text" id="gPaire" placeholder="EUR/USD, XAU/USD...">
+          <label>Heure de publication <span style="font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.06em;">● AUTO</span></label>
+          <input type="time" id="gTime" readonly style="opacity:.6;cursor:not-allowed;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;">
         </div>
+      </div>
+      <div class="field">
+        <label>Paire / Instrument</label>
+        <input type="text" id="gPaire" placeholder="EUR/USD, XAU/USD...">
       </div>
 
       <button class="btn-submit" id="gBtnSubmit" onclick="submitGuestTrade()">📤 Soumettre mon Trade</button>
@@ -1359,7 +1558,7 @@
         <div class="ab-block-num" id="abBlockNum" style="color:var(--accent);">BLOC 2 · MISE À JOUR</div>
         <div class="field">
           <label>Titre du bloc <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
-          <input type="text" id="abTitle" placeholder="Ex: Mise à jour SL · Résultat final · Analyse post-trade…" maxlength="80">
+          <input type="text" id="abTitle" placeholder="Ex: Mise à jour SL · Résultat final · Analyse post-trade…" maxlength="200">
         </div>
         <div class="field">
           <label>Paragraphe 1</label>
@@ -1435,6 +1634,31 @@
   </div>
 </div>
 
+<!-- ── AUTHOR PROFILE MODAL ── -->
+<div id="authorProfileOverlay" onclick="if(event.target===this)closeAuthorProfile()">
+  <div id="authorProfileCard">
+    <div class="apcard-head">
+      <button class="apcard-close" onclick="closeAuthorProfile()">✕</button>
+      <div class="apcard-avatar" id="apcAvatar"></div>
+      <div class="apcard-name" id="apcName">—</div>
+      <div class="apcard-username" id="apcUsername"></div>
+    </div>
+    <div class="apcard-body">
+      <div class="apcard-bio" id="apcBio" style="color:#323d4d;font-style:italic;">Chargement...</div>
+      <div class="apcard-stats">
+        <div class="apcard-stat">
+          <div class="apcard-stat-val clickable" id="apcPostCount" onclick="filterByCurrentAuthor()" title="Voir tous les posts">—</div>
+          <div class="apcard-stat-lbl">POSTS ↗</div>
+        </div>
+        <div class="apcard-stat">
+          <div class="apcard-stat-val" id="apcCountry" style="font-size:20px;">—</div>
+          <div class="apcard-stat-lbl">PAYS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1500,6 +1724,8 @@ async function verifyOtp(){
       emailVerified: true,
       online: false,
       banned: false,
+      accessDays: SETTINGS.defaultAccessDays || 30,
+      accessExpiry: new Date(Date.now() + ((SETTINGS.defaultAccessDays||30) * 86400000)).toISOString(),
       status: "pending",
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       lastSeen: null
@@ -1555,6 +1781,7 @@ let SETTINGS = {
   adminPass : "trading2026",
   guestPass : "smfhub2026",
   maxGuests : 10,
+  defaultAccessDays: 30,
   allowedCats: ["hebdo","weekahead","mensuel","banques","trade","tradeinvites"],
   colors: {
     hebdo:       "#f7b731",
@@ -1618,6 +1845,7 @@ let role        = sessionStorage.getItem("smf_role") || null;
 let currentUser = JSON.parse(sessionStorage.getItem("smf_user")||"null");
 let arts        = JSON.parse(localStorage.getItem("smf_hub_v4") || "[]");
 let filt="tous", sq="";
+let authorFilter = null; // { displayName, userId, username }
 let mode="html";
 let pendingHTML=null, pendingImages=[];
 let unsubscribe = null;
@@ -1712,7 +1940,17 @@ async function doLogin(){
     if(snap.empty){ errEl.textContent="✕ "+(isEmail?"Email":"Username")+" introuvable"; errEl.style.display="block"; return; }
     const userDoc  = snap.docs[0];
     const userData = userDoc.data();
+    // Vérifier expiration d'accès
+    if(userData.accessExpiry && !userData.banned && !userData.paused){
+      const expiry = new Date(userData.accessExpiry);
+      if(Date.now() > expiry.getTime()){
+        await db.collection("users").doc(userDoc.id).update({paused:true, online:false});
+        errEl.textContent="✕ Votre période d'accès a expiré — contactez l'administrateur";
+        errEl.style.display="block"; return;
+      }
+    }
     if(userData.banned){ errEl.textContent="✕ Compte suspendu par l'administrateur"; errEl.style.display="block"; return; }
+    if(userData.paused){ errEl.textContent="✕ Votre accès est temporairement suspendu — contactez l'administrateur"; errEl.style.display="block"; return; }
     if(userData.status !== "approved"){ errEl.textContent="✕ Compte en attente de validation — contactez l'admin"; errEl.style.display="block"; return; }
     if((userData.password||"").trim() !== p){ errEl.textContent="✕ Mot de passe incorrect"; errEl.style.display="block"; return; }
 
@@ -1745,6 +1983,223 @@ async function doLogin(){
   }catch(e){ errEl.textContent="✕ Erreur: "+e.message; errEl.style.display="block"; }
 }
 
+
+// ── PAYS + INDICATIF ──────────────────────────────────────────────
+const COUNTRIES = [
+  {name:"Afghanistan",code:"AF",dial:"+93"},{name:"Afrique du Sud",code:"ZA",dial:"+27"},
+  {name:"Albanie",code:"AL",dial:"+355"},{name:"Algérie",code:"DZ",dial:"+213"},
+  {name:"Allemagne",code:"DE",dial:"+49"},{name:"Angola",code:"AO",dial:"+244"},
+  {name:"Arabie Saoudite",code:"SA",dial:"+966"},{name:"Argentine",code:"AR",dial:"+54"},
+  {name:"Arménie",code:"AM",dial:"+374"},{name:"Australie",code:"AU",dial:"+61"},
+  {name:"Autriche",code:"AT",dial:"+43"},{name:"Azerbaïdjan",code:"AZ",dial:"+994"},
+  {name:"Bahreïn",code:"BH",dial:"+973"},{name:"Bangladesh",code:"BD",dial:"+880"},
+  {name:"Belgique",code:"BE",dial:"+32"},{name:"Bénin",code:"BJ",dial:"+229"},
+  {name:"Biélorussie",code:"BY",dial:"+375"},{name:"Birmanie",code:"MM",dial:"+95"},
+  {name:"Bolivie",code:"BO",dial:"+591"},{name:"Bosnie-Herzégovine",code:"BA",dial:"+387"},
+  {name:"Botswana",code:"BW",dial:"+267"},{name:"Brésil",code:"BR",dial:"+55"},
+  {name:"Brunei",code:"BN",dial:"+673"},{name:"Bulgarie",code:"BG",dial:"+359"},
+  {name:"Burkina Faso",code:"BF",dial:"+226"},{name:"Burundi",code:"BI",dial:"+257"},
+  {name:"Cambodge",code:"KH",dial:"+855"},{name:"Cameroun",code:"CM",dial:"+237"},
+  {name:"Canada",code:"CA",dial:"+1"},{name:"Cap-Vert",code:"CV",dial:"+238"},
+  {name:"Chili",code:"CL",dial:"+56"},{name:"Chine",code:"CN",dial:"+86"},
+  {name:"Chypre",code:"CY",dial:"+357"},{name:"Colombie",code:"CO",dial:"+57"},
+  {name:"Congo (Brazzaville)",code:"CG",dial:"+242"},{name:"Congo (RDC)",code:"CD",dial:"+243"},
+  {name:"Corée du Nord",code:"KP",dial:"+850"},{name:"Corée du Sud",code:"KR",dial:"+82"},
+  {name:"Costa Rica",code:"CR",dial:"+506"},{name:"Côte d'Ivoire",code:"CI",dial:"+225"},
+  {name:"Croatie",code:"HR",dial:"+385"},{name:"Cuba",code:"CU",dial:"+53"},
+  {name:"Danemark",code:"DK",dial:"+45"},{name:"Djibouti",code:"DJ",dial:"+253"},
+  {name:"Égypte",code:"EG",dial:"+20"},{name:"Émirats Arabes Unis",code:"AE",dial:"+971"},
+  {name:"Équateur",code:"EC",dial:"+593"},{name:"Érythrée",code:"ER",dial:"+291"},
+  {name:"Espagne",code:"ES",dial:"+34"},{name:"Estonie",code:"EE",dial:"+372"},
+  {name:"Éthiopie",code:"ET",dial:"+251"},{name:"États-Unis",code:"US",dial:"+1"},
+  {name:"Finlande",code:"FI",dial:"+358"},{name:"France",code:"FR",dial:"+33"},
+  {name:"Gabon",code:"GA",dial:"+241"},{name:"Gambie",code:"GM",dial:"+220"},
+  {name:"Géorgie",code:"GE",dial:"+995"},{name:"Ghana",code:"GH",dial:"+233"},
+  {name:"Grèce",code:"GR",dial:"+30"},{name:"Guatemala",code:"GT",dial:"+502"},
+  {name:"Guinée",code:"GN",dial:"+224"},{name:"Guinée-Bissau",code:"GW",dial:"+245"},
+  {name:"Guinée Équatoriale",code:"GQ",dial:"+240"},{name:"Haïti",code:"HT",dial:"+509"},
+  {name:"Honduras",code:"HN",dial:"+504"},{name:"Hongrie",code:"HU",dial:"+36"},
+  {name:"Inde",code:"IN",dial:"+91"},{name:"Indonésie",code:"ID",dial:"+62"},
+  {name:"Irak",code:"IQ",dial:"+964"},{name:"Iran",code:"IR",dial:"+98"},
+  {name:"Irlande",code:"IE",dial:"+353"},{name:"Islande",code:"IS",dial:"+354"},
+  {name:"Israël",code:"IL",dial:"+972"},{name:"Italie",code:"IT",dial:"+39"},
+  {name:"Jamaïque",code:"JM",dial:"+1-876"},{name:"Japon",code:"JP",dial:"+81"},
+  {name:"Jordanie",code:"JO",dial:"+962"},{name:"Kazakhstan",code:"KZ",dial:"+7"},
+  {name:"Kenya",code:"KE",dial:"+254"},{name:"Kirghizistan",code:"KG",dial:"+996"},
+  {name:"Kosovo",code:"XK",dial:"+383"},{name:"Koweït",code:"KW",dial:"+965"},
+  {name:"Laos",code:"LA",dial:"+856"},{name:"Lesotho",code:"LS",dial:"+266"},
+  {name:"Lettonie",code:"LV",dial:"+371"},{name:"Liban",code:"LB",dial:"+961"},
+  {name:"Liberia",code:"LR",dial:"+231"},{name:"Libye",code:"LY",dial:"+218"},
+  {name:"Liechtenstein",code:"LI",dial:"+423"},{name:"Lituanie",code:"LT",dial:"+370"},
+  {name:"Luxembourg",code:"LU",dial:"+352"},{name:"Madagascar",code:"MG",dial:"+261"},
+  {name:"Malaisie",code:"MY",dial:"+60"},{name:"Malawi",code:"MW",dial:"+265"},
+  {name:"Maldives",code:"MV",dial:"+960"},{name:"Mali",code:"ML",dial:"+223"},
+  {name:"Malte",code:"MT",dial:"+356"},{name:"Maroc",code:"MA",dial:"+212"},
+  {name:"Mauritanie",code:"MR",dial:"+222"},{name:"Maurice",code:"MU",dial:"+230"},
+  {name:"Mexique",code:"MX",dial:"+52"},{name:"Moldavie",code:"MD",dial:"+373"},
+  {name:"Monaco",code:"MC",dial:"+377"},{name:"Mongolie",code:"MN",dial:"+976"},
+  {name:"Monténégro",code:"ME",dial:"+382"},{name:"Mozambique",code:"MZ",dial:"+258"},
+  {name:"Namibie",code:"NA",dial:"+264"},{name:"Népal",code:"NP",dial:"+977"},
+  {name:"Nicaragua",code:"NI",dial:"+505"},{name:"Niger",code:"NE",dial:"+227"},
+  {name:"Nigéria",code:"NG",dial:"+234"},{name:"Norvège",code:"NO",dial:"+47"},
+  {name:"Nouvelle-Zélande",code:"NZ",dial:"+64"},{name:"Oman",code:"OM",dial:"+968"},
+  {name:"Ouganda",code:"UG",dial:"+256"},{name:"Ouzbékistan",code:"UZ",dial:"+998"},
+  {name:"Pakistan",code:"PK",dial:"+92"},{name:"Palestine",code:"PS",dial:"+970"},
+  {name:"Panama",code:"PA",dial:"+507"},{name:"Paraguay",code:"PY",dial:"+595"},
+  {name:"Pays-Bas",code:"NL",dial:"+31"},{name:"Pérou",code:"PE",dial:"+51"},
+  {name:"Philippines",code:"PH",dial:"+63"},{name:"Pologne",code:"PL",dial:"+48"},
+  {name:"Portugal",code:"PT",dial:"+351"},{name:"Qatar",code:"QA",dial:"+974"},
+  {name:"République Centrafricaine",code:"CF",dial:"+236"},{name:"République Dominicaine",code:"DO",dial:"+1-809"},
+  {name:"République Tchèque",code:"CZ",dial:"+420"},{name:"Roumanie",code:"RO",dial:"+40"},
+  {name:"Royaume-Uni",code:"GB",dial:"+44"},{name:"Russie",code:"RU",dial:"+7"},
+  {name:"Rwanda",code:"RW",dial:"+250"},{name:"Salvador",code:"SV",dial:"+503"},
+  {name:"Sénégal",code:"SN",dial:"+221"},{name:"Serbie",code:"RS",dial:"+381"},
+  {name:"Sierra Leone",code:"SL",dial:"+232"},{name:"Singapour",code:"SG",dial:"+65"},
+  {name:"Slovaquie",code:"SK",dial:"+421"},{name:"Slovénie",code:"SI",dial:"+386"},
+  {name:"Somalie",code:"SO",dial:"+252"},{name:"Soudan",code:"SD",dial:"+249"},
+  {name:"Soudan du Sud",code:"SS",dial:"+211"},{name:"Sri Lanka",code:"LK",dial:"+94"},
+  {name:"Suède",code:"SE",dial:"+46"},{name:"Suisse",code:"CH",dial:"+41"},
+  {name:"Syrie",code:"SY",dial:"+963"},{name:"Tadjikistan",code:"TJ",dial:"+992"},
+  {name:"Tanzanie",code:"TZ",dial:"+255"},{name:"Tchad",code:"TD",dial:"+235"},
+  {name:"Thaïlande",code:"TH",dial:"+66"},{name:"Timor Oriental",code:"TL",dial:"+670"},
+  {name:"Togo",code:"TG",dial:"+228"},{name:"Tunisie",code:"TN",dial:"+216"},
+  {name:"Turkménistan",code:"TM",dial:"+993"},{name:"Turquie",code:"TR",dial:"+90"},
+  {name:"Ukraine",code:"UA",dial:"+380"},{name:"Uruguay",code:"UY",dial:"+598"},
+  {name:"Venezuela",code:"VE",dial:"+58"},{name:"Vietnam",code:"VN",dial:"+84"},
+  {name:"Yémen",code:"YE",dial:"+967"},{name:"Zambie",code:"ZM",dial:"+260"},
+  {name:"Zimbabwe",code:"ZW",dial:"+263"}
+];
+
+(function initCountrySelect(){
+  const sel = document.getElementById("rCountry");
+  if(!sel) return;
+  COUNTRIES.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.dial;
+    opt.dataset.name = c.name;
+    opt.textContent = c.name + "  " + c.dial;
+    sel.appendChild(opt);
+  });
+})();
+
+// Formats de numéros par indicatif : tableau de groupes de chiffres
+const PHONE_FORMATS = {
+  "+1":    [3,3,4],   // USA/Canada : 514 123 4567
+  "+7":    [3,3,2,2], // Russie/Kazakhstan : 912 345 67 89
+  "+20":   [2,4,4],   // Égypte
+  "+27":   [2,3,4],   // Afrique du Sud
+  "+30":   [3,3,4],   // Grèce
+  "+31":   [1,4,4],   // Pays-Bas
+  "+32":   [3,2,2,2], // Belgique
+  "+33":   [1,2,2,2,2], // France : 6 12 34 56 78
+  "+34":   [3,3,3],   // Espagne
+  "+36":   [2,3,4],   // Hongrie
+  "+39":   [3,4,3],   // Italie
+  "+40":   [3,3,3],   // Roumanie
+  "+41":   [2,3,2,2], // Suisse
+  "+44":   [4,3,4],   // Royaume-Uni
+  "+46":   [3,3,3],   // Suède
+  "+47":   [3,2,3],   // Norvège
+  "+48":   [3,3,3],   // Pologne
+  "+49":   [3,4,4],   // Allemagne
+  "+51":   [3,3,3],   // Pérou
+  "+52":   [3,3,4],   // Mexique
+  "+54":   [2,4,4],   // Argentine
+  "+55":   [2,5,4],   // Brésil
+  "+56":   [1,4,4],   // Chili
+  "+57":   [3,3,4],   // Colombie
+  "+58":   [3,3,4],   // Venezuela
+  "+60":   [2,4,4],   // Malaisie
+  "+61":   [3,3,3],   // Australie
+  "+62":   [3,4,4],   // Indonésie
+  "+63":   [3,4,4],   // Philippines
+  "+64":   [2,3,4],   // Nouvelle-Zélande
+  "+65":   [4,4],     // Singapour
+  "+66":   [2,3,4],   // Thaïlande
+  "+81":   [3,4,4],   // Japon
+  "+82":   [2,4,4],   // Corée du Sud
+  "+84":   [3,3,4],   // Vietnam
+  "+86":   [3,4,4],   // Chine
+  "+90":   [3,3,4],   // Turquie
+  "+91":   [5,5],     // Inde
+  "+92":   [3,7],     // Pakistan
+  "+94":   [2,7],     // Sri Lanka
+  "+212":  [2,2,2,3], // Maroc
+  "+213":  [2,2,2,3], // Algérie
+  "+216":  [2,3,3],   // Tunisie
+  "+220":  [3,4],     // Gambie
+  "+221":  [2,3,4],   // Sénégal
+  "+222":  [2,2,4],   // Mauritanie
+  "+223":  [2,2,4],   // Mali
+  "+224":  [3,2,4],   // Guinée
+  "+225":  [2,2,2,2], // Côte d'Ivoire
+  "+226":  [2,2,4],   // Burkina Faso
+  "+227":  [2,3,3],   // Niger
+  "+228":  [2,3,4],   // Togo : 90 123 456
+  "+229":  [2,2,4],   // Bénin
+  "+230":  [4,4],     // Maurice
+  "+233":  [2,3,4],   // Ghana
+  "+234":  [3,3,4],   // Nigéria
+  "+237":  [3,2,4],   // Cameroun
+  "+241":  [2,2,4],   // Gabon
+  "+242":  [2,3,4],   // Congo
+  "+243":  [3,3,3],   // RDC
+  "+244":  [3,3,3],   // Angola
+  "+245":  [3,4],     // Guinée-Bissau
+  "+251":  [2,3,4],   // Éthiopie
+  "+254":  [3,3,3],   // Kenya
+  "+255":  [3,3,3],   // Tanzanie
+  "+256":  [3,3,3],   // Ouganda
+  "+257":  [2,3,3],   // Burundi
+  "+258":  [2,3,4],   // Mozambique
+  "+260":  [3,3,3],   // Zambie
+  "+261":  [2,2,3,2], // Madagascar
+  "+263":  [2,3,4],   // Zimbabwe
+  "+966":  [2,3,4],   // Arabie Saoudite
+  "+971":  [2,3,4],   // Émirats
+  "+972":  [2,3,4],   // Israël
+};
+
+let currentDialCode = "";
+
+function formatPhoneInput(){
+  const input = document.getElementById("rPhone");
+  // Garder seulement les chiffres
+  const digits = input.value.replace(/\D/g, "");
+  const fmt = PHONE_FORMATS[currentDialCode];
+  if(!fmt || !digits){ input.value = digits; return; }
+
+  let result = "";
+  let pos = 0;
+  for(let i = 0; i < fmt.length; i++){
+    if(pos >= digits.length) break;
+    if(i > 0) result += " ";
+    result += digits.substr(pos, fmt[i]);
+    pos += fmt[i];
+  }
+  // S'il reste des chiffres non couverts par le format
+  if(pos < digits.length) result += " " + digits.substr(pos);
+
+  input.value = result;
+}
+
+function onCountryChange(){
+  const sel = document.getElementById("rCountry");
+  const dial = sel.value;
+  const dialEl = document.getElementById("rDialCode");
+  if(dial && dialEl){
+    currentDialCode = dial;
+    dialEl.textContent = dial;
+    dialEl.style.borderColor = "#00e5a0";
+    const fmt = PHONE_FORMATS[dial];
+    const example = fmt ? fmt.map(n=>"X".repeat(n)).join(" ") : "XX XXX XXXX";
+    document.getElementById("rPhone").placeholder = example;
+    document.getElementById("rPhone").value = "";
+    document.getElementById("rPhone").focus();
+  }
+}
+// ─────────────────────────────────────────────────────────────────
+
 async function doRegister(){
   const nom      = document.getElementById("rNom").value.trim();
   const prenom   = document.getElementById("rPrenom").value.trim();
@@ -1753,14 +2208,20 @@ async function doRegister(){
   const username = document.getElementById("rUsername").value.trim().toLowerCase();
   const pass     = document.getElementById("rPass").value;
   const pass2    = document.getElementById("rPass2").value;
+  const dialCode  = document.getElementById("rDialCode").textContent.trim();
+  const phoneRaw  = document.getElementById("rPhone").value.trim();
+  const phone     = (dialCode && dialCode !== "+—") ? dialCode + " " + phoneRaw : phoneRaw;
+  const country   = document.getElementById("rCountry").value;
   const errEl    = document.getElementById("registerErr");
   errEl.style.display="none";
 
   // Validations
+  if(!country) { errEl.textContent="✕ Veuillez sélectionner votre pays"; errEl.style.display="block"; return; }
   if(!nom)     { errEl.textContent="✕ Le nom est requis"; errEl.style.display="block"; return; }
   if(!prenom)  { errEl.textContent="✕ Le prénom est requis"; errEl.style.display="block"; return; }
   if(!dob)     { errEl.textContent="✕ La date de naissance est requise"; errEl.style.display="block"; return; }
   if(!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)){ errEl.textContent="✕ Email invalide"; errEl.style.display="block"; return; }
+  if(!phone || phone.replace(/[\s\-+().]/g,"").length < 8){ errEl.textContent="✕ Numéro de téléphone invalide (min. 8 chiffres)"; errEl.style.display="block"; return; }
   if(!username || username.length < 3){ errEl.textContent="✕ Username minimum 3 caractères"; errEl.style.display="block"; return; }
   if(pass.length<6){ errEl.textContent="✕ Mot de passe minimum 6 caractères"; errEl.style.display="block"; return; }
   if(pass!==pass2){ errEl.textContent="✕ Les mots de passe ne correspondent pas"; errEl.style.display="block"; return; }
@@ -1782,7 +2243,7 @@ async function doRegister(){
     // Générer et envoyer OTP
     pendingOtp     = generateOtp();
     otpExpiry      = Date.now() + 10 * 60000;
-    pendingOtpData = { nom, prenom, dob, email, username, password: pass.trim() };
+    pendingOtpData = { nom, prenom, dob, email, username, phone, password: pass.trim() };
 
     await sendOtpEmail(email, prenom, pendingOtp);
 
@@ -1817,6 +2278,7 @@ async function doLogout(){
   document.getElementById("gateScreen").style.display="flex";
   renderHeaderActions(); render();
   setTimeout(()=>document.getElementById("lUser").focus(),100);
+  initLoginContactBtn();
 }
 
 // marquer offline si l'onglet se ferme
@@ -1878,6 +2340,9 @@ function buildProfileMenuContent(initials, isGuest){
     ? `<button class="pm-btn" onclick="closeProfileMenu();openAdminPanel()"><span class="pm-ico">⚙</span>Gestion</button>` : "";
   const submitBtn = role==="guest"
     ? `<button class="pm-btn" onclick="closeProfileMenu();openGuestSubmit()"><span class="pm-ico">📤</span>Soumettre un Trade</button>` : "";
+  const contactLink = localStorage.getItem("smf_contact_link") || "";
+  const contactBtn = contactLink
+    ? `<button class="pm-btn" onclick="closeProfileMenu();window.open('${contactLink.replace(/'/g,"\'")}','_blank')" style="color:#00e5a0;"><span class="pm-ico">💬</span>Contacter l'admin</button>` : "";
   return `
     <div class="pm-header">
       <div class="pm-big-avatar" onclick="document.getElementById('pmPhotoInput').click()" title="Changer la photo">
@@ -1896,6 +2361,7 @@ function buildProfileMenuContent(initials, isGuest){
     <div class="pm-actions">
       ${gestionBtn}
       ${submitBtn}
+      ${contactBtn}
       <button class="pm-btn danger" onclick="closeProfileMenu();doLogout()"><span class="pm-ico">🚪</span>Déconnexion</button>
     </div>`;
 }
@@ -2050,6 +2516,7 @@ async function openAdminPanel(){
   document.getElementById("newAdminPass").value="";
   document.getElementById("newGuestPass").value="";
   document.getElementById("maxGuests").value = SETTINGS.maxGuests;
+  document.getElementById("defaultAccessDays").value = SETTINGS.defaultAccessDays || 30;
 
   // Catégories
   const ct=document.getElementById("catToggles");
@@ -2076,6 +2543,11 @@ async function openAdminPanel(){
   // Liste invités
   await refreshGuestList();
 
+  // Charger le lien de contact sauvegardé
+  const savedLink = localStorage.getItem("smf_contact_link") || "";
+  const linkInput = document.getElementById("adminContactLink");
+  if(linkInput) linkInput.value = savedLink;
+  if(savedLink) showContactLinkPreview(savedLink);
   document.getElementById("adminPanel").style.display="flex";
   document.body.style.overflow="hidden";
 }
@@ -2095,10 +2567,9 @@ async function refreshGuestList(){
   const list = document.getElementById("guestList");
   document.getElementById("guestCountBadge").textContent = snap.size+" compte(s)";
   if(snap.empty){ list.innerHTML=`<div style="font-family:var(--mono);font-size:11px;color:#5a6578;padding:.5rem;">Aucun invité inscrit</div>`; return; }
-  // Separate pending vs approved/banned
+
   const pending  = snap.docs.filter(d=>d.data().status==="pending");
   const approved = snap.docs.filter(d=>d.data().status!=="pending");
-
   let html="";
 
   if(pending.length){
@@ -2107,7 +2578,7 @@ async function refreshGuestList(){
       const u=d.data();
       return `<div style="display:flex;align-items:center;gap:.75rem;background:rgba(247,183,49,.05);border:1px solid rgba(247,183,49,.25);border-radius:6px;padding:.6rem 1rem;">
         <span style="font-size:14px;">⏳</span>
-        <span style="font-family:var(--mono);font-size:12px;color:#d0dae8;flex:1;">${u.phone}</span>
+        <span style="font-family:var(--mono);font-size:12px;color:#d0dae8;flex:1;">${(u.prenom||"")} ${(u.nom||"")} <span style="color:#5a6578;font-size:10px;">${u.email||u.phone||"—"}</span></span>
         <button onclick="approveUser('${d.id}')" style="background:rgba(0,229,160,.15);border:1px solid #00e5a0;color:#00e5a0;font-family:var(--mono);font-size:9px;font-weight:700;padding:4px 12px;border-radius:3px;cursor:pointer;">✓ Approuver</button>
         <button onclick="deleteUser('${d.id}')" style="background:transparent;border:1px solid rgba(255,77,109,.3);color:var(--red);font-family:var(--mono);font-size:9px;padding:4px 10px;border-radius:3px;cursor:pointer;">✕ Refuser</button>
       </div>`;
@@ -2119,23 +2590,181 @@ async function refreshGuestList(){
     html+=`<div style="font-family:var(--mono);font-size:10px;color:#5a6578;letter-spacing:.12em;margin:.25rem 0 .4rem;">MEMBRES (${approved.length})</div>`;
     html+=approved.map(d=>{
       const u=d.data();
-      const online=u.online===true;
-      const banned=u.banned===true;
-      return `<div style="display:flex;align-items:center;gap:.75rem;background:#0b1018;border:1px solid ${banned?"rgba(255,77,109,.2)":"#1c2430"};border-radius:6px;padding:.6rem 1rem;">
-        <span style="font-size:10px;">${online?"🟢":"⚫"}</span>
-        <span style="font-family:var(--mono);font-size:12px;color:${banned?"#5a6578":"#d0dae8"};flex:1;text-decoration:${banned?"line-through":"none"};">${u.prenom||""} ${u.nom||""} <span style="color:#5a6578;font-size:10px;">@${u.username||u.email||"—"}</span> ${u.emailVerified?'<span style="color:#00e5a0;font-size:9px;">✉ vérifié</span>':""}  </span>
-        ${banned?`<span style="font-family:var(--mono);font-size:9px;color:var(--red);background:rgba(255,77,109,.1);padding:2px 8px;border-radius:3px;">BANNI</span>`:""}
-        <button onclick="banUser('${d.id}',${!banned})" style="background:transparent;border:1px solid ${banned?"#00e5a0":"rgba(255,77,109,.3)"};color:${banned?"#00e5a0":"var(--red)"};font-family:var(--mono);font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;">${banned?"Débloquer":"Bannir"}</button>
+      // Stocker les données dans le cache mémoire (évite les problèmes d'échappement JSON dans onclick)
+      _userCache[d.id] = {id:d.id, ...u};
+
+      const online  = u.online===true;
+      const banned  = u.banned===true;
+      const paused  = u.paused===true;
+      const fullName= ((u.prenom||"")+" "+(u.nom||"")).trim() || u.username || "—";
+
+      let stateIcon = online ? "🟢" : "⚫";
+      let stateBadge = "";
+      if(paused) { stateIcon="⏸"; stateBadge=`<span style="font-family:var(--mono);font-size:9px;color:#f7b731;background:rgba(247,183,49,.12);padding:2px 8px;border-radius:3px;border:1px solid rgba(247,183,49,.3);">EN PAUSE</span>`; }
+      if(banned) { stateIcon="🚫"; stateBadge=`<span style="font-family:var(--mono);font-size:9px;color:var(--red);background:rgba(255,77,109,.1);padding:2px 8px;border-radius:3px;border:1px solid rgba(255,77,109,.25);">BANNI</span>`; }
+      // Badge expiration
+      let expiryBadge = "";
+      if(u.accessExpiry && !banned){
+        const dLeft = Math.ceil((new Date(u.accessExpiry) - Date.now()) / 86400000);
+        if(dLeft <= 0)       expiryBadge = `<span style="font-family:var(--mono);font-size:9px;color:var(--red);background:rgba(255,77,109,.1);padding:2px 8px;border-radius:3px;border:1px solid rgba(255,77,109,.25);">EXPIRÉ</span>`;
+        else if(dLeft <= 7)  expiryBadge = `<span style="font-family:var(--mono);font-size:9px;color:#f7b731;background:rgba(247,183,49,.08);padding:2px 8px;border-radius:3px;border:1px solid rgba(247,183,49,.2);">J-${dLeft}</span>`;
+      }
+
+      const borderColor = banned ? "rgba(255,77,109,.2)" : paused ? "rgba(247,183,49,.2)" : "#1c2430";
+
+      return `<div style="display:flex;align-items:center;gap:.6rem;background:#0b1018;border:1px solid ${borderColor};border-radius:6px;padding:.55rem .85rem;flex-wrap:wrap;">
+        <span style="font-size:11px;flex-shrink:0;">${stateIcon}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:${(banned||paused)?"#5a6578":"#d0dae8"};flex:1;min-width:120px;text-decoration:${banned?"line-through":"none"};">
+          ${fullName} <span style="color:#5a6578;font-size:9px;">@${u.username||"—"}</span>
+          ${u.emailVerified?'<span style="color:#00e5a0;font-size:8px;margin-left:4px;">✉✓</span>':""}
+        </span>
+        ${stateBadge}${expiryBadge}
+        <button data-uid="${d.id}" class="btn-fiche" style="background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.2);color:#00e5a0;font-family:var(--mono);font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;">🔍 Fiche</button>
+        <button onclick="pauseUser('${d.id}',${!paused})" style="background:transparent;border:1px solid ${paused?"rgba(0,229,160,.3)":"rgba(247,183,49,.3)"};color:${paused?"#00e5a0":"#f7b731"};font-family:var(--mono);font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;">${paused?"▶ Reprendre":"⏸ Pause"}</button>
+        <button onclick="banUser('${d.id}',${!banned})" style="background:transparent;border:1px solid ${banned?"rgba(0,229,160,.3)":"rgba(255,77,109,.3)"};color:${banned?"#00e5a0":"var(--red)"};font-family:var(--mono);font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;">${banned?"Débloquer":"Bannir"}</button>
         <button onclick="deleteUser('${d.id}')" style="background:transparent;border:1px solid #1c2430;color:#5a6578;font-family:var(--mono);font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;">Supprimer</button>
       </div>`;
     }).join("");
   }
 
   list.innerHTML=html;
+
+  // Attacher les listeners sur les boutons Fiche via délégation (évite tout pb d'échappement)
+  list.querySelectorAll(".btn-fiche").forEach(btn=>{
+    btn.addEventListener("click", ()=>{ showUserDetail(btn.dataset.uid); });
+  });
+}
+
+function fmtTs(ts){
+  if(!ts) return "—";
+  try{
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"})+" "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  }catch(e){ return String(ts); }
+}
+
+// Cache mémoire : uid → données utilisateur (évite de passer du JSON dans les attributs HTML)
+const _userCache = {};
+
+function showUserDetail(uid){
+  const u = _userCache[uid];
+  if(!u){ console.warn("showUserDetail: uid introuvable dans le cache", uid); return; }
+
+  const online  = u.online===true;
+  const banned  = u.banned===true;
+  const paused  = u.paused===true;
+
+  let statusLabel, statusColor;
+  if(banned)      { statusLabel="🚫 Banni";     statusColor="var(--red)"; }
+  else if(paused) { statusLabel="⏸ En pause";   statusColor="#f7b731"; }
+  else if(online) { statusLabel="🟢 Connecté";  statusColor="#00f70a"; }
+  else            { statusLabel="⚫ Hors ligne"; statusColor="#5a6578"; }
+
+  // Calcul expiration
+  let expiryStr = "—"; let expiryColor = "#5a6578"; let daysLeft = null;
+  if(u.accessExpiry){
+    const exp = new Date(u.accessExpiry);
+    daysLeft = Math.ceil((exp - Date.now()) / 86400000);
+    expiryStr = exp.toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});
+    expiryColor = daysLeft <= 0 ? "var(--red)" : daysLeft <= 7 ? "#f7b731" : "#00e5a0";
+    expiryStr += daysLeft <= 0
+      ? ` <span style="color:var(--red);font-weight:700;">— EXPIRÉ</span>`
+      : ` <span style="color:${expiryColor};">(J-${daysLeft})</span>`;
+  }
+
+  const fields = [
+    ["👤 Prénom",             u.prenom   || "—"],
+    ["👤 Nom",                u.nom      || "—"],
+    ["🏷 Username",           "@"+(u.username||"—")],
+    ["📧 Email",              u.email    || "—"],
+    ["📱 Téléphone",          u.phone    || "—"],
+    ["📅 Date de naissance",  u.dob      || "—"],
+    ["📡 Statut",             `<span style="color:${statusColor};font-weight:700;">${statusLabel}</span>`],
+    ["✉ Email vérifié",       u.emailVerified ? '<span style="color:#00e5a0;">✓ Oui</span>' : '<span style="color:#5a6578;">Non</span>'],
+    ["🗓 Inscription",        fmtTs(u.createdAt)],
+    ["🕐 Dernière connexion", fmtTs(u.lastSeen)],
+    ["📝 Bio",                (u.bio ? u.bio.replace(/</g,"&lt;") : "—")],
+  ];
+
+  document.getElementById("userDetailContent").innerHTML = fields.map(([k,v])=>`
+    <div style="background:#060a0f;border:1px solid #131820;border-radius:6px;padding:.6rem .8rem;">
+      <div style="font-family:var(--mono);font-size:9px;color:#5a6578;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem;">${k}</div>
+      <div style="font-family:var(--mono);font-size:11px;color:#d0dae8;word-break:break-all;">${v}</div>
+    </div>`).join("")
+  + `<div style="background:#060a0f;border:1px solid rgba(247,183,49,.3);border-radius:6px;padding:.75rem .8rem;grid-column:1/-1;">
+      <div style="font-family:var(--mono);font-size:9px;color:#f7b731;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem;">⏱ DATE D'EXPIRATION D'ACCÈS</div>
+      <div style="font-family:var(--mono);font-size:11px;color:#d0dae8;margin-bottom:.6rem;">Actuelle : ${expiryStr}</div>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+        <input type="date" id="detailExpiryDate"
+          value="${u.accessExpiry ? new Date(u.accessExpiry).toISOString().slice(0,10) : new Date(Date.now()+30*86400000).toISOString().slice(0,10)}"
+          style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:12px;padding:6px 10px;border-radius:4px;outline:none;width:160px;">
+        <input type="time" id="detailExpiryTime"
+          value="${u.accessExpiry ? new Date(u.accessExpiry).toTimeString().slice(0,5) : '23:59'}"
+          style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:12px;padding:6px 10px;border-radius:4px;outline:none;width:100px;">
+        <button onclick="saveUserAccess('${u.id}')"
+          style="background:#f7b731;border:none;color:#000;font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 14px;border-radius:4px;cursor:pointer;margin-left:auto;">
+          💾 Appliquer
+        </button>
+      </div>
+    </div>`;
+
+  document.getElementById("userDetailCard").style.display="block";
+  document.getElementById("userDetailCard").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+function closeUserDetail(){
+  document.getElementById("userDetailCard").style.display="none";
+}
+
+async function saveUserAccess(id){
+  const dateVal = document.getElementById("detailExpiryDate").value;
+  const timeVal = document.getElementById("detailExpiryTime").value || "23:59";
+  if(!dateVal){ toast("✕ Date d'expiration invalide", true); return; }
+  const expiry = new Date(dateVal + "T" + timeVal + ":00");
+  if(isNaN(expiry.getTime())){ toast("✕ Date invalide", true); return; }
+  const u = _userCache[id];
+  if(!u){ return; }
+  // Calculer les jours restants depuis maintenant (pour info)
+  const daysFromNow = Math.round((expiry - Date.now()) / 86400000);
+  await db.collection("users").doc(id).update({
+    accessExpiry: expiry.toISOString(),
+    paused: false
+  });
+  _userCache[id].accessExpiry = expiry.toISOString();
+  toast(`✓ Expiration fixée au ${expiry.toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"})} à ${timeVal}${daysFromNow>0?" (J-"+daysFromNow+")":daysFromNow===0?" (aujourd'hui)":" (EXPIRÉ)"}`);
+  await refreshGuestList();
+  showUserDetail(id);
+}
+
+async function pauseUser(id, pause){
+  const upd = pause ? {paused:true, online:false} : {paused:false};
+  await db.collection("users").doc(id).update(upd);
+  toast(pause ? "⏸ Accès suspendu — l'utilisateur ne peut plus se connecter" : "▶ Accès restauré pour cet utilisateur");
+  closeUserDetail();
+  await refreshGuestList();
+}
+
+async function pauseAllUsers(pause){
+  const label = pause ? "mettre en pause TOUS les invités" : "restaurer l'accès de TOUS les invités";
+  if(!confirm("Confirmer : "+label+" ?")) return;
+  const snap = await db.collection("users").where("status","==","approved").get();
+  if(snap.empty){ toast("Aucun invité actif", true); return; }
+  const BATCH_SIZE = 400;
+  const docs = snap.docs;
+  for(let i=0; i<docs.length; i+=BATCH_SIZE){
+    const batch = db.batch();
+    docs.slice(i,i+BATCH_SIZE).forEach(doc=>{
+      batch.update(doc.ref, pause ? {paused:true, online:false} : {paused:false});
+    });
+    await batch.commit();
+  }
+  toast(pause ? `⏸ ${docs.length} invité(s) mis en pause` : `▶ ${docs.length} invité(s) — accès restauré`);
+  closeUserDetail();
+  await refreshGuestList();
 }
 
 async function approveUser(id){
-  await db.collection("users").doc(id).update({status:"approved", banned:false});
+  await db.collection("users").doc(id).update({status:"approved", banned:false, paused:false});
   toast("✓ Compte approuvé — l'invité peut maintenant se connecter");
   await refreshGuestList();
 }
@@ -2143,6 +2772,7 @@ async function approveUser(id){
 async function banUser(id, ban){
   await db.collection("users").doc(id).update({banned:ban, online:false});
   toast(ban?"✓ Utilisateur banni — déconnecté instantanément":"✓ Utilisateur débloqué");
+  closeUserDetail();
   await refreshGuestList();
 }
 
@@ -2150,7 +2780,16 @@ async function deleteUser(id){
   if(!confirm("Supprimer définitivement ce compte ?"))return;
   await db.collection("users").doc(id).delete();
   toast("✓ Compte supprimé");
+  closeUserDetail();
   await refreshGuestList();
+}
+
+async function saveDefaultAccess(){
+  const days = parseInt(document.getElementById("defaultAccessDays").value);
+  if(!days || days < 1){ toast("✕ Valeur invalide", true); return; }
+  SETTINGS.defaultAccessDays = days;
+  await pushSettings();
+  toast(`✓ Durée par défaut : ${days} jour${days>1?"s":""} pour les nouveaux inscrits`);
 }
 
 async function savePasswords(){
@@ -2282,6 +2921,206 @@ async function saveCatAccess(){
   render();
 }
 
+
+// ── ÉDITION D'ARTICLE (KGB uniquement) ───────────────────────────────────────
+let _eaTargetId   = null;   // id de l'article en cours d'édition
+let _eaNewHTML    = null;   // si un nouveau fichier HTML a été sélectionné
+
+function canEditArt(){
+  return role==="admin" && sessionStorage.getItem("smf_username")==="KGB";
+}
+
+function openEditArt(e, id){
+  e.stopPropagation();
+  if(!canEditArt()){ toast("⚠ Modification réservée à KGB",true); return; }
+  const a = arts.find(x=>x.id===id);
+  if(!a){ toast("⚠ Article introuvable",true); return; }
+
+  _eaTargetId = id;
+  _eaNewHTML  = null;
+
+  // Pré-remplir les champs
+  document.getElementById("eaTitre").value = a.titre || "";
+  document.getElementById("eaDesc").value  = a.desc  || "";
+  document.getElementById("eaDate").value  = a.date  || "";
+  document.getElementById("eaTime").value  = a.time  || "";
+  document.getElementById("eaPaire").value = a.paire || "";
+
+  // Contenu HTML
+  const htmlVal = a.html || "";
+  document.getElementById("eaHtml").value = htmlVal;
+
+  // Masquer la zone fichier au départ
+  document.getElementById("eaFilePrev").classList.remove("on");
+  document.getElementById("eaDropZone").style.display = "block";
+  document.getElementById("eaFileName").textContent = "—";
+  document.getElementById("eaFileSize").textContent = "—";
+
+  // Sous-titre du modal
+  const cats = artCats(a);
+  document.getElementById("editArtSub").textContent =
+    (CAT_LABEL[cats[0]]||cats[0]||"") + (a.paire ? " · "+a.paire : "") + " · " + (a.date||"");
+
+  document.getElementById("editArtOv").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeEditArt(){
+  document.getElementById("editArtOv").classList.remove("open");
+  document.body.style.overflow = "";
+  _eaTargetId = null;
+  _eaNewHTML  = null;
+}
+
+function onEaHtmlFile(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    _eaNewHTML = ev.target.result;
+    document.getElementById("eaFileName").textContent = file.name;
+    document.getElementById("eaFileSize").textContent = (file.size/1024).toFixed(1)+" Ko";
+    document.getElementById("eaFilePrev").classList.add("on");
+    document.getElementById("eaDropZone").style.display = "none";
+    // Synchronise aussi la textarea
+    document.getElementById("eaHtml").value = _eaNewHTML;
+  };
+  reader.readAsText(file);
+}
+
+function resetEaHtml(){
+  _eaNewHTML = null;
+  document.getElementById("eaFilePrev").classList.remove("on");
+  document.getElementById("eaDropZone").style.display = "block";
+  document.getElementById("eaFileName").textContent = "—";
+  document.getElementById("eaFileSize").textContent = "—";
+  document.getElementById("eaFileInput").value = "";
+}
+
+async function saveEditArt(){
+  if(!canEditArt()){ toast("⚠ Accès refusé",true); return; }
+  if(!_eaTargetId){ toast("⚠ Aucun article sélectionné",true); return; }
+
+  const titre = document.getElementById("eaTitre").value.trim();
+  const desc  = document.getElementById("eaDesc").value.trim();
+  const date  = document.getElementById("eaDate").value;
+  const time  = document.getElementById("eaTime").value;
+  const paire = document.getElementById("eaPaire").value.trim();
+  const htmlContent = document.getElementById("eaHtml").value;
+
+  if(!titre){ toast("⚠ Le titre est obligatoire",true); return; }
+  if(!date) { toast("⚠ La date est obligatoire",true);  return; }
+
+  const btn = document.getElementById("eaSaveBtn");
+  btn.disabled = true; btn.textContent = "⏳ Sauvegarde…";
+
+  const update = { titre, desc, date, time, paire,
+                   updatedBy: "KGB",
+                   updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+
+  // Si le contenu HTML a été modifié (via textarea ou nouveau fichier)
+  const original = arts.find(x=>x.id===_eaTargetId);
+  if(htmlContent !== (original?.html||"") || _eaNewHTML){
+    update.html = _eaNewHTML || htmlContent;
+    update.type = "html";
+    // Invalider les artBlocks pour forcer le rendu depuis le HTML mis à jour
+    update.artBlocks = firebase.firestore.FieldValue.delete();
+  }
+
+  const ok = await fbUpdate(_eaTargetId, update);
+
+  btn.disabled = false; btn.textContent = "💾 Sauvegarder les modifications";
+
+  if(ok){
+    toast("✓ Article mis à jour par KGB !");
+    closeEditArt();
+  } else {
+    toast("✕ Erreur lors de la sauvegarde",true);
+  }
+}
+
+// Drag-and-drop sur la zone fichier du modal édition
+(function(){
+  const zone = document.getElementById("eaDropZone");
+  if(!zone) return;
+  zone.addEventListener("dragover", e=>{ e.preventDefault(); zone.classList.add("drag"); });
+  zone.addEventListener("dragleave", ()=>zone.classList.remove("drag"));
+  zone.addEventListener("drop", e=>{
+    e.preventDefault(); zone.classList.remove("drag");
+    const f = e.dataTransfer.files[0];
+    if(f) onEaHtmlFile(f);
+  });
+})();
+
+function openContactAdmin(){
+  const link = localStorage.getItem("smf_contact_link") || "";
+  if(link) window.open(link, "_blank");
+}
+
+function initLoginContactBtn(){
+  // Au chargement/logout : toujours cacher
+  const w1 = document.getElementById("loginContactWrap");
+  const w2 = document.getElementById("registerContactWrap");
+  if(w1) w1.style.display = "none";
+  // Inscription : visible dès que le lien est configuré (l'user n'a pas encore de compte)
+  const link = localStorage.getItem("smf_contact_link") || "";
+  if(w2) w2.style.display = link ? "block" : "none";
+}
+
+let _contactCheckTimer = null;
+function checkLoginContactBtn(){
+  const link = localStorage.getItem("smf_contact_link") || "";
+  const wrap = document.getElementById("loginContactWrap");
+  if(!link || !wrap){ if(wrap) wrap.style.display="none"; return; }
+
+  const val = document.getElementById("lUser").value.trim();
+  // Moins de 3 caractères → cacher immédiatement sans requête
+  if(val.length < 3){ wrap.style.display="none"; return; }
+
+  // Debounce : attendre 600ms après la dernière frappe avant de requêter Firebase
+  clearTimeout(_contactCheckTimer);
+  _contactCheckTimer = setTimeout(async ()=>{
+    try{
+      // Chercher par email OU par username dans Firebase
+      const [byEmail, byUsername] = await Promise.all([
+        db.collection("users").where("email","==",val.toLowerCase()).limit(1).get(),
+        db.collection("users").where("username","==",val.toLowerCase()).limit(1).get()
+      ]);
+      const found = !byEmail.empty || !byUsername.empty;
+      wrap.style.display = found ? "block" : "none";
+    }catch(e){
+      wrap.style.display="none";
+    }
+  }, 600);
+}
+
+function saveContactLink(){
+  const val = document.getElementById("adminContactLink").value.trim();
+  if(!val){ toast("✕ Lien vide — rien sauvegardé", true); return; }
+  try { new URL(val); } catch(e){ toast("✕ URL invalide — ex: https://wa.me/...", true); return; }
+  if(!val.startsWith("https://") && !val.startsWith("http://")){ toast("✕ Uniquement un lien https:// est accepté (pas d'email)", true); return; }
+  localStorage.setItem("smf_contact_link", val);
+  showContactLinkPreview(val);
+  toast("✓ Lien de contact sauvegardé !");
+  initLoginContactBtn();
+  const rw = document.getElementById("registerContactWrap");
+  if(rw) rw.style.display = "block";
+  // Rafraîchir le menu profil si ouvert
+  const menu = document.getElementById("profileMenu");
+  if(menu && menu.classList.contains("open")) menu.innerHTML = buildProfileMenu();
+}
+
+function showContactLinkPreview(url){
+  const el = document.getElementById("contactLinkPreview");
+  if(!el) return;
+  let icon = "🔗", type = "Lien";
+  if(url.includes("wa.me") || url.includes("whatsapp")) { icon = "💬"; type = "WhatsApp"; }
+  else if(url.includes("t.me") || url.includes("telegram")) { icon = "✈️"; type = "Telegram"; }
+  else if(url.includes("discord")) { icon = "🎮"; type = "Discord"; }
+  // mailto non supporté
+  el.style.display = "block";
+  el.innerHTML = `${icon} <span style="color:#00e5a0;">${type}</span> · <span style="color:#d0dae8;">${url}</span>`;
+}
+
 function closeAdminPanel(){
   document.getElementById("adminPanel").style.display="none";
   document.body.style.overflow="";
@@ -2293,6 +3132,7 @@ let userPhotoCache = {};
 
 async function loadUserPhotoCache(){
   try{
+    // Guests — collection users
     const snap = await db.collection("users").get();
     snap.docs.forEach(d=>{
       const u = d.data();
@@ -2302,6 +3142,19 @@ async function loadUserPhotoCache(){
         if(fullName && u.photoURL) userPhotoCache[fullName] = u.photoURL;
       }
     });
+  }catch(e){}
+  try{
+    // Admins — config/profiles (clé = username ex: "SMF", "KGB")
+    const profilesDoc = await db.collection("config").doc("profiles").get();
+    if(profilesDoc.exists){
+      const data = profilesDoc.data();
+      Object.entries(data).forEach(([key, val])=>{
+        // Ignorer les clés "guest_XXXXX" (ce sont des guests)
+        if(!key.startsWith("guest_") && val && val.photoURL){
+          userPhotoCache[key] = val.photoURL;
+        }
+      });
+    }
   }catch(e){}
 }
 
@@ -2330,6 +3183,7 @@ function startBanWatch(){
       if(!snap.exists) { forcedLogout("✕ Compte supprimé par l'administrateur"); return; }
       const d = snap.data();
       if(d.banned){ forcedLogout("✕ Votre accès a été révoqué par l'administrateur"); return; }
+      if(d.paused){ forcedLogout("✕ Votre accès est temporairement suspendu — contactez l'administrateur"); return; }
       if(d.status !== "approved"){ forcedLogout("✕ Votre compte a été désactivé"); return; }
     });
 }
@@ -2404,6 +3258,14 @@ function filtered(){
   if(filt!=="tous") l=l.filter(a=>artMatchesFilt(a, filt));
   else l=l.filter(a=>!artCats(a).includes("tradeinvites")||artCats(a).length>1||artCats(a).includes("tous"));
   if(sq){ const lq=sq.toLowerCase(); l=l.filter(a=>a.titre.toLowerCase().includes(lq)||a.desc.toLowerCase().includes(lq)||(a.paire&&a.paire.toLowerCase().includes(lq))); }
+  if(authorFilter){
+    l=l.filter(a=>{
+      if(authorFilter.userId && a.submittedById === authorFilter.userId) return true;
+      if(authorFilter.username && a.submittedByUsername === authorFilter.username) return true;
+      if(a.submittedBy === authorFilter.displayName) return true;
+      return false;
+    });
+  }
   return l;
 }
 
@@ -2503,7 +3365,7 @@ function renderGrid(){
         </div>
       </div>
       <div class="card-footer">
-        <div class="card-author">
+        <div class="card-author" onclick="openAuthorProfile(event,'${a.submittedById||""}','${(a.submittedBy||"S·M·F").replace(/'/g,"\\'")}','${(a.submittedByUsername||"").replace(/'/g,"\\'")}')">
           ${buildCardAvatar(authorName, primaryCat)}
           <span class="card-author-name">${authorName||"S·M·F"}</span>
           ${blocksBadge}
@@ -2511,6 +3373,7 @@ function renderGrid(){
         <div class="card-actions">
           ${addBtn}
           ${editTagBtn}
+          ${(role==="admin"&&sessionStorage.getItem("smf_username")==="KGB")?`<button class="btn-edit-art" onclick="openEditArt(event,'${a.id}')" title="Modifier l'article">✏ Modifier</button>`:""}
           ${role==="admin"?`<button class="btn-del" onclick="delArt(event,'${a.id}')" title="Supprimer">🗑</button>`:""}
           ${isMyPost(a)?`<button class="btn-del" onclick="delOwnArt(event,'${a.id}')" title="Supprimer" style="color:var(--red);">🗑</button>`:""}
           <span class="card-open">Lire →</span>
@@ -2842,7 +3705,7 @@ function renderBlocks(){
         <div class="wb-body">
           <div class="wiz-field" style="margin-bottom:.75rem;">
             <label>Titre du paragraphe <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
-            <input class="wiz-input" type="text" maxlength="80"
+            <input class="wiz-input" type="text" maxlength="200"
               placeholder="Ex: Sentiment de marché · Zone clé · Biais directionnel…"
               oninput="syncBlockParaTitle(${i},this.value)"
               value="${(b.title||'').replace(/"/g,'&quot;')}">
@@ -2896,7 +3759,8 @@ function wizUpdateUI(){
   const next=document.getElementById("wizBtnNext");
   const pub =document.getElementById("wizBtnPublish");
   back.style.visibility = wizStep>1 ? "visible":"hidden";
-  if(wizStep===3){ next.style.display="none"; pub.style.display="flex"; }
+  const guestLastStep = role==="guest" ? 3 : 3;
+  if(wizStep===guestLastStep){ next.style.display="none"; pub.style.display="flex"; pub.textContent = role==="guest" ? "📤 Soumettre" : "✦ Publier l'article"; }
   else { next.style.display="flex"; pub.style.display="none"; }
   const isTradeOnly = wizCat==="trade"||wizCat==="tradeinvites";
   const mt=document.getElementById("wizModeToggle");
@@ -2988,6 +3852,11 @@ function openImport(){
 function closeImport(){
   document.getElementById("wizOv").classList.remove("open");
   document.body.style.overflow="";
+  // Retirer le readonly des champs date/heure (pour que l'admin puisse les modifier)
+  const _wDate = document.getElementById("wDate");
+  const _wTime = document.getElementById("wTime");
+  if(_wDate){ _wDate.readOnly=false; _wDate.style.opacity=""; _wDate.style.cursor=""; _wDate.title=""; }
+  if(_wTime){ _wTime.readOnly=false; _wTime.style.opacity=""; _wTime.style.cursor=""; _wTime.title=""; }
 }
 
 function onWizHtmlFile(file){
@@ -3015,20 +3884,32 @@ function resetWizHtml(){
 }
 
 async function wizPublish(){
-  if(role!=="admin"){toast("⚠ Accès réservé",true);return;}
+  if(role!=="admin" && role!=="guest"){toast("⚠ Accès requis",true);return;}
+  // Les guests ne peuvent publier qu'en tradeinvites
+  if(role==="guest" && wizCat!=="tradeinvites"){
+    wizCat="tradeinvites";
+  }
   const titre = (wizBlocks[0]?.titre||document.getElementById("wTitre").value||"").trim();
   const desc  = (wizBlocks[0]?.subtitle||titre||"").trim();
   const date  = document.getElementById("wDate").value;
   const time  = document.getElementById("wTime").value;
   const paire = document.getElementById("wPaire").value.trim();
   const adminUsername = sessionStorage.getItem("smf_username")||"Admin";
+  // Auteur selon le rôle
+  const isGuestPublish = role === "guest" && currentUser;
+  const authorName = isGuestPublish
+    ? (((currentUser.prenom||"")+" "+(currentUser.nom||"")).trim() || currentUser.username || "Invité")
+    : adminUsername;
+  const authorId       = isGuestPublish ? currentUser.id       : null;
+  const authorUsername = isGuestPublish ? currentUser.username : null;
   const timeStr = time ? ` · ${time}` : "";
   const fdate = date ? new Date(date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})+timeStr : "";
   let newArt;
 
   if(wizMode==="html"&&wizPendingHTML){
     newArt={type:"html",titre,desc,date,time,cat:wizCat,paire,html:wizPendingHTML,
-            fileName:document.getElementById("wFileName").textContent,submittedBy:adminUsername};
+            fileName:document.getElementById("wFileName").textContent,submittedBy:authorName,
+            ...(isGuestPublish ? {submittedById:authorId, submittedByUsername:authorUsername} : {})};
   } else {
     if(wizCat==="trade"||wizCat==="tradeinvites"){
       const headerBlock = wizBlocks.find(b=>b.type==="header")||{};
@@ -3038,7 +3919,7 @@ async function wizPublish(){
       // Bloc 0 : image principale du Bloc 1 (si présente)
       if(headerBlock.image){
         blocksData.push({
-          text: headerBlock.subtitle||"",
+          text: "",   // subtitle already shown in hero section — avoid duplicate
           images: [headerBlock.image.dataUrl],
           image: headerBlock.image.dataUrl,
           date,
@@ -3057,22 +3938,27 @@ async function wizPublish(){
       });
 
       if(blocksData.length===0) blocksData.push({text:"",images:[],image:null,date});
-      newArt={type:"manual",titre,desc,date,time,cat:wizCat,paire,blocks:blocksData,submittedBy:adminUsername};
+      newArt={type:"manual",titre,desc,date,time,cat:wizCat,paire,blocks:blocksData,submittedBy:authorName,
+            ...(isGuestPublish ? {submittedById:authorId, submittedByUsername:authorUsername} : {})};
     } else {
       const acc=CAT_COLORS[wizCat]||"#00e5a0";
       const catLbl=CAT_LABEL[wizCat]||wizCat;
       const generatedHTML=generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,wizBlocks,adminUsername);
       // On stocke aussi les blocs pour pouvoir régénérer avec le dernier template à l'ouverture
       newArt={type:"html",titre,desc,date,time,cat:wizCat,paire,html:generatedHTML,
-              artBlocks:wizBlocks,submittedBy:adminUsername};
+              artBlocks:wizBlocks,submittedBy:authorName,
+              ...(isGuestPublish ? {submittedById:authorId, submittedByUsername:authorUsername} : {})};
     }
   }
 
   const btn=document.getElementById("wizBtnPublish");
   btn.disabled=true; btn.textContent="Publication…";
   const id=await fbAdd(newArt);
-  btn.disabled=false; btn.textContent="✦ Publier l'article";
-  if(id){ closeImport(); toast("✓ Article publié — visible instantanément !"); }
+  btn.disabled=false; btn.textContent = role==="guest" ? "📤 Soumettre" : "✦ Publier l'article";
+  if(id){
+    closeImport();
+    toast(role==="guest" ? "✓ Trade soumis — en attente de validation !" : "✓ Article publié — visible instantanément !");
+  }
 }
 
 // Legacy stubs
@@ -3096,7 +3982,7 @@ function generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,blocks,author
     case "trade": {
       // Construire les blocs trade avec l'image header comme bloc initial
       const coverFromHeader = headerBlock.image ? [{
-        isInitial:true, text:headerBlock.subtitle||"",
+        isInitial:true, text:"",
         image:headerBlock.image.dataUrl, images:[headerBlock.image.dataUrl], date:""
       }] : [];
       const tradeBlocks = [...coverFromHeader, ...paraBlocks.map(b=>({
@@ -3108,7 +3994,7 @@ function generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,blocks,author
     }
     case "tradeinvites": {
       const coverFromHeader = headerBlock.image ? [{
-        isInitial:true, text:headerBlock.subtitle||"",
+        isInitial:true, text:"",
         image:headerBlock.image.dataUrl, images:[headerBlock.image.dataUrl], date:""
       }] : [];
       const tradeBlocks = [...coverFromHeader, ...paraBlocks.map(b=>({
@@ -3272,9 +4158,9 @@ ${sharedCSS(acc,"0.025")}
 /* Hebdo spécifique */
 h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
 /* Grande initiale sur 1er paragraphe */
-.para-block:first-child .art-body p:first-child::first-letter{
-  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
-  float:left;line-height:.82;margin:.04em .14em 0 0;text-shadow:0 0 20px rgba(247,183,49,.35);}
+.para-block .para-title::first-letter{
+  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:${acc};
+  float:left;line-height:.78;margin:.06em .16em .02em 0;text-shadow:0 0 20px rgba(247,183,49,.35);}
 /* Topbar gold border */
 .topbar{border-bottom:3px solid ${acc} !important;}
 .week-badge{font-family:'Space Mono',monospace;font-size:9px;color:${acc};background:rgba(247,183,49,.07);border:1px solid rgba(247,183,49,.2);padding:3px 10px;border-radius:3px;letter-spacing:.12em;margin-left:.75rem;}
@@ -3317,9 +4203,9 @@ ${sharedCSS(acc,"0.02")}
 /* Monthly spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
 h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
-.para-block:first-child .art-body p:first-child::first-letter{
-  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
-  float:left;line-height:.82;margin:.04em .14em 0 0;}
+.para-block .para-title::first-letter{
+  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:${acc};
+  float:left;line-height:.78;margin:.06em .16em .02em 0;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
@@ -3357,9 +4243,9 @@ ${sharedCSS(acc,"0.025")}
 /* Bank Meeting spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
 h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
-.para-block:first-child .art-body p:first-child::first-letter{
-  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
-  float:left;line-height:.82;margin:.04em .14em 0 0;}
+.para-block .para-title::first-letter{
+  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:${acc};
+  float:left;line-height:.78;margin:.06em .16em .02em 0;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
@@ -3415,9 +4301,9 @@ ${sharedCSS(acc,"0.025")}
 /* Trade Admin spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
 h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
-.para-block:not(.para-sep-only) .art-body p:first-child::first-letter{
-  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
-  float:left;line-height:.82;margin:.04em .14em 0 0;}
+.para-block:not(.para-sep-only) .para-title::first-letter{
+  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:${acc};
+  float:left;line-height:.78;margin:.06em .16em .02em 0;}
 .para-sep-only{padding:.5rem 1.5rem !important;margin-bottom:.5rem;}
 .para-sep-only::before,.para-sep-only::after{display:none;}
 .blk-sep{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;
@@ -3481,9 +4367,9 @@ ${sharedCSS(acc,"0.025")}
 /* Trades Invités spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
 h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
-.para-block:not(.para-sep-only) .art-body p:first-child::first-letter{
-  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
-  float:left;line-height:.82;margin:.04em .14em 0 0;}
+.para-block:not(.para-sep-only) .para-title::first-letter{
+  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:${acc};
+  float:left;line-height:.78;margin:.06em .16em .02em 0;}
 .para-sep-only{padding:.5rem 1.5rem !important;margin-bottom:.5rem;}
 .para-sep-only::before,.para-sep-only::after{display:none;}
 .blk-sep{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;
@@ -3527,9 +4413,9 @@ function tplDefault(titre,desc,fdate,paire,acc,catLbl,hb,paraBlocks,by){
 ${sharedCSS(acc,"0.025")}
 .topbar{border-bottom:3px solid ${acc} !important;}
 h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
-.para-block:first-child .art-body p:first-child::first-letter{
-  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
-  float:left;line-height:.82;margin:.04em .14em 0 0;}
+.para-block .para-title::first-letter{
+  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:${acc};
+  float:left;line-height:.78;margin:.06em .16em .02em 0;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left"><div class="tb-hex">SMF</div><div class="tb-brand"><em>S·M·F</em> RESEARCH</div></div>
@@ -3562,9 +4448,9 @@ ${sharedCSS(acc,"0.02")}
 h1{font-family:'Space Mono',monospace !important;font-size:clamp(1.6rem,3.8vw,2.5rem) !important;letter-spacing:.02em !important;}
 .topbar{border-bottom:3px solid ${acc} !important;}
 /* Grande initiale sur 1er paragraphe */
-.para-block:first-child .art-body p:first-child::first-letter{
-  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:700;color:${acc};
-  float:left;line-height:.82;margin:.04em .14em 0 0;text-shadow:0 0 20px rgba(247,183,49,.35);}
+.para-block .para-title::first-letter{
+  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:${acc};
+  float:left;line-height:.78;margin:.06em .16em .02em 0;text-shadow:0 0 20px rgba(247,183,49,.35);}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
@@ -3591,30 +4477,68 @@ let guestMode="text", guestPendingImages=[], guestPendingPdf=null;
 
 function openGuestSubmit(){
   if(role!=="guest"){toast("⚠ Accès réservé aux invités",true);return;}
-  document.getElementById("gDate").value=new Date().toISOString().slice(0,10);
-  document.getElementById("guestSubmitOv").classList.add("open");
-  document.body.style.overflow="hidden";
-  setGuestMode("text");
+  // Utiliser le même wizard que l'admin — catégorie forcée à tradeinvites
+  wizStep = 2;          // Sauter l'étape catégorie
+  wizCat  = "tradeinvites";
+  wizMode = "manual";
+  wizPendingHTML = null;
+  wizBlocks = [];
+  document.getElementById("wTitre").value = "";
+  document.getElementById("wDesc").value  = "";
+  const _now = new Date();
+  const _dateStr = _now.toISOString().slice(0,10);
+  const _timeStr = _now.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  // Date & heure wizard — readonly pour les invités
+  const _wDate = document.getElementById("wDate");
+  const _wTime = document.getElementById("wTime");
+  _wDate.value    = _dateStr;
+  _wTime.value    = _timeStr;
+  _wDate.readOnly = true;
+  _wTime.readOnly = true;
+  _wDate.style.opacity = "0.6";
+  _wTime.style.opacity = "0.6";
+  _wDate.style.cursor  = "not-allowed";
+  _wTime.style.cursor  = "not-allowed";
+  _wDate.title = "La date est automatiquement fixée à l'instant de la soumission";
+  _wTime.title = "L'heure est automatiquement fixée à l'instant de la soumission";
+  // Auto-remplir aussi les champs du modal legacy (si ouvert)
+  const _gDate = document.getElementById("gDate");
+  const _gTime = document.getElementById("gTime");
+  if(_gDate){ _gDate.value = _dateStr; }
+  if(_gTime){ _gTime.value = _timeStr; }
+  document.getElementById("wPaire").value = "";
+  resetWizHtml();
+  // Masquer les catégories non-pertinentes pour un guest
+  document.querySelectorAll(".cat-card").forEach(c=>c.classList.remove("selected"));
+  setWizMode("manual");
+  initBlocks();
+  wizUpdateUI();
+  // Adapter le titre/sous-titre pour le guest
+  document.getElementById("wizTitle").textContent = "Soumettre un Trade";
+  document.getElementById("wizSub").textContent   = "Étape 1 sur 2 · Titre · Blocs · Date";
+  document.getElementById("wizStepLabel").textContent = "1 / 2";
+  document.getElementById("wizOv").classList.add("open");
+  document.body.style.overflow = "hidden";
 }
 
 function closeGuestSubmit(){
   document.getElementById("guestSubmitOv").classList.remove("open");
   document.body.style.overflow="";
-  guestPendingImages=[]; guestPendingPdf=null;
+  guestPendingImages=[];
   document.getElementById("gContent").value="";
   document.getElementById("gContentImg").value="";
   document.getElementById("gTitre").value="";
   document.getElementById("gDesc").value="";
   document.getElementById("gPaire").value="";
   document.getElementById("gImgPreviews").innerHTML="";
-  resetGuestPdf();
   setGuestMode("text");
 }
 
 function setGuestMode(m){
+  // L'invité ne peut utiliser que 'text' ou 'textimg' (plus de PDF)
+  if(m==="pdf") m="text";
   guestMode=m;
-  // Map mode keys to exact element ID suffixes (case-sensitive)
-  const ID_MAP = { text:"Text", textimg:"TextImg", pdf:"Pdf" };
+  const ID_MAP = { text:"Text", textimg:"TextImg" };
   Object.keys(ID_MAP).forEach(key=>{
     const suffix = ID_MAP[key];
     const modeBtn = document.getElementById("gMode"+suffix);
@@ -3669,11 +4593,11 @@ function resetGuestPdf(){
 async function submitGuestTrade(){
   const titre=document.getElementById("gTitre").value.trim();
   const desc =document.getElementById("gDesc").value.trim();
-  const date =document.getElementById("gDate").value;
+  const date =document.getElementById("gDate").value || new Date().toISOString().slice(0,10);
+  const time =document.getElementById("gTime")?.value || new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
   const paire=document.getElementById("gPaire").value.trim();
   if(!titre){toast("⚠ Le titre est obligatoire",true);return;}
   if(!desc){toast("⚠ La description est obligatoire",true);return;}
-  if(!date){toast("⚠ La date est obligatoire",true);return;}
 
   let newArt;
   const submittedBy=currentUser?((currentUser.prenom||"")+" "+(currentUser.nom||"")).trim()||currentUser.username:"Invité";
@@ -3684,15 +4608,14 @@ async function submitGuestTrade(){
     const fc=document.getElementById("gContent").value.trim();
     if(!fc){toast("⚠ Ajoute du texte",true);return;}
     const block1={text:fc,image:null,date};
-    newArt={type:"manual",titre,desc,date,cat:"tradeinvites",paire,blocks:[block1],submittedBy,submittedById,submittedByUsername};
+    newArt={type:"manual",titre,desc,date,time,cat:"tradeinvites",paire,blocks:[block1],submittedBy,submittedById,submittedByUsername};
   } else if(guestMode==="textimg"){
     const fc=document.getElementById("gContentImg").value.trim();
     if(!fc&&guestPendingImages.length===0){toast("⚠ Ajoute du texte ou au moins une image",true);return;}
     const block1={text:fc,images:guestPendingImages.map(i=>i.dataUrl),image:guestPendingImages[0]?.dataUrl||null,date};
-    newArt={type:"manual",titre,desc,date,cat:"tradeinvites",paire,blocks:[block1],submittedBy,submittedById,submittedByUsername};
-  } else if(guestMode==="pdf"){
-    if(!guestPendingPdf){toast("⚠ Sélectionne un fichier PDF",true);return;}
-    newArt={type:"pdf",titre,desc,date,cat:"tradeinvites",paire,pdfData:guestPendingPdf.dataUrl,pdfName:guestPendingPdf.name,submittedBy,submittedById,submittedByUsername};
+    newArt={type:"manual",titre,desc,date,time,cat:"tradeinvites",paire,blocks:[block1],submittedBy,submittedById,submittedByUsername};
+  } else {
+    toast("⚠ Mode non supporté",true); return;
   }
 
   const btn=document.getElementById("gBtnSubmit");
@@ -3813,21 +4736,13 @@ if(abd){
   abd.addEventListener("dragleave",()=>abd.classList.remove("drag"));
   abd.addEventListener("drop",e=>{e.preventDefault();abd.classList.remove("drag");onAbImgs(e.dataTransfer.files);});
 }
-// Guest PDF drop
-const gpdf=document.getElementById("gPdfDropZone");
-if(gpdf){
-  gpdf.addEventListener("dragover",e=>{e.preventDefault();gpdf.classList.add("drag");});
-  gpdf.addEventListener("dragleave",()=>gpdf.classList.remove("drag"));
-  gpdf.addEventListener("drop",e=>{e.preventDefault();gpdf.classList.remove("drag");const f=e.dataTransfer.files[0];if(f)onGuestPdfFile(f);});
-}
-
 // ── FILTERS ───────────────────────────────────────────────────────────────────
 document.querySelectorAll(".filter-btn").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll(".filter-btn").forEach(x=>x.classList.remove("active"));
   b.classList.add("active"); filt=b.dataset.cat; renderGrid();
 }));
 document.getElementById("searchInput").addEventListener("input",e=>{sq=e.target.value;renderGrid();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeImport();closeAdminPanel();}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeImport();closeAdminPanel();closeAuthorProfile();}});
 
 // ── VIEW MODE ─────────────────────────────────────────────────────────────────
 let viewMode = localStorage.getItem("smf_view") || "grid";
@@ -3967,8 +4882,382 @@ const QUOTES=[
     renderHeaderActions();
     render();
     setTimeout(()=>document.getElementById("lUser").focus(),100);
+    initLoginContactBtn();
   }
 })();
+
+// ── EXPORT HTML HORS-LIGNE ────────────────────────────────────────────────────
+async function exportHubHTML(){
+  const btn    = document.getElementById("btnExportHTML");
+  const status = document.getElementById("exportStatus");
+  btn.disabled = true;
+  btn.textContent = "⏳ Chargement des articles...";
+  status.textContent = "";
+
+  try {
+    // 1. Récupérer tous les articles depuis Firestore
+    const snap = await db.collection("articles").orderBy("date","desc").get();
+    const articles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    btn.textContent = "⚙ Génération du fichier...";
+
+    // 2. Construire les cartes HTML
+    const CAT_COLORS = {
+      tous:"#00e5a0", hebdo:"#f7b731", weekahead:"#f7b731",
+      mensuel:"#0ff", banques:"#00e5a0", trade:"#00f70a", tradeinvites:"#0005ff"
+    };
+    const CAT_LABELS = {
+      tous:"All", hebdo:"Hebdo", weekahead:"Week Ahead",
+      mensuel:"Monthly Recap", banques:"Bank Meeting",
+      trade:"Trades Admins", tradeinvites:"Trades Invités"
+    };
+
+    function fmtDate(d){
+      if(!d) return "—";
+      if(d && d.toDate) d = d.toDate();
+      else if(typeof d === "string") d = new Date(d);
+      return d instanceof Date && !isNaN(d)
+        ? d.toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"})
+        : String(d);
+    }
+
+    const cardsHTML = articles.map(a => {
+      const color  = CAT_COLORS[a.cat] || "#00e5a0";
+      const label  = CAT_LABELS[a.cat]  || a.cat || "";
+      const date   = fmtDate(a.date);
+      const thumb  = a.thumb || "";
+      const titre  = (a.titre || a.title || "Sans titre").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      const desc   = (a.desc  || a.description || "").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      const author = (a.author || a.auteur || "").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      const paire  = (a.paire || "").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      // contenu intégré en iframe srcdoc si disponible
+      const htmlContent = a.html || a.content || "";
+      const encodedContent = htmlContent ? btoa(unescape(encodeURIComponent(htmlContent))) : "";
+      const iframeSection = encodedContent ? `
+        <div class="exp-card-preview" onclick="openArticle('${a.id}')">Voir l'article ▶</div>
+        <div class="exp-article-wrap" id="art_${a.id}" style="display:none;">
+          <iframe srcdoc="${htmlContent.replace(/"/g,'&quot;')}" style="width:100%;height:500px;border:none;border-radius:6px;background:#fff;" sandbox="allow-same-origin"></iframe>
+          <button onclick="closeArticle('${a.id}')" style="margin-top:.5rem;background:transparent;border:1px solid #1c2430;color:#5a6578;font-family:monospace;font-size:11px;padding:5px 14px;border-radius:4px;cursor:pointer;">▲ Réduire</button>
+        </div>` : "";
+
+      return `
+      <div class="exp-card">
+        ${thumb ? `<div class="exp-thumb"><img src="${thumb}" alt=""></div>` : `<div class="exp-thumb exp-thumb-empty" style="background:rgba(0,229,160,.05);display:flex;align-items:center;justify-content:center;font-size:32px;">📄</div>`}
+        <div class="exp-info">
+          <div class="exp-tags">
+            <span class="exp-cat" style="border-color:${color};color:${color};">${label}</span>
+            ${paire ? `<span class="exp-paire">${paire}</span>` : ""}
+          </div>
+          <div class="exp-titre">${titre}</div>
+          ${desc ? `<div class="exp-desc">${desc}</div>` : ""}
+          <div class="exp-meta">${author ? `<span>✦ ${author}</span>` : ""}<span>${date}</span></div>
+          ${iframeSection}
+        </div>
+      </div>`;
+    }).join("\n");
+
+    // 3. Compter par catégorie
+    const counts = {};
+    articles.forEach(a => { counts[a.cat] = (counts[a.cat]||0)+1; });
+    const totalStr = articles.length + " article" + (articles.length>1?"s":"");
+    const exportDate = new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});
+
+    // 4. Assembler le HTML final autonome
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SMF · Sauvegarde Hub — ${new Date().toLocaleDateString("fr-FR")}</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#02040a;--surface:#060a0f;--surface2:#0b1018;--border:#131820;--border2:#1c2430;--accent:#00e5a0;--text:#d0dae8;--muted:#5a6578;--mono:'Space Mono',monospace;--sans:'Syne',sans-serif;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  header{background:rgba(8,12,16,.98);border-bottom:1px solid var(--border);padding:1rem 2rem;position:sticky;top:0;z-index:10;}
+  .hdr-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+  .hdr-logo{display:flex;align-items:center;gap:.75rem;}
+  .hdr-hex{width:32px;height:32px;background:var(--accent);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;color:#000;}
+  .hdr-name{font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.1em;}
+  .hdr-badge{background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.3);color:var(--accent);font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;}
+  .hdr-meta{font-family:var(--mono);font-size:10px;color:var(--muted);}
+  .container{max-width:1200px;margin:0 auto;padding:2rem;}
+  .stats-bar{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:2rem;}
+  .stat-chip{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:.6rem 1rem;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);}
+  .stat-chip span{color:var(--accent);margin-right:.4rem;}
+  .search-bar{margin-bottom:1.5rem;position:relative;}
+  .search-bar input{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 16px 10px 40px;border-radius:8px;outline:none;}
+  .search-bar input:focus{border-color:var(--accent);}
+  .search-bar::before{content:"⌕";position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;pointer-events:none;}
+  .filters{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.5rem;}
+  .filt-btn{background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:700;padding:5px 14px;border-radius:4px;cursor:pointer;letter-spacing:.08em;transition:all .15s;}
+  .filt-btn:hover,.filt-btn.active{background:rgba(0,229,160,.12);border-color:var(--accent);color:var(--accent);}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.25rem;}
+  .exp-card{background:var(--surface);border:1px solid var(--border2);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .2s,box-shadow .2s;}
+  .exp-card:hover{border-color:#2a3548;box-shadow:0 4px 24px rgba(0,0,0,.4);}
+  .exp-thumb{height:140px;overflow:hidden;flex-shrink:0;}
+  .exp-thumb img{width:100%;height:100%;object-fit:cover;}
+  .exp-thumb-empty{height:140px;flex-shrink:0;}
+  .exp-info{padding:1rem;display:flex;flex-direction:column;gap:.6rem;flex:1;}
+  .exp-tags{display:flex;flex-wrap:wrap;gap:.4rem;}
+  .exp-cat{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;border:1px solid;letter-spacing:.1em;text-transform:uppercase;}
+  .exp-paire{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border2);}
+  .exp-titre{font-size:14px;font-weight:700;color:var(--text);line-height:1.4;}
+  .exp-desc{font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .exp-meta{display:flex;gap:1rem;font-family:var(--mono);font-size:10px;color:#323d4d;margin-top:auto;}
+  .exp-card-preview{margin-top:.5rem;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);color:var(--accent);font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 12px;border-radius:4px;cursor:pointer;text-align:center;letter-spacing:.06em;transition:background .15s;}
+  .exp-card-preview:hover{background:rgba(0,229,160,.16);}
+  footer{text-align:center;padding:2rem;font-family:var(--mono);font-size:10px;color:#1c2430;letter-spacing:.1em;}
+  .no-results{grid-column:1/-1;padding:3rem;text-align:center;font-family:var(--mono);font-size:13px;color:#323d4d;}
+</style>
+</head>
+<body>
+<header>
+  <div class="hdr-inner">
+    <div class="hdr-logo">
+      <div class="hdr-hex">S</div>
+      <div>
+        <div class="hdr-name">S-M-F · RESEARCH HUB</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.15em;margin-top:1px;">SAUVEGARDE HORS-LIGNE</div>
+      </div>
+    </div>
+    <span class="hdr-badge">💾 ${totalStr} exporté${articles.length>1?"s":""}</span>
+    <span class="hdr-meta">Exporté le ${exportDate}</span>
+  </div>
+</header>
+<div class="container">
+  <div class="stats-bar">
+    <div class="stat-chip"><span>${articles.length}</span>Articles total</div>
+    ${Object.entries(counts).map(([k,v])=>`<div class="stat-chip"><span>${v}</span>${CAT_LABELS[k]||k}</div>`).join("")}
+  </div>
+  <div class="search-bar">
+    <input type="text" id="searchExp" placeholder="Rechercher un article..." oninput="filterCards()">
+  </div>
+  <div class="filters" id="filterBar">
+    <button class="filt-btn active" data-cat="tous" onclick="setFilt('tous',this)">Tous</button>
+    ${Object.entries(CAT_LABELS).filter(([k])=>k!=="tous"&&counts[k]).map(([k,v])=>`<button class="filt-btn" data-cat="${k}" onclick="setFilt('${k}',this)">${v} <span style="opacity:.6;font-size:9px;">${counts[k]||0}</span></button>`).join("")}
+  </div>
+  <div class="grid" id="expGrid">
+    ${cardsHTML}
+  </div>
+</div>
+<footer>SMF · Research Hub — Sauvegarde générée le ${exportDate} · ${totalStr}</footer>
+<script>
+  let activeFilt = "tous";
+  function setFilt(cat, btn){
+    activeFilt = cat;
+    document.querySelectorAll(".filt-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    filterCards();
+  }
+  function filterCards(){
+    const q = document.getElementById("searchExp").value.toLowerCase();
+    document.querySelectorAll(".exp-card").forEach(c=>{
+      const txt = c.textContent.toLowerCase();
+      const cat = c.dataset.cat||"";
+      const matchCat  = activeFilt==="tous" || cat===activeFilt;
+      const matchText = !q || txt.includes(q);
+      c.style.display = (matchCat && matchText) ? "" : "none";
+    });
+    const visible = [...document.querySelectorAll(".exp-card")].filter(c=>c.style.display!=="none");
+    let nr = document.getElementById("noResults");
+    if(!visible.length){
+      if(!nr){ nr=document.createElement("div"); nr.id="noResults"; nr.className="no-results"; nr.textContent="Aucun article trouvé."; document.getElementById("expGrid").appendChild(nr); }
+    } else { if(nr) nr.remove(); }
+  }
+  function openArticle(id){
+    const w=document.getElementById("art_"+id);
+    const btn=w.previousElementSibling;
+    if(w){ w.style.display="block"; if(btn) btn.style.display="none"; }
+  }
+  function closeArticle(id){
+    const w=document.getElementById("art_"+id);
+    const btn=w.previousElementSibling;
+    if(w){ w.style.display="none"; if(btn) btn.style.display="block"; }
+  }
+  // Injecter data-cat sur chaque carte
+  (function(){
+    const cats = ${JSON.stringify(articles.map(a=>a.cat||"tous"))};
+    const cards = document.querySelectorAll(".exp-card");
+    cards.forEach((c,i)=>{ if(cats[i]) c.dataset.cat = cats[i]; });
+  })();
+<\/script>
+</body>
+</html>`;
+
+    // 5. Télécharger
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0,10);
+    a.href     = url;
+    a.download = `SMF_Hub_Sauvegarde_${dateStr}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    status.style.color = "#00e5a0";
+    status.textContent = `✓ ${articles.length} article${articles.length>1?"s":""} exporté${articles.length>1?"s":""}`;
+    toast(`✓ Sauvegarde exportée — ${articles.length} article${articles.length>1?"s":""} !`);
+
+  } catch(err){
+    console.error("Export error:", err);
+    status.style.color = "#ff4d6d";
+    status.textContent = "✕ Erreur — " + (err.message || err);
+    toast("✕ Erreur export : " + (err.message || err), true);
+  } finally {
+    btn.disabled   = false;
+    btn.innerHTML  = "<span>⬇</span> Exporter en HTML";
+  }
+}
+
+// ── AUTHOR PROFILE MODAL ─────────────────────────────────────────────────────
+// Store current profile data for filter
+let _currentProfileData = null;
+
+async function openAuthorProfile(e, userId, displayName, username){
+  e.stopPropagation();
+  if(!displayName || displayName === "S·M·F") return;
+
+  _currentProfileData = { userId, displayName, username };
+
+  const overlay   = document.getElementById("authorProfileOverlay");
+  const apcName   = document.getElementById("apcName");
+  const apcUser   = document.getElementById("apcUsername");
+  const apcAv     = document.getElementById("apcAvatar");
+  const apcBio    = document.getElementById("apcBio");
+  const apcPosts  = document.getElementById("apcPostCount");
+  const apcCtry   = document.getElementById("apcCountry");
+
+  // Reset immédiat
+  apcName.textContent  = displayName;
+  apcUser.textContent  = username ? "@" + username : "";
+  apcBio.textContent   = "Chargement...";
+  apcBio.style.color   = "#323d4d";
+  apcBio.style.fontStyle = "italic";
+  apcPosts.textContent = "—";
+  apcCtry.textContent  = "—";
+
+  // Avatar — reset styles avant tout
+  apcAv.style.color       = "";
+  apcAv.style.borderColor = "";
+  const initials    = displayName.trim().split(/\s+/).map(w=>w[0]).join("").toUpperCase().slice(0,2);
+  const cachedPhoto = userPhotoCache[displayName] || userPhotoCache[username] || null;
+  if(cachedPhoto){
+    apcAv.innerHTML = `<img src="${cachedPhoto}" alt="${initials}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  } else {
+    apcAv.innerHTML     = initials;
+    apcAv.style.color   = "#00e5a0";
+    apcAv.style.borderColor = "rgba(0,229,160,.25)";
+  }
+
+  overlay.classList.add("open");
+
+  // Charger depuis Firestore
+  try{
+    let userData = null;
+    let isAdmin  = false;
+
+    // 1. Chercher dans users (guests)
+    if(userId){
+      const doc = await db.collection("users").doc(userId).get();
+      if(doc.exists) userData = doc.data();
+    }
+    if(!userData && username){
+      const snap = await db.collection("users").where("username","==",username.toLowerCase()).limit(1).get();
+      if(!snap.empty) userData = snap.docs[0].data();
+    }
+
+    // 2. Si pas trouvé → peut être un admin (stocké dans config/profiles)
+    if(!userData){
+      isAdmin = true;
+      const profilesDoc = await db.collection("config").doc("profiles").get();
+      if(profilesDoc.exists){
+        const profileKey = displayName; // ex: "SMF", "KGB"
+        const pd = profilesDoc.data()[profileKey] || null;
+        if(pd) userData = pd;
+      }
+    }
+
+    if(userData){
+      // Bio — chercher dans le doc + fallback config/profiles pour les guests
+      let bio = userData.bio || "";
+      if(!bio && !isAdmin && userId){
+        try{
+          const profilesDoc = await db.collection("config").doc("profiles").get();
+          if(profilesDoc.exists){
+            const pd = profilesDoc.data()["guest_" + userId] || {};
+            bio = pd.bio || "";
+          }
+        }catch(ex){}
+      }
+      apcBio.textContent     = bio || "Aucune bio renseignée.";
+      apcBio.style.color     = bio ? "#8a9ab0" : "#323d4d";
+      apcBio.style.fontStyle = bio ? "normal" : "italic";
+
+      // Photo — reset styles et afficher
+      const photo = userData.photoURL || null;
+      if(photo){
+        apcAv.style.color       = "";
+        apcAv.style.borderColor = "";
+        apcAv.innerHTML = `<img src="${photo}" alt="${initials}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        // Mettre à jour le cache local
+        userPhotoCache[displayName] = photo;
+        if(username) userPhotoCache[username] = photo;
+      }
+
+      // Pays (flag emoji)
+      const country = userData.country || null;
+      if(country){
+        const code = country.toUpperCase().slice(0,2);
+        if(/^[A-Z]{2}$/.test(code)){
+          const flag = [...code].map(c=>String.fromCodePoint(0x1F1E6+c.charCodeAt(0)-65)).join("");
+          apcCtry.textContent = flag;
+        }
+      }
+    }
+
+    // Compter les posts
+    const postCount = arts.filter(a=>{
+      if(userId && a.submittedById === userId) return true;
+      if(username && a.submittedByUsername === username) return true;
+      if(a.submittedBy === displayName) return true;
+      return false;
+    }).length;
+    apcPosts.textContent = postCount || "0";
+
+  }catch(ex){
+    console.warn("openAuthorProfile:", ex);
+    apcBio.textContent = "Profil indisponible.";
+  }
+}
+
+function filterByCurrentAuthor(){
+  if(!_currentProfileData) return;
+  authorFilter = { ..._currentProfileData };
+  closeAuthorProfile();
+  // Mettre à jour le banner
+  const banner = document.getElementById("authorFilterBanner");
+  const label  = document.getElementById("authorFilterLabel");
+  label.textContent = `🔍 Posts de : ${authorFilter.displayName}`;
+  banner.classList.add("on");
+  renderGrid();
+  // Scroll vers le haut
+  document.getElementById("articlesGrid").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
+function clearAuthorFilter(){
+  authorFilter = null;
+  document.getElementById("authorFilterBanner").classList.remove("on");
+  renderGrid();
+}
+
+function closeAuthorProfile(){
+  document.getElementById("authorProfileOverlay").classList.remove("open");
+}
+
 </script>
 </body>
 </html>
