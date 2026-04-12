@@ -914,6 +914,7 @@
   <!-- Firebase compat (global SDK) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -1147,126 +1148,324 @@
 
 
 <!-- ====== ÉCRAN D'ACCÈS ====== -->
-<div id="gateScreen" style="position:fixed;inset:0;background:#02040a;z-index:1000;display:flex;align-items:center;justify-content:center;padding:2rem;">
-  <div class="gate-card" style="width:100%;max-width:420px;background:#060a0f;border:1px solid #1c2430;border-radius:12px;overflow:hidden;animation:up .3s ease,gateGlow 3.5s ease-in-out .4s infinite;">
-    <!-- Logo -->
-    <div style="padding:2rem 2rem 1rem;text-align:center;border-bottom:1px solid #131820;">
-      <div class="gate-hex" style="width:48px;height:48px;background:#00e5a0;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:16px;font-weight:700;color:#000;box-shadow:0 0 12px rgba(0,229,160,.6),0 0 30px rgba(0,229,160,.25);animation:hexGatePulse 2.5s ease-in-out infinite;">S</div>
-      <div class="gate-title" style="font-size:18px;font-weight:800;color:#00e5a0;letter-spacing:.06em;white-space:nowrap;font-family:var(--mono);animation:titleFlicker 6s ease-in-out infinite;">SMART FINANCE RESEARCH</div>
-      <div style="font-family:var(--mono);font-size:10px;color:#5a6578;letter-spacing:.2em;margin-top:4px;text-transform:uppercase;">Accès privé</div>
+<!-- ====== LANDING PAGE ====== -->
+<div id="gateScreen" style="position:fixed;inset:0;background:#02040a;z-index:1000;overflow-y:auto;display:flex;flex-direction:column;">
+
+  <!-- CSS landing spécifique -->
+  <style>
+    #gateScreen *{box-sizing:border-box;}
+    .lp-nav{position:sticky;top:0;z-index:50;background:rgba(2,4,10,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,229,160,.08);padding:0 2.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;}
+    .lp-logo{display:flex;align-items:center;gap:.65rem;text-decoration:none;}
+    .lp-logo-hex{width:34px;height:34px;background:#00e5a0;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700;color:#000;box-shadow:0 0 12px rgba(0,229,160,.5);}
+    .lp-logo-text{font-family:var(--mono);font-size:13px;font-weight:700;color:#d0dae8;letter-spacing:.06em;}
+    .lp-logo-text span{color:#00e5a0;}
+    .lp-nav-right{display:flex;align-items:center;gap:.75rem;}
+    .lp-btn-ghost{background:transparent;border:1px solid rgba(0,229,160,.3);color:#00e5a0;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 20px;border-radius:5px;cursor:pointer;letter-spacing:.08em;transition:all .2s;}
+    .lp-btn-ghost:hover{background:rgba(0,229,160,.08);border-color:#00e5a0;box-shadow:0 0 16px rgba(0,229,160,.2);}
+    .lp-btn-solid{background:#00e5a0;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 22px;border-radius:5px;cursor:pointer;letter-spacing:.08em;transition:all .2s;box-shadow:0 0 16px rgba(0,229,160,.3);}
+    .lp-btn-solid:hover{background:#00ffa8;box-shadow:0 0 28px rgba(0,229,160,.5);transform:translateY(-1px);}
+
+    /* Hero */
+    .lp-hero{min-height:92vh;display:flex;align-items:center;justify-content:center;padding:5rem 2.5rem 4rem;position:relative;overflow:hidden;}
+    .lp-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,229,160,.07) 0%,transparent 70%);}
+    .lp-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:80px;background:linear-gradient(to bottom,transparent,#02040a);}
+    .lp-hero-inner{max-width:860px;width:100%;text-align:center;position:relative;z-index:1;}
+    .lp-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);border-radius:20px;padding:5px 14px;font-family:var(--mono);font-size:10px;color:#00e5a0;letter-spacing:.12em;margin-bottom:2rem;animation:fadeIn .6s ease both;}
+    .lp-badge-dot{width:6px;height:6px;border-radius:50%;background:#00e5a0;box-shadow:0 0 6px #00e5a0;animation:blink 1.8s ease-in-out infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    .lp-h1{font-family:var(--sans);font-size:clamp(2.2rem,5.5vw,4rem);font-weight:800;line-height:1.1;color:#d0dae8;margin-bottom:1.5rem;animation:fadeInUp .7s .1s ease both;}
+    .lp-h1 em{font-style:normal;color:#00e5a0;position:relative;}
+    .lp-h1 em::after{content:'';position:absolute;bottom:-3px;left:0;right:0;height:2px;background:#00e5a0;box-shadow:0 0 8px #00e5a0;border-radius:2px;}
+    .lp-desc{font-family:var(--mono);font-size:14px;color:#5a6578;line-height:1.8;max-width:580px;margin:0 auto 2.5rem;animation:fadeInUp .7s .2s ease both;}
+    .lp-cta-row{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;animation:fadeInUp .7s .3s ease both;}
+    .lp-cta-main{background:#00e5a0;border:none;color:#000;font-family:var(--mono);font-size:13px;font-weight:700;padding:14px 32px;border-radius:6px;cursor:pointer;letter-spacing:.08em;transition:all .2s;box-shadow:0 0 24px rgba(0,229,160,.35);}
+    .lp-cta-main:hover{background:#00ffa8;box-shadow:0 0 40px rgba(0,229,160,.6);transform:translateY(-2px);}
+    .lp-cta-sec{background:transparent;border:1px solid rgba(0,229,160,.25);color:#00e5a0;font-family:var(--mono);font-size:13px;font-weight:700;padding:14px 32px;border-radius:6px;cursor:pointer;letter-spacing:.08em;transition:all .2s;}
+    .lp-cta-sec:hover{background:rgba(0,229,160,.07);border-color:#00e5a0;}
+    .lp-stats{display:flex;gap:3rem;justify-content:center;margin-top:3.5rem;flex-wrap:wrap;animation:fadeInUp .7s .4s ease both;}
+    .lp-stat-n{font-family:var(--mono);font-size:28px;font-weight:700;color:#00e5a0;}
+    .lp-stat-l{font-family:var(--mono);font-size:10px;color:#5a6578;letter-spacing:.1em;text-transform:uppercase;margin-top:2px;}
+
+    /* Sections */
+    .lp-section{padding:5rem 2.5rem;max-width:1100px;margin:0 auto;width:100%;}
+    .lp-section-label{font-family:var(--mono);font-size:10px;color:#00e5a0;letter-spacing:.18em;text-transform:uppercase;margin-bottom:.75rem;}
+    .lp-section-title{font-family:var(--sans);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;color:#d0dae8;line-height:1.2;margin-bottom:1rem;}
+    .lp-section-sub{font-family:var(--mono);font-size:13px;color:#5a6578;line-height:1.8;max-width:540px;}
+
+    /* Features grid */
+    .lp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin-top:3rem;}
+    .lp-card{background:#060a0f;border:1px solid #131820;border-radius:10px;padding:1.75rem;transition:all .3s;position:relative;overflow:hidden;}
+    .lp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--card-c,#00e5a0),transparent);opacity:0;transition:opacity .3s;}
+    .lp-card:hover{border-color:rgba(0,229,160,.2);background:#070c12;transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.4);}
+    .lp-card:hover::before{opacity:1;}
+    .lp-card-icon{font-size:28px;margin-bottom:1rem;}
+    .lp-card-title{font-family:var(--mono);font-size:13px;font-weight:700;color:#d0dae8;margin-bottom:.6rem;letter-spacing:.04em;}
+    .lp-card-text{font-family:var(--mono);font-size:11px;color:#5a6578;line-height:1.7;}
+
+    /* Footer */
+    .lp-footer{border-top:1px solid #131820;padding:2rem 2.5rem;text-align:center;font-family:var(--mono);font-size:10px;color:#323d4d;letter-spacing:.08em;}
+
+    /* Modale auth */
+    .lp-modal-ov{position:fixed;inset:0;background:rgba(2,4,10,.75);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:2rem;}
+    .lp-modal-ov.open{display:flex;}
+    .lp-modal{width:100%;max-width:500px;background:#060a0f;border:1px solid #1c2430;border-radius:14px;overflow:hidden;animation:fadeInUp .3s ease;max-height:90vh;overflow-y:auto;}
+    .lp-modal-head{padding:1.5rem 1.75rem 1.25rem;border-bottom:1px solid #131820;display:flex;align-items:center;justify-content:space-between;}
+    .lp-modal-logo{display:flex;align-items:center;gap:.6rem;}
+    .lp-modal-logo-hex{width:28px;height:28px;background:#00e5a0;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700;color:#000;}
+    .lp-modal-logo-text{font-family:var(--mono);font-size:12px;font-weight:700;color:#5a6578;letter-spacing:.06em;}
+    .lp-modal-close{background:transparent;border:none;color:#5a6578;font-size:18px;cursor:pointer;line-height:1;padding:4px 8px;border-radius:4px;transition:color .2s;}
+    .lp-modal-close:hover{color:#d0dae8;}
+    .lp-modal-tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #131820;}
+    .lp-modal-tab{background:transparent;border:none;color:#5a6578;font-family:var(--mono);font-size:11px;font-weight:700;padding:12px;cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.08em;transition:all .2s;}
+    .lp-modal-tab.active{color:#00e5a0;border-bottom-color:#00e5a0;background:rgba(0,229,160,.03);}
+    .lp-modal-body{padding:1.75rem;}
+    .lp-field{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem;}
+    .lp-field label{font-family:var(--mono);font-size:9px;color:#5a6578;letter-spacing:.14em;text-transform:uppercase;}
+    .lp-field input,.lp-field select{background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:10px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;}
+    .lp-field input:focus,.lp-field select:focus{border-color:#00e5a0;box-shadow:0 0 0 3px rgba(0,229,160,.08);}
+    .lp-field input::placeholder{color:#323d4d;}
+    .lp-grid2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+    @media(max-width:480px){.lp-grid2{grid-template-columns:1fr;}}
+
+    /* Scrollbar landing */
+    #gateScreen::-webkit-scrollbar{width:4px;}
+    #gateScreen::-webkit-scrollbar-track{background:#02040a;}
+    #gateScreen::-webkit-scrollbar-thumb{background:#131820;border-radius:2px;}
+    @media(max-width:640px){
+      .lp-nav{padding:0 1.25rem;}
+      .lp-nav-right .lp-btn-ghost{display:none;}
+      .lp-hero{padding:4rem 1.25rem 3rem;}
+      .lp-section{padding:3.5rem 1.25rem;}
+      .lp-stats{gap:1.75rem;}
+      .lp-modal-body{padding:1.25rem;}
+    }
+  </style>
+
+  <!-- ── NAVBAR ── -->
+  <nav class="lp-nav">
+    <div class="lp-logo">
+      <div class="lp-logo-hex">S</div>
+      <div class="lp-logo-text"><span>SMF</span> Research Hub</div>
     </div>
-    <!-- Onglets -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #131820;">
-      <button id="tabLogin" onclick="switchTab('login')" style="background:#060a0f;border:none;color:#00e5a0;font-family:var(--mono);font-size:11px;font-weight:700;padding:12px;cursor:pointer;border-bottom:2px solid #00e5a0;letter-spacing:.08em;">CONNEXION</button>
-      <button id="tabRegister" onclick="switchTab('register')" style="background:transparent;border:none;color:#5a6578;font-family:var(--mono);font-size:11px;font-weight:700;padding:12px;cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.08em;">INSCRIPTION</button>
+    <div class="lp-nav-right">
+      <button class="lp-btn-ghost" onclick="openAuthModal('login')">Se connecter</button>
+      <button class="lp-btn-solid" onclick="openAuthModal('register')">S'inscrire</button>
     </div>
-    <!-- Connexion -->
-    <div id="panelLogin" style="padding:1.75rem;display:flex;flex-direction:column;gap:1rem;">
-      <div class="field">
-        <label>Identifiant admin, Email ou Username</label>
-        <input type="text" id="lUser" placeholder="SMF  ou  email@…  ou  username" autocomplete="username" oninput="checkLoginContactBtn()">
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="lp-hero">
+    <div class="lp-hero-inner">
+      <div class="lp-badge"><span class="lp-badge-dot"></span>Plateforme privée · Accès sur invitation</div>
+      <h1 class="lp-h1">L'analyse financière<br>réservée aux <em>vrais traders</em></h1>
+      <p class="lp-desc">Accédez à des analyses hebdomadaires, des décisions de banques centrales, des récapitulatifs mensuels et bien plus — publiés exclusivement pour notre communauté.</p>
+      <div class="lp-cta-row">
+        <button class="lp-cta-main" onclick="openAuthModal('register')">✦ Rejoindre le Hub</button>
+        <button class="lp-cta-sec"  onclick="openAuthModal('login')">→ Me connecter</button>
       </div>
-      <div class="field">
-        <label>Mot de passe</label>
-        <input type="password" id="lPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <div id="loginErr" style="display:none;font-family:var(--mono);font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);border-radius:4px;"></div>
-      <button class="btn-submit" onclick="doLogin()" style="margin-top:.25rem;">→ Accéder au Hub</button>
-      <div id="loginContactWrap" style="display:none;text-align:center;margin-top:.25rem;">
-        <button onclick="openContactAdmin()" style="background:transparent;border:1px solid rgba(255,77,109,.35);color:#ff4d6d;font-family:var(--mono);font-size:10px;font-weight:700;padding:8px 18px;border-radius:5px;cursor:pointer;letter-spacing:.08em;width:100%;transition:all .2s;" onmouseover="this.style.background='rgba(255,77,109,.08)'" onmouseout="this.style.background='transparent'">
-          💬 Problème de connexion ? Contacter l'admin
-        </button>
+      <div class="lp-stats">
+        <div><div class="lp-stat-n">100%</div><div class="lp-stat-l">Analyses originales</div></div>
+        <div><div class="lp-stat-n">7j/7</div><div class="lp-stat-l">Contenu mis à jour</div></div>
+        <div><div class="lp-stat-n">Privé</div><div class="lp-stat-l">Accès restreint</div></div>
       </div>
     </div>
-    <!-- Inscription invité -->
-    <div id="panelRegister" style="display:none;padding:1.75rem;flex-direction:column;gap:.85rem;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
-        <div class="field">
-          <label>Nom *</label>
-          <input type="text" id="rNom" placeholder="Nom de famille" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+  </section>
+
+  <!-- ── FEATURES ── -->
+  <section style="background:linear-gradient(180deg,#02040a 0%,#040810 100%);border-top:1px solid #0d1420;border-bottom:1px solid #0d1420;">
+    <div class="lp-section">
+      <div style="max-width:480px;margin-bottom:3rem;">
+        <div class="lp-section-label">Ce que vous obtenez</div>
+        <div class="lp-section-title">Tout ce dont un trader a besoin, au même endroit</div>
+        <div class="lp-section-sub">Des contenus structurés, mis à jour régulièrement par l'équipe SMF Research.</div>
+      </div>
+      <div class="lp-grid">
+        <div class="lp-card" style="--card-c:#00e5a0">
+          <div class="lp-card-icon">📊</div>
+          <div class="lp-card-title">Analyses Hebdomadaires</div>
+          <div class="lp-card-text">Chaque semaine, une lecture complète des marchés financiers avec les niveaux clés à surveiller.</div>
         </div>
-        <div class="field">
-          <label>Prénom *</label>
-          <input type="text" id="rPrenom" placeholder="Prénom" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+        <div class="lp-card" style="--card-c:#f7b731">
+          <div class="lp-card-icon">🏦</div>
+          <div class="lp-card-title">Décisions Banques Centrales</div>
+          <div class="lp-card-text">Décryptage des annonces de la Fed, BCE, et autres banques centrales avec l'impact attendu sur les actifs.</div>
+        </div>
+        <div class="lp-card" style="--card-c:#0ff">
+          <div class="lp-card-icon">📅</div>
+          <div class="lp-card-title">Récapitulatifs Mensuels</div>
+          <div class="lp-card-text">Un bilan complet à la fin de chaque mois : performances, tendances et perspectives pour le mois suivant.</div>
+        </div>
+        <div class="lp-card" style="--card-c:#00e5a0">
+          <div class="lp-card-icon">🎯</div>
+          <div class="lp-card-title">Trades des Admins</div>
+          <div class="lp-card-text">Suivez en temps réel les positions prises par l'équipe SMF avec les niveaux d'entrée, cibles et stops.</div>
+        </div>
+        <div class="lp-card" style="--card-c:#f7b731">
+          <div class="lp-card-icon">🔭</div>
+          <div class="lp-card-title">Week Ahead</div>
+          <div class="lp-card-text">Chaque dimanche, un aperçu des événements économiques majeurs et des opportunités de la semaine à venir.</div>
+        </div>
+        <div class="lp-card" style="--card-c:#0ff">
+          <div class="lp-card-icon">🔒</div>
+          <div class="lp-card-title">Contenu Exclusif</div>
+          <div class="lp-card-text">Accès restreint aux membres validés uniquement. Qualité garantie, sans bruit de fond.</div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
-        <div class="field">
-          <label>Date de naissance *</label>
-          <input type="date" id="rDob" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
-        </div>
-        <div class="field">
-          <label>Username *</label>
-          <input type="text" id="rUsername" placeholder="Nom d'utilisateur" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
-        </div>
+    </div>
+  </section>
+
+  <!-- ── CTA FINAL ── -->
+  <section>
+    <div class="lp-section" style="text-align:center;">
+      <div class="lp-section-label" style="text-align:center;">Prêt à commencer ?</div>
+      <div class="lp-section-title" style="max-width:500px;margin:0 auto 1rem;">Rejoignez la communauté SMF Research</div>
+      <div style="font-family:var(--mono);font-size:12px;color:#5a6578;margin-bottom:2rem;line-height:1.7;">Créez votre compte en moins de 2 minutes.<br>Vérification email requise.</div>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+        <button class="lp-cta-main" onclick="openAuthModal('register')">✦ Créer mon compte</button>
+        <button class="lp-cta-sec" onclick="openAuthModal('login')">→ J'ai déjà un compte</button>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
-        <div class="field">
-          <label>Email *</label>
-          <input type="email" id="rEmail" placeholder="Adresse e-mail" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="lp-footer">
+    © 2025 SMF Research Hub · Plateforme privée · Tous droits réservés
+  </footer>
+
+  <!-- ── MODALE AUTH (connexion / inscription) ── -->
+  <div class="lp-modal-ov" id="authModal">
+    <div class="lp-modal">
+      <div class="lp-modal-head">
+        <div class="lp-modal-logo">
+          <div class="lp-modal-logo-hex">S</div>
+          <div class="lp-modal-logo-text">SMF Research Hub</div>
         </div>
-        <div class="field">
-          <label>Pays *</label>
-          <select id="rCountry" onchange="onCountryChange()" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;cursor:pointer;appearance:none;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
-            <option value="" disabled selected>Sélectionner un pays</option>
-          </select>
-        </div>
+        <button class="lp-modal-close" onclick="closeAuthModal()">✕</button>
       </div>
-      <div class="field" style="margin-top:0;">
-        <label>Téléphone *</label>
-        <div style="display:flex;gap:.5rem;align-items:stretch;">
-          <div id="rDialCode" style="background:#0b1018;border:1px solid #1c2430;color:#00e5a0;font-family:var(--mono);font-size:13px;font-weight:700;padding:9px 14px;border-radius:5px;white-space:nowrap;min-width:72px;text-align:center;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;">+—</div>
-          <input type="tel" id="rPhone" placeholder="Numéro de téléphone" oninput="formatPhoneInput()" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;flex:1;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
-        </div>
+      <div class="lp-modal-tabs">
+        <button class="lp-modal-tab active" id="tabLogin" onclick="switchTab('login')">CONNEXION</button>
+        <button class="lp-modal-tab" id="tabRegister" onclick="switchTab('register')">INSCRIPTION</button>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
-        <div class="field">
-          <label>Mot de passe *</label>
-          <input type="password" id="rPass" placeholder="Mot de passe" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+      <div class="lp-modal-body">
+
+        <!-- PANEL CONNEXION -->
+        <div id="panelLogin" style="display:flex;flex-direction:column;gap:.85rem;">
+          <div class="lp-field">
+            <label>Email, Username ou Identifiant admin</label>
+            <input type="text" id="lUser" placeholder="SMF · email@… · username" autocomplete="username" oninput="checkLoginContactBtn()">
+          </div>
+          <div class="lp-field">
+            <label>Mot de passe</label>
+            <input type="password" id="lPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+          </div>
+          <div id="loginErr" style="display:none;font-family:var(--mono);font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);border-radius:4px;"></div>
+          <button class="btn-submit" onclick="doLogin()" style="margin-top:.25rem;">→ Accéder au Hub</button>
+          <div id="loginContactWrap" style="display:none;">
+            <button onclick="openContactAdmin()" style="background:transparent;border:1px solid rgba(255,77,109,.35);color:#ff4d6d;font-family:var(--mono);font-size:10px;font-weight:700;padding:8px 18px;border-radius:5px;cursor:pointer;letter-spacing:.08em;width:100%;transition:all .2s;" onmouseover="this.style.background='rgba(255,77,109,.08)'" onmouseout="this.style.background='transparent'">
+              💬 Problème de connexion ? Contacter l'admin
+            </button>
+          </div>
         </div>
-        <div class="field">
-          <label>Confirmer *</label>
-          <input type="password" id="rPass2" placeholder="Confirmer le mot de passe">
+
+        <!-- PANEL INSCRIPTION -->
+        <div id="panelRegister" style="display:none;flex-direction:column;gap:.75rem;">
+          <div class="lp-grid2">
+            <div class="lp-field"><label>Nom *</label><input type="text" id="rNom" placeholder="Nom de famille"></div>
+            <div class="lp-field"><label>Prénom *</label><input type="text" id="rPrenom" placeholder="Prénom"></div>
+          </div>
+          <div class="lp-grid2">
+            <div class="lp-field"><label>Date de naissance *</label><input type="date" id="rDob"></div>
+            <div class="lp-field"><label>Username *</label><input type="text" id="rUsername" placeholder="Nom d'utilisateur"></div>
+          </div>
+          <div class="lp-grid2">
+            <div class="lp-field"><label>Email *</label><input type="email" id="rEmail" placeholder="Adresse e-mail"></div>
+            <div class="lp-field">
+              <label>Pays *</label>
+              <select id="rCountry" onchange="onCountryChange()" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:10px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;cursor:pointer;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+                <option value="" disabled selected>Sélectionner un pays</option>
+              </select>
+            </div>
+          </div>
+          <div class="lp-field">
+            <label>Téléphone *</label>
+            <div style="display:flex;gap:.5rem;">
+              <div id="rDialCode" style="background:#0b1018;border:1px solid #1c2430;color:#00e5a0;font-family:var(--mono);font-size:13px;font-weight:700;padding:10px 14px;border-radius:5px;white-space:nowrap;min-width:72px;text-align:center;display:flex;align-items:center;justify-content:center;">+—</div>
+              <input type="tel" id="rPhone" placeholder="Numéro de téléphone" oninput="formatPhoneInput()" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:13px;padding:10px 12px;border-radius:5px;outline:none;flex:1;transition:border-color .2s;" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+            </div>
+          </div>
+          <div class="lp-grid2">
+            <div class="lp-field"><label>Mot de passe *</label><input type="password" id="rPass" placeholder="Min. 6 caractères"></div>
+            <div class="lp-field"><label>Confirmer *</label><input type="password" id="rPass2" placeholder="Répéter le mot de passe"></div>
+          </div>
+          <div id="registerErr" style="display:none;font-family:var(--mono);font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);border-radius:4px;"></div>
+          <button class="btn-submit" onclick="doRegister()" style="margin-top:.25rem;">✦ Créer mon compte</button>
+          <div id="registerContactWrap" style="display:none;">
+            <button onclick="openContactAdmin()" style="background:transparent;border:1px solid rgba(255,77,109,.35);color:#ff4d6d;font-family:var(--mono);font-size:10px;font-weight:700;padding:8px 18px;border-radius:5px;cursor:pointer;letter-spacing:.08em;width:100%;transition:all .2s;" onmouseover="this.style.background='rgba(255,77,109,.08)'" onmouseout="this.style.background='transparent'">
+              💬 Problème d'inscription ? Contacter l'admin
+            </button>
+          </div>
         </div>
-      </div>
-      <div id="registerErr" style="display:none;font-family:var(--mono);font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);border-radius:4px;"></div>
-      <button class="btn-submit" onclick="doRegister()" style="margin-top:.25rem;">✦ Créer mon compte</button>
-      <div id="registerContactWrap" style="display:none;text-align:center;margin-top:.25rem;">
-        <button onclick="openContactAdmin()" style="background:transparent;border:1px solid rgba(255,77,109,.35);color:#ff4d6d;font-family:var(--mono);font-size:10px;font-weight:700;padding:8px 18px;border-radius:5px;cursor:pointer;letter-spacing:.08em;width:100%;transition:all .2s;" onmouseover="this.style.background='rgba(255,77,109,.08)'" onmouseout="this.style.background='transparent'">
-          💬 Problème d'inscription ? Contacter l'admin
-        </button>
+
       </div>
     </div>
   </div>
+
 </div>
 
-<!-- ====== ÉCRAN OTP ====== -->
+<!-- ====== ÉCRAN VÉRIFICATION EMAIL ====== -->
 <div id="otpScreen" style="position:fixed;inset:0;background:#02040a;z-index:1001;display:none;align-items:center;justify-content:center;padding:2rem;">
-  <div style="width:100%;max-width:400px;background:#060a0f;border:1px solid #1c2430;border-radius:12px;overflow:hidden;animation:up .3s ease;">
+  <div style="width:100%;max-width:440px;background:#060a0f;border:1px solid #1c2430;border-radius:12px;overflow:hidden;animation:up .3s ease;">
     <div style="padding:2rem;text-align:center;border-bottom:1px solid #131820;">
-      <div style="font-size:32px;margin-bottom:.75rem;">📧</div>
+      <div style="font-size:40px;margin-bottom:.75rem;">📧</div>
       <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:#00e5a0;letter-spacing:.08em;">VÉRIFICATION EMAIL</div>
-      <div style="font-family:var(--mono);font-size:10px;color:#5a6578;margin-top:6px;" id="otpSubtitle">Un code à 6 chiffres a été envoyé à votre email</div>
+      <div style="font-family:var(--mono);font-size:11px;color:#5a6578;margin-top:8px;line-height:1.6;" id="otpSubtitle">
+        Un lien de confirmation a été envoyé à votre adresse e-mail.<br>
+        Cliquez sur ce lien pour activer votre compte.
+      </div>
     </div>
-    <div style="padding:1.75rem;display:flex;flex-direction:column;gap:1rem;">
-      <div class="field">
-        <label>Code de vérification</label>
-        <input type="text" id="otpInput" maxlength="6" placeholder="000000"
-          style="background:#0b1018;border:1px solid #1c2430;color:#00e5a0;font-family:var(--mono);font-size:28px;font-weight:700;padding:12px;border-radius:5px;outline:none;width:100%;text-align:center;letter-spacing:.4em;transition:border-color .2s;"
-          onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'"
-          oninput="this.value=this.value.replace(/[^0-9]/g,'')"
-          onkeydown="if(event.key==='Enter')verifyOtp()">
-      </div>
+    <div style="padding:1.75rem;display:flex;flex-direction:column;gap:.85rem;">
       <div id="otpErr" style="display:none;font-family:var(--mono);font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);border-radius:4px;"></div>
-      <button class="btn-submit" onclick="verifyOtp()" id="otpBtn">✓ Confirmer le code</button>
-      <div style="text-align:center;">
-        <button onclick="resendOtp()" id="resendBtn" style="background:transparent;border:none;color:#5a6578;font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.05em;transition:color .2s;" onmouseover="this.style.color='#00e5a0'" onmouseout="this.style.color='#5a6578'">↺ Renvoyer le code</button>
-      </div>
+      <div id="otpOk"  style="display:none;font-family:var(--mono);font-size:11px;color:#00e5a0;padding:8px 12px;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);border-radius:4px;"></div>
+      <button class="btn-submit" onclick="checkEmailVerified()" id="otpBtn">✓ J'ai confirmé mon e-mail</button>
+      <button onclick="resendOtp()" id="resendBtn"
+        style="background:transparent;border:1px solid #1c2430;color:#5a6578;font-family:var(--mono);font-size:11px;font-weight:700;padding:10px;border-radius:5px;cursor:pointer;letter-spacing:.05em;transition:all .2s;width:100%;"
+        onmouseover="this.style.borderColor='#00e5a0';this.style.color='#00e5a0'"
+        onmouseout="this.style.borderColor='#1c2430';this.style.color='#5a6578'">⟳ Renvoyer le lien</button>
+      <button onclick="document.getElementById('otpScreen').style.display='none';document.getElementById('gateScreen').style.display='flex';"
+        style="background:transparent;border:none;color:#5a6578;font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.05em;text-align:center;transition:color .2s;"
+        onmouseover="this.style.color='#d0dae8'" onmouseout="this.style.color='#5a6578'">← Retour à la connexion</button>
     </div>
   </div>
 </div>
 
 <!-- ====== PANNEAU ADMIN ====== -->
+<!-- ====== ÉCRAN COUPON D'ACTIVATION ====== -->
+<div id="couponScreen" style="position:fixed;inset:0;background:#02040a;z-index:1002;display:none;align-items:center;justify-content:center;padding:2rem;">
+  <div style="width:100%;max-width:420px;background:#060a0f;border:1px solid rgba(247,183,49,.3);border-radius:12px;overflow:hidden;animation:up .3s ease;">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#f7b731,transparent);border-radius:10px 10px 0 0;"></div>
+    <div style="padding:2rem;text-align:center;border-bottom:1px solid #131820;">
+      <div style="font-size:36px;margin-bottom:.75rem;">🎟</div>
+      <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:#f7b731;letter-spacing:.08em;">CODE D'ACTIVATION</div>
+      <div id="couponExpiredMsg" style="font-family:var(--mono);font-size:10px;color:#5a6578;margin-top:8px;">⏱ Votre période d'essai est terminée.</div>
+    </div>
+    <div style="padding:1.75rem;display:flex;flex-direction:column;gap:.85rem;">
+      <input type="text" id="couponInput" maxlength="7" placeholder="XXXXXX0" autocomplete="off"
+        style="background:#0b1018;border:1px solid rgba(247,183,49,.25);color:#f7b731;font-family:var(--mono);font-size:24px;font-weight:700;padding:12px;border-radius:5px;outline:none;width:100%;text-align:center;letter-spacing:.3em;text-transform:uppercase;transition:border-color .2s;"
+        onfocus="this.style.borderColor='#f7b731'" onblur="this.style.borderColor='rgba(247,183,49,.25)'"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')submitCoupon()">
+      <div id="couponErr" style="display:none;font-family:var(--mono);font-size:11px;color:var(--red);padding:8px 12px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);border-radius:4px;"></div>
+      <div id="couponOk"  style="display:none;font-family:var(--mono);font-size:11px;color:#00e5a0;padding:8px 12px;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);border-radius:4px;"></div>
+      <button class="btn-submit" id="btnCoupon" onclick="submitCoupon()">🎟 Activer le code</button>
+      <button onclick="doLogout()"
+        style="background:transparent;border:none;color:#5a6578;font-family:var(--mono);font-size:10px;cursor:pointer;text-align:center;transition:color .2s;letter-spacing:.05em;"
+        onmouseover="this.style.color='#d0dae8'" onmouseout="this.style.color='#5a6578'">⏻ Se déconnecter</button>
+    </div>
+  </div>
+</div>
+
 <div id="adminPanel" style="position:fixed;inset:0;background:rgba(8,12,16,.97);backdrop-filter:blur(12px);z-index:300;display:none;align-items:flex-start;justify-content:center;padding:2rem;overflow-y:auto;">
   <div style="width:100%;max-width:700px;margin:auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
@@ -1311,14 +1510,57 @@
       </div>
     </div>
 
-    <!-- Durée d'accès par défaut -->
+    <!-- Durée d'accès par défaut (essai) -->
     <div style="background:#060a0f;border:1px solid #1c2430;border-radius:10px;padding:1.25rem;margin-bottom:1rem;">
-      <div style="font-family:var(--mono);font-size:11px;color:#00e5a0;letter-spacing:.15em;margin-bottom:.4rem;">⏱ DURÉE D'ACCÈS PAR DÉFAUT</div>
-      <div style="font-family:var(--mono);font-size:10px;color:#5a6578;margin-bottom:.85rem;">Appliquée automatiquement aux nouveaux inscrits. Chaque invité peut avoir sa propre durée depuis sa fiche.</div>
-      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-        <input type="number" id="defaultAccessDays" min="1" max="3650" value="30" style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:14px;padding:8px 12px;border-radius:5px;outline:none;width:110px;">
-        <span style="font-family:var(--mono);font-size:11px;color:#5a6578;">jours d'accès après inscription</span>
+      <div style="font-family:var(--mono);font-size:11px;color:#00e5a0;letter-spacing:.15em;margin-bottom:.4rem;">⏱ DURÉE D'ESSAI PAR DÉFAUT</div>
+      <div style="font-family:var(--mono);font-size:10px;color:#5a6578;margin-bottom:.85rem;">
+        Période d'accès gratuite après vérification email. <b style="color:#f7b731;">0 = coupon obligatoire dès l'inscription</b>, aucun essai gratuit.
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.6rem;">
+        <input type="number" id="defaultAccessDays" min="0" max="3650" value="30"
+          style="background:#0b1018;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:14px;font-weight:700;padding:8px 12px;border-radius:5px;outline:none;width:100px;transition:border-color .2s;"
+          oninput="updateTrialPreview()" onfocus="this.style.borderColor='#00e5a0'" onblur="this.style.borderColor='#1c2430'">
+        <span style="font-family:var(--mono);font-size:11px;color:#5a6578;">jours d'essai (0 = coupon requis)</span>
         <button onclick="saveDefaultAccess()" style="background:#00e5a0;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 16px;border-radius:4px;cursor:pointer;margin-left:auto;">💾 Sauvegarder</button>
+      </div>
+      <div id="trialPreview" style="font-family:var(--mono);font-size:10px;padding:7px 10px;border-radius:5px;background:#0b1018;border:1px solid #1c2430;color:#5a6578;transition:all .2s;">
+        Essai de 30 jours pour chaque nouvel inscrit
+      </div>
+    </div>
+
+    <!-- Gestion des coupons -->
+    <div style="background:#060a0f;border:1px solid rgba(247,183,49,.2);border-radius:10px;padding:1.25rem;margin-bottom:1rem;">
+      <div style="font-family:var(--mono);font-size:11px;color:#f7b731;letter-spacing:.15em;margin-bottom:1rem;">🎟 CODES D'ACTIVATION (COUPONS)</div>
+
+      <!-- Générer un coupon -->
+      <div style="background:#0b1018;border:1px solid #1c2430;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+        <div style="font-family:var(--mono);font-size:10px;color:#5a6578;letter-spacing:.1em;margin-bottom:.75rem;">⚡ GÉNÉRER UN NOUVEAU COUPON</div>
+        <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:.75rem;">
+          <input type="number" id="adminCouponDuration" min="1" value="3" placeholder="3"
+            style="background:#060a0f;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:14px;font-weight:700;padding:8px 10px;border-radius:5px;outline:none;width:80px;"
+            oninput="generateCouponCode()">
+          <select id="adminCouponUnit" onchange="generateCouponCode()"
+            style="background:#060a0f;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:11px;padding:8px 10px;border-radius:5px;outline:none;cursor:pointer;">
+            <option value="hours">Heures</option>
+            <option value="days">Jours</option>
+            <option value="weeks">Semaines</option>
+            <option value="months" selected>Mois</option>
+          </select>
+          <div id="adminCouponPreview"
+            style="flex:1;background:#060a0f;border:1px solid rgba(247,183,49,.2);border-radius:5px;padding:8px 12px;font-family:var(--mono);font-size:16px;font-weight:700;color:#f7b731;letter-spacing:.18em;text-align:center;cursor:pointer;min-width:130px;"
+            onclick="generateCouponCode()" title="Cliquer pour régénérer">——————</div>
+        </div>
+        <div style="display:flex;gap:.75rem;">
+          <button onclick="generateCouponCode()" style="flex:1;background:transparent;border:1px solid #1c2430;color:#5a6578;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px;border-radius:4px;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#f7b731';this.style.color='#f7b731'" onmouseout="this.style.borderColor='#1c2430';this.style.color='#5a6578'">↺ Nouveau</button>
+          <button onclick="saveCoupon()" style="flex:2;background:#f7b731;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 14px;border-radius:4px;cursor:pointer;">💾 Enregistrer</button>
+        </div>
+        <div id="adminCouponSaveMsg" style="display:none;font-family:var(--mono);font-size:10px;color:#00e5a0;margin-top:.6rem;text-align:center;"></div>
+      </div>
+
+      <!-- Liste des coupons -->
+      <button onclick="loadAdminCoupons()" style="width:100%;background:transparent;border:1px solid #1c2430;color:#5a6578;font-family:var(--mono);font-size:10px;font-weight:700;padding:7px;border-radius:4px;cursor:pointer;margin-bottom:.75rem;transition:all .2s;" onmouseover="this.style.borderColor='#f7b731';this.style.color='#f7b731'" onmouseout="this.style.borderColor='#1c2430';this.style.color='#5a6578'">↺ Charger les coupons</button>
+      <div id="adminCouponList" style="display:flex;flex-direction:column;gap:.5rem;max-height:300px;overflow-y:auto;">
+        <div style="font-family:var(--mono);font-size:10px;color:#5a6578;text-align:center;padding:12px">Cliquez "Charger" pour afficher les coupons.</div>
       </div>
     </div>
 
@@ -1670,97 +1912,94 @@ const EMAILJS_TEMPLATE = "template_oly2fn8";
 const EMAILJS_KEY      = "lVp_Fv1oO6w_s70KW";
 emailjs.init(EMAILJS_KEY);
 
-// ── OTP State ─────────────────────────────────────────────────────────────────
-let pendingOtp      = null;   // code généré
+// ── Auth Email Verification State ────────────────────────────────────────────
+let pendingAuthUser = null;   // Firebase Auth user en attente de vérification
 let pendingOtpData  = null;   // données d'inscription en attente
-let otpExpiry       = null;   // timestamp d'expiration
-
-function generateOtp(){
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
-async function sendOtpEmail(email, prenom, otp){
-  const now = new Date();
-  const expiry = new Date(now.getTime() + 10 * 60000); // +10 min
-  const timeStr = expiry.toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"});
-  await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
-    email      : email,
-    to_email   : email,
-    passcode   : otp,
-    time       : timeStr,
-    prenom     : prenom
-  });
-}
 
 async function resendOtp(){
-  if(!pendingOtpData){ return; }
-  const btn = document.getElementById("resendBtn");
-  btn.disabled = true; btn.textContent = "Envoi...";
+  const errEl = document.getElementById("otpErr");
+  const okEl  = document.getElementById("otpOk");
+  const btn   = document.getElementById("resendBtn");
+  if(!pendingAuthUser){ document.getElementById("otpScreen").style.display="none"; document.getElementById("gateScreen").style.display="flex"; return; }
+  btn.disabled=true; btn.textContent="Envoi...";
   try{
-    pendingOtp    = generateOtp();
-    otpExpiry     = Date.now() + 10 * 60000;
-    await sendOtpEmail(pendingOtpData.email, pendingOtpData.prenom, pendingOtp);
-    toast("✓ Nouveau code envoyé !");
-  }catch(e){ toast("✕ Erreur envoi: "+e.text||e.message, true); }
-  setTimeout(()=>{ btn.disabled=false; btn.textContent="↺ Renvoyer le code"; }, 30000);
+    await pendingAuthUser.sendEmailVerification();
+    okEl.textContent="✓ Lien renvoyé ! Vérifiez votre boîte mail (et vos spams).";
+    okEl.style.display="block"; errEl.style.display="none";
+    toast("✓ Lien de vérification renvoyé !");
+  }catch(e){
+    const msg = e.code==="auth/too-many-requests" ? "Trop de tentatives — réessayez dans quelques minutes." : e.message;
+    errEl.textContent="✕ "+msg; errEl.style.display="block"; okEl.style.display="none";
+  }
+  setTimeout(()=>{ btn.disabled=false; btn.textContent="⟳ Renvoyer le lien"; }, 60000);
 }
 
-async function verifyOtp(){
-  const code   = document.getElementById("otpInput").value.trim();
-  const errEl  = document.getElementById("otpErr");
-  const btn    = document.getElementById("otpBtn");
-  errEl.style.display = "none";
-
-  if(code.length !== 6){ errEl.textContent="✕ Entrez le code à 6 chiffres"; errEl.style.display="block"; return; }
-  if(Date.now() > otpExpiry){ errEl.textContent="✕ Code expiré — cliquez Renvoyer"; errEl.style.display="block"; return; }
-  if(code !== pendingOtp){ errEl.textContent="✕ Code incorrect"; errEl.style.display="block"; return; }
-
+async function checkEmailVerified(){
+  const errEl = document.getElementById("otpErr");
+  const okEl  = document.getElementById("otpOk");
+  const btn   = document.getElementById("otpBtn");
+  if(!pendingAuthUser){ document.getElementById("otpScreen").style.display="none"; document.getElementById("gateScreen").style.display="flex"; return; }
   btn.disabled=true; btn.textContent="Vérification...";
-
+  errEl.style.display="none";
   try{
-    // Créer le compte dans Firestore
-    await db.collection("users").add({
-      ...pendingOtpData,
-      emailVerified: true,
-      online: false,
-      banned: false,
-      accessDays: SETTINGS.defaultAccessDays || 30,
-      accessExpiry: new Date(Date.now() + ((SETTINGS.defaultAccessDays||30) * 86400000)).toISOString(),
-      status: "pending",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      lastSeen: null
-    });
-
-    // Afficher l'écran de confirmation post-vérification
-    const prenom = pendingOtpData.prenom;
-    const email  = pendingOtpData.email;
-    pendingOtp = null; pendingOtpData = null; otpExpiry = null;
-
-    document.getElementById("otpScreen").innerHTML = `
-      <div style="width:100%;max-width:440px;background:#060a0f;border:1px solid rgba(0,229,160,.25);border-radius:12px;overflow:hidden;animation:up .3s ease;text-align:center;padding:2.5rem 2rem;">
-        <div style="font-size:48px;margin-bottom:1rem;">✅</div>
-        <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:#00e5a0;letter-spacing:.08em;margin-bottom:.5rem;">EMAIL VÉRIFIÉ !</div>
-        <div style="font-size:15px;font-weight:700;color:#d0dae8;margin-bottom:1.25rem;">Bonjour ${prenom} 👋</div>
-        <div style="background:#0b1018;border:1px solid #1c2430;border-radius:8px;padding:1.25rem;margin-bottom:1.5rem;text-align:left;">
-          <div style="font-family:var(--mono);font-size:10px;color:#00e5a0;letter-spacing:.15em;margin-bottom:.75rem;">⏳ EN ATTENTE D'APPROBATION</div>
-          <p style="font-family:var(--mono);font-size:12px;color:#d0dae8;line-height:1.7;margin:0;">
-            Votre compte est en cours d'examen par l'administrateur.<br><br>
-            Vous recevrez une confirmation à <span style="color:#00e5a0;">${email}</span> dès que votre accès sera activé.<br><br>
-            <span style="color:#f7b731;">⏱ Délai estimé : 12 heures maximum.</span>
-          </p>
-        </div>
-        <button onclick="document.getElementById('otpScreen').style.display='none';document.getElementById('gateScreen').style.display='flex';"
-          style="background:transparent;border:1px solid #1c2430;color:#5a6578;font-family:var(--mono);font-size:11px;font-weight:700;padding:9px 24px;border-radius:5px;cursor:pointer;letter-spacing:.08em;transition:all .2s;"
-          onmouseover="this.style.borderColor='#00e5a0';this.style.color='#00e5a0'"
-          onmouseout="this.style.borderColor='#1c2430';this.style.color='#5a6578'">
-          ← Retour à la connexion
-        </button>
-      </div>`;
+    await pendingAuthUser.reload();
+    if(pendingAuthUser.emailVerified){
+      // Email confirmé → créer le compte Firestore avec période d'essai
+      const trialDays = (SETTINGS.defaultAccessDays !== undefined ? SETTINGS.defaultAccessDays : 30);
+      const trialEnds = trialDays === 0 ? 0 : Date.now() + trialDays * 86400000;
+      const newDocRef = await db.collection("users").add({
+        ...pendingOtpData,
+        emailVerified: true,
+        online: false,
+        banned: false,
+        paused: false,
+        trialEnds: trialEnds,
+        accessUntil: null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastSeen: null
+      });
+      const newDocId = newDocRef.id;
+      const prenom = pendingOtpData.prenom;
+      const email  = pendingOtpData.email;
+      const uname  = pendingOtpData.username;
+      await auth.signOut();
+      pendingAuthUser = null; pendingOtpData = null;
+      document.getElementById("otpScreen").style.display="none";
+      // Vérifier si l'essai est encore actif
+      if(trialEnds > Date.now()){
+        // Connexion directe — essai actif
+        const ud = await db.collection("users").doc(newDocId).get();
+        if(ud.exists){
+          const udata = ud.data();
+          role="guest";
+          sessionStorage.setItem("smf_role","guest");
+          sessionStorage.setItem("smf_username", udata.username);
+          currentUser={id:newDocId, username:udata.username, email:udata.email, prenom:udata.prenom||"", nom:udata.nom||"", photoURL:null, bio:""};
+          document.getElementById("gateScreen").style.display="none";
+          renderHeaderActions(); startRealtimeSync();
+          const trialDaysMsg = (SETTINGS.defaultAccessDays||30);
+          toast("✓ Bienvenue " + prenom + " ! Essai de " + trialDaysMsg + " jour" + (trialDaysMsg>1?"s":"") + " activé.");
+        }
+      } else {
+        // Pas d'essai ou expiré → coupon obligatoire
+        _pendingCouponUser  = uname;
+        _pendingCouponDocId = newDocId;
+        const msg = trialDays === 0
+          ? "🔒 Un code d'activation est requis pour accéder."
+          : "⏱ Votre période d'essai est terminée.";
+        document.getElementById("couponExpiredMsg").textContent = msg;
+        document.getElementById("couponScreen").style.display="flex";
+        document.getElementById("gateScreen").style.display="none";
+      }
+    } else {
+      errEl.textContent="✕ E-mail pas encore confirmé — vérifiez votre boîte (et vos spams).";
+      errEl.style.display="block";
+      btn.disabled=false; btn.textContent="✓ J'ai confirmé mon e-mail";
+    }
   }catch(e){
-    errEl.textContent="✕ Erreur: "+e.message;
-    errEl.style.display="block";
+    errEl.textContent="✕ Erreur: "+e.message; errEl.style.display="block";
+    btn.disabled=false; btn.textContent="✓ J'ai confirmé mon e-mail";
   }
-  btn.disabled=false; btn.textContent="✓ Confirmer le code";
 }
 const CAT_LABEL = {hebdo:"Hebdo",weekahead:"Week Ahead",mensuel:"Monthly Recap",banques:"Bank Meeting",trade:"Trades Admins",tradeinvites:"Trades Invites",tous:"All"};
 
@@ -1776,6 +2015,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
 // ── Settings stored in Firestore /config/settings ────────────────────────────
 let SETTINGS = {
@@ -1885,19 +2125,162 @@ function compressImage(dataUrl, maxPx=1600, quality=0.88){
 }
 
 // ── Tab switcher on gate ──────────────────────────────────────────────────────
+function openAuthModal(tab){
+  const modal = document.getElementById("authModal");
+  if(modal){ modal.classList.add("open"); document.body.style.overflow="hidden"; }
+  switchTab(tab || "login");
+  setTimeout(()=>{
+    const el = tab==="register" ? document.getElementById("rNom") : document.getElementById("lUser");
+    if(el) el.focus();
+  }, 200);
+}
+function closeAuthModal(){
+  const modal = document.getElementById("authModal");
+  if(modal){ modal.classList.remove("open"); document.body.style.overflow=""; }
+}
+document.addEventListener("click", e=>{
+  const modal = document.getElementById("authModal");
+  if(modal && e.target === modal) closeAuthModal();
+});
+
 function switchTab(tab){
   const isLogin = tab==="login";
-  document.getElementById("tabLogin").style.cssText    = isLogin
-    ? "background:#060a0f;border:none;color:#00e5a0;font-family:var(--mono);font-size:11px;font-weight:700;padding:12px;cursor:pointer;border-bottom:2px solid #00e5a0;letter-spacing:.08em;"
-    : "background:transparent;border:none;color:#5a6578;font-family:var(--mono);font-size:11px;font-weight:700;padding:12px;cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.08em;";
-  document.getElementById("tabRegister").style.cssText = !isLogin
-    ? "background:#060a0f;border:none;color:#00e5a0;font-family:var(--mono);font-size:11px;font-weight:700;padding:12px;cursor:pointer;border-bottom:2px solid #00e5a0;letter-spacing:.08em;"
-    : "background:transparent;border:none;color:#5a6578;font-family:var(--mono);font-size:11px;font-weight:700;padding:12px;cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.08em;";
-  document.getElementById("panelLogin").style.display    = isLogin ? "flex" : "none";
-  document.getElementById("panelRegister").style.display = !isLogin ? "flex" : "none";
+  const tL = document.getElementById("tabLogin");
+  const tR = document.getElementById("tabRegister");
+  if(tL){ tL.classList.toggle("active", isLogin); }
+  if(tR){ tR.classList.toggle("active", !isLogin); }
+  const pL = document.getElementById("panelLogin");
+  const pR = document.getElementById("panelRegister");
+  if(pL) pL.style.display = isLogin ? "flex" : "none";
+  if(pR) pR.style.display = !isLogin ? "flex" : "none";
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
+// ── COUPON STATE ─────────────────────────────────────────────────────────────
+let _pendingCouponUser  = null;
+let _pendingCouponDocId = null;
+
+// ── FONCTIONS COUPON ──────────────────────────────────────────────────────────
+async function submitCoupon(){
+  const code  = (document.getElementById("couponInput").value||"").trim().toUpperCase();
+  const errEl = document.getElementById("couponErr");
+  const okEl  = document.getElementById("couponOk");
+  const btn   = document.getElementById("btnCoupon");
+  errEl.style.display="none"; okEl.style.display="none";
+  if(!code || code.length < 7){ errEl.textContent="✕ Code invalide (format : 6 lettres + 1 chiffre)."; errEl.style.display="block"; return; }
+  btn.disabled=true; btn.textContent="Vérification...";
+  try{
+    const doc = await db.collection("smf_coupons").doc(code).get();
+    btn.disabled=false; btn.textContent="🎟 Activer le code";
+    if(!doc.exists){ errEl.textContent="✕ Code introuvable."; errEl.style.display="block"; return; }
+    const data = doc.data();
+    if((data.useCount||0) >= 1){ errEl.textContent="✕ Ce code a déjà été utilisé."; errEl.style.display="block"; return; }
+    const dur   = data.duration || 1;
+    const dUnit = data.durationUnit || "months";
+    const now   = Date.now();
+    const until = dUnit==="hours"  ? now + dur*3600000
+                : dUnit==="days"   ? now + dur*86400000
+                : dUnit==="weeks"  ? now + dur*7*86400000
+                :                    now + dur*30*86400000;
+    const untilFmt = new Date(until).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});
+    // Trouver le doc utilisateur
+    let userDocId = _pendingCouponDocId;
+    if(!userDocId && _pendingCouponUser){
+      const snap = await db.collection("users").where("username","==",_pendingCouponUser).limit(1).get();
+      if(!snap.empty) userDocId = snap.docs[0].id;
+    }
+    if(!userDocId){ errEl.textContent="✕ Utilisateur introuvable."; errEl.style.display="block"; return; }
+    await Promise.all([
+      db.collection("smf_coupons").doc(code).update({ useCount:(data.useCount||0)+1, usedBy:firebase.firestore.FieldValue.arrayUnion(_pendingCouponUser||""), lastUsedAt:now }),
+      db.collection("users").doc(userDocId).update({ accessUntil: until })
+    ]);
+    okEl.textContent="✓ Accès activé jusqu'au " + untilFmt + " !";
+    okEl.style.display="block";
+    toast("✓ Accès activé jusqu'au " + untilFmt);
+    setTimeout(async ()=>{
+      document.getElementById("couponScreen").style.display="none";
+      _pendingCouponUser=null; _pendingCouponDocId=null;
+      // Recharger et connecter
+      const usnap = await db.collection("users").doc(userDocId).get();
+      if(usnap.exists){
+        const ud = usnap.data();
+        role="guest"; sessionStorage.setItem("smf_role","guest"); sessionStorage.setItem("smf_username",ud.username);
+        currentUser={id:userDocId, username:ud.username, email:ud.email, prenom:ud.prenom||"", nom:ud.nom||"", photoURL:null, bio:""};
+        document.getElementById("gateScreen").style.display="none";
+        renderHeaderActions(); startRealtimeSync();
+      }
+    }, 1200);
+  }catch(e){
+    btn.disabled=false; btn.textContent="🎟 Activer le code";
+    errEl.textContent="✕ Erreur: "+e.message; errEl.style.display="block";
+  }
+}
+
+// ── COUPON ADMIN ──────────────────────────────────────────────────────────────
+let _currentCouponCode = "";
+function generateCouponCode(){
+  const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  let code = "";
+  for(let i=0;i<6;i++) code += letters[Math.floor(Math.random()*letters.length)];
+  const dur = parseInt(document.getElementById("adminCouponDuration").value)||3;
+  code += dur;
+  _currentCouponCode = code;
+  document.getElementById("adminCouponPreview").textContent = code;
+  document.getElementById("adminCouponSaveMsg").style.display="none";
+}
+
+async function saveCoupon(){
+  if(!_currentCouponCode){ generateCouponCode(); return; }
+  const dur  = parseInt(document.getElementById("adminCouponDuration").value)||3;
+  const unit = document.getElementById("adminCouponUnit").value || "months";
+  const msgEl = document.getElementById("adminCouponSaveMsg");
+  try{
+    await db.collection("smf_coupons").doc(_currentCouponCode).set({
+      code: _currentCouponCode, duration: dur, durationUnit: unit,
+      useCount: 0, usedBy: [], lastUsedAt: null, createdAt: Date.now()
+    });
+    msgEl.textContent = "✓ Coupon \""+_currentCouponCode+"\" enregistré !";
+    msgEl.style.display="block";
+    _currentCouponCode="";
+    document.getElementById("adminCouponPreview").textContent="——————";
+    loadAdminCoupons();
+  }catch(e){ toast("✕ Erreur: "+e.message, true); }
+}
+
+async function loadAdminCoupons(){
+  const listEl = document.getElementById("adminCouponList");
+  if(!listEl) return;
+  listEl.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:#5a6578;text-align:center;padding:12px">Chargement...</div>';
+  try{
+    const snap = await db.collection("smf_coupons").orderBy("createdAt","desc").limit(30).get();
+    if(snap.empty){ listEl.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:#5a6578;text-align:center;padding:16px">Aucun coupon.</div>'; return; }
+    let html="";
+    snap.forEach(d=>{
+      const c=d.data();
+      const dt=new Date(c.createdAt).toLocaleDateString("fr-FR",{day:"2-digit",month:"short"});
+      const used = (c.useCount||0) > 0;
+      const usedBy = Array.isArray(c.usedBy) ? c.usedBy.join(", ") : "";
+      const unitLabel = c.durationUnit==="hours"?"H":c.durationUnit==="days"?"J":c.durationUnit==="weeks"?"S":"M";
+      html+=`<div style="background:#0b1018;border:1px solid #1c2430;border-radius:6px;padding:9px 12px;display:flex;flex-direction:column;gap:4px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:#f7b731;letter-spacing:.14em;flex:1;">${c.code}</span>
+          <span style="font-family:var(--mono);font-size:9px;color:#5a6578;">${c.duration}${unitLabel} · ${dt}</span>
+          <span style="font-family:var(--mono);font-size:9px;font-weight:700;color:${used?"var(--red)":"#00e5a0"};">${used?"🔒 Utilisé":"✓ Disponible"}</span>
+          <button onclick="deleteCoupon('${c.code}')" style="background:transparent;border:1px solid rgba(255,77,109,.3);color:var(--red);font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:3px;cursor:pointer;">×</button>
+        </div>
+        ${usedBy ? `<div style="font-family:var(--mono);font-size:9px;color:#5a6578;">👤 ${usedBy}</div>` : ""}
+      </div>`;
+    });
+    listEl.innerHTML=html;
+  }catch(e){ listEl.innerHTML=`<div style="font-family:var(--mono);font-size:10px;color:var(--red);text-align:center;padding:12px">Erreur: ${e.message}</div>`; }
+}
+
+async function deleteCoupon(code){
+  if(!confirm("Supprimer le coupon \""+code+"\" ?")) return;
+  await db.collection("smf_coupons").doc(code).delete();
+  toast("✓ Coupon supprimé"); loadAdminCoupons();
+}
+
 async function doLogin(){
   const u = document.getElementById("lUser").value.trim();
   const p = document.getElementById("lPass").value.trim();
@@ -1946,17 +2329,24 @@ async function doLogin(){
     const userDoc  = snap.docs[0];
     const userData = userDoc.data();
 
-    if(userData.accessExpiry && !userData.banned && !userData.paused){
-      if(Date.now() > new Date(userData.accessExpiry).getTime()){
-        db.collection("users").doc(userDoc.id).update({paused:true, online:false});
-        errEl.textContent="✕ Votre période d\'accès a expiré — contactez l\'administrateur";
-        errEl.style.display="block"; return;
-      }
-    }
     if(userData.banned)              { errEl.textContent="✕ Compte suspendu par l\'administrateur"; errEl.style.display="block"; return; }
     if(userData.paused)              { errEl.textContent="✕ Accès temporairement suspendu — contactez l\'administrateur"; errEl.style.display="block"; return; }
-    if(userData.status!=="approved") { errEl.textContent="✕ Compte en attente de validation — contactez l\'admin"; errEl.style.display="block"; return; }
+    if(userData.emailVerified===false){ errEl.textContent="✕ E-mail non vérifié — consultez votre boîte mail et cliquez sur le lien de confirmation."; errEl.style.display="block"; return; }
     if((userData.password||"").trim()!==p){ errEl.textContent="✕ Mot de passe incorrect"; errEl.style.display="block"; return; }
+    // Vérifier accès trial / coupon
+    const now2       = Date.now();
+    const trialEnds2 = userData.trialEnds || 0;
+    const accUntil2  = userData.accessUntil || 0;
+    const hasAccess2 = (accUntil2 > now2) || (trialEnds2 > now2);
+    if(!hasAccess2){
+      _pendingCouponUser = userData.username || u;
+      _pendingCouponDocId = userDoc.id;
+      if(btn){ btn.disabled=false; btn.textContent="→ Accéder au Hub"; }
+      document.getElementById("gateScreen").style.display="none";
+      document.getElementById("couponExpiredMsg").textContent="⏱ Votre période d\'accès est terminée.";
+      document.getElementById("couponScreen").style.display="flex";
+      return;
+    }
 
     // limite connectes + profil en parallele
     const [activeSnap, profilesDoc] = await Promise.all([
@@ -2247,23 +2637,32 @@ async function doRegister(){
     if(!exEmail.empty){ errEl.textContent="✕ Cet email est déjà utilisé"; errEl.style.display="block"; btn.disabled=false; btn.textContent="✦ Créer mon compte"; return; }
     if(!exUser.empty) { errEl.textContent="✕ Ce username est déjà pris"; errEl.style.display="block"; btn.disabled=false; btn.textContent="✦ Créer mon compte"; return; }
 
-    // Générer et envoyer OTP
-    pendingOtp     = generateOtp();
-    otpExpiry      = Date.now() + 10 * 60000;
+    // Stocker les données en attente
     pendingOtpData = { nom, prenom, dob, email, username, phone, password: pass.trim() };
 
-    await sendOtpEmail(email, prenom, pendingOtp);
+    // Créer compte Firebase Auth + envoyer email de vérification
+    const cred = await auth.createUserWithEmailAndPassword(email, pass.trim());
+    pendingAuthUser = cred.user;
+    await cred.user.updateProfile({ displayName: username });
+    await cred.user.sendEmailVerification();
 
-    // Masquer gate, afficher écran OTP
+    // Masquer gate, afficher écran de vérification
     document.getElementById("gateScreen").style.display="none";
     document.getElementById("otpScreen").style.display="flex";
-    document.getElementById("otpSubtitle").textContent="Code envoyé à "+email;
-    document.getElementById("otpInput").value="";
+    document.getElementById("otpSubtitle").innerHTML =
+      "Un lien de confirmation a été envoyé à :<br>" +
+      "<span style=\"color:#00e5a0;font-weight:700\">" + email + "</span><br>" +
+      "<span style=\"font-size:10px;color:#5a6578\">Vérifiez aussi vos spams.</span>";
     document.getElementById("otpErr").style.display="none";
+    document.getElementById("otpOk").style.display="none";
 
   }catch(e){
-    errEl.textContent="✕ Erreur envoi email: "+(e.text||e.message||"vérifiez votre connexion");
-    errEl.style.display="block";
+    const msg = e.code==="auth/email-already-in-use"
+      ? "✕ Cet e-mail est déjà associé à un compte — connectez-vous ou utilisez un autre e-mail."
+      : e.code==="auth/weak-password"
+      ? "✕ Mot de passe trop faible (minimum 6 caractères requis par Firebase)."
+      : "✕ Erreur: "+(e.message||"vérifiez votre connexion");
+    errEl.textContent=msg; errEl.style.display="block";
   }
   btn.disabled=false; btn.textContent="✦ Créer mon compte";
 }
@@ -2523,7 +2922,8 @@ async function openAdminPanel(){
   document.getElementById("newAdminPass").value="";
   document.getElementById("newGuestPass").value="";
   document.getElementById("maxGuests").value = SETTINGS.maxGuests;
-  document.getElementById("defaultAccessDays").value = SETTINGS.defaultAccessDays || 30;
+  document.getElementById("defaultAccessDays").value = SETTINGS.defaultAccessDays !== undefined ? SETTINGS.defaultAccessDays : 30;
+  updateTrialPreview();
 
   // Catégories
   const ct=document.getElementById("catToggles");
@@ -2771,8 +3171,11 @@ async function pauseAllUsers(pause){
 }
 
 async function approveUser(id){
-  await db.collection("users").doc(id).update({status:"approved", banned:false, paused:false});
-  toast("✓ Compte approuvé — l'invité peut maintenant se connecter");
+  // Accorder 30 jours d'accès (ou la valeur par défaut)
+  const days = SETTINGS.defaultAccessDays || 30;
+  const until = Date.now() + days * 86400000;
+  await db.collection("users").doc(id).update({accessUntil: until, banned:false, paused:false});
+  toast("✓ Accès accordé — " + days + " jours d'accès activés");
   await refreshGuestList();
 }
 
@@ -2791,12 +3194,34 @@ async function deleteUser(id){
   await refreshGuestList();
 }
 
+function updateTrialPreview(){
+  const days = parseInt(document.getElementById("defaultAccessDays").value) || 0;
+  const prev = document.getElementById("trialPreview");
+  if(!prev) return;
+  if(days === 0){
+    prev.textContent = "🔒 Coupon obligatoire dès l'inscription — aucun essai gratuit";
+    prev.style.color = "#f7b731";
+    prev.style.borderColor = "rgba(247,183,49,.3)";
+    prev.style.background = "rgba(247,183,49,.05)";
+  } else {
+    prev.textContent = "⏱ Essai de " + days + " jour" + (days>1?"s":"") + " pour chaque nouvel inscrit";
+    prev.style.color = "#00e5a0";
+    prev.style.borderColor = "rgba(0,229,160,.2)";
+    prev.style.background = "rgba(0,229,160,.04)";
+  }
+}
+
 async function saveDefaultAccess(){
   const days = parseInt(document.getElementById("defaultAccessDays").value);
-  if(!days || days < 1){ toast("✕ Valeur invalide", true); return; }
+  if(isNaN(days) || days < 0){ toast("✕ Valeur invalide (min. 0)", true); return; }
   SETTINGS.defaultAccessDays = days;
   await pushSettings();
-  toast(`✓ Durée par défaut : ${days} jour${days>1?"s":""} pour les nouveaux inscrits`);
+  if(days === 0){
+    toast("✓ Coupon obligatoire dès l'inscription — aucun essai gratuit");
+  } else {
+    toast(`✓ Essai de ${days} jour${days>1?"s":""} pour les nouveaux inscrits`);
+  }
+  updateTrialPreview();
 }
 
 async function savePasswords(){
@@ -3191,7 +3616,9 @@ function startBanWatch(){
       const d = snap.data();
       if(d.banned){ forcedLogout("✕ Votre accès a été révoqué par l'administrateur"); return; }
       if(d.paused){ forcedLogout("✕ Votre accès est temporairement suspendu — contactez l'administrateur"); return; }
-      if(d.status !== "approved"){ forcedLogout("✕ Votre compte a été désactivé"); return; }
+      const now3 = Date.now();
+      const hasA  = ((d.accessUntil||0) > now3) || ((d.trialEnds||0) > now3);
+      if(!hasA){ forcedLogout("✕ Votre accès a expiré — contactez l\'administrateur"); return; }
     });
 }
 
