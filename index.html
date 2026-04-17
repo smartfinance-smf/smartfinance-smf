@@ -376,6 +376,11 @@
   .filter-btn{background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:11px;padding:5px 14px;border-radius:3px;cursor:pointer;transition:all .15s;}
   .filter-btn:hover,.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700;}
   .filter-btn[data-cat="hebdo"].active{background:var(--warn);border-color:var(--warn);}
+  .filter-btn[data-cat="tradeideas"].active{background:#f7b731;border-color:#f7b731;color:#000;}
+  .filter-btn[data-cat="wa"].active{background:#f7b731;border-color:#f7b731;color:#000;}
+  .filter-btn[data-cat="mr"].active{background:#f7b731;border-color:#f7b731;color:#000;}
+  .filter-btn[data-cat="bm"].active{background:#f7b731;border-color:#f7b731;color:#000;}
+  .filter-btn[data-cat="tan"].active{background:#f7b731;border-color:#f7b731;color:#000;}
   .filter-btn[data-cat="mensuel"].active{background:var(--accent2);border-color:var(--accent2);}
   .filter-btn[data-cat="trade"].active{background:var(--trade);border-color:var(--trade);color:#000;}
   .filter-btn[data-cat="tradeinvites"].active{background:#0005ff;border-color:#0005ff;color:#fff;}
@@ -401,6 +406,11 @@
   .article-card[data-cat="trade"]::before{background:var(--trade);}
   .article-card[data-cat="tradeinvites"]::before{background:#0005ff;}
   .article-card[data-cat="banques"]::before{background:var(--accent);}
+  .article-card[data-cat="tradeideas"]::before{background:#f7b731;}
+  .article-card[data-cat="wa"]::before{background:#f7b731;}
+  .article-card[data-cat="mr"]::before{background:#f7b731;}
+  .article-card[data-cat="bm"]::before{background:#f7b731;}
+  .article-card[data-cat="tan"]::before{background:#f7b731;}
 
   /* Corps horizontal */
   .card-body{display:flex;align-items:stretch;flex:1;padding-top:3px;}
@@ -418,6 +428,11 @@
   .cat-badge.banques{background:rgba(0,229,160,.1);color:var(--accent);}
   .cat-badge.trade{background:rgba(0,247,10,.12);color:var(--trade);}
   .cat-badge.tradeinvites{background:rgba(0,5,255,.15);color:#0005ff;}
+  .cat-badge.tradeideas{background:rgba(247,183,49,.15);color:#f7b731;}
+  .cat-badge.wa{background:rgba(247,183,49,.15);color:#f7b731;}
+  .cat-badge.mr{background:rgba(247,183,49,.15);color:#f7b731;}
+  .cat-badge.bm{background:rgba(247,183,49,.15);color:#f7b731;}
+  .cat-badge.tan{background:rgba(247,183,49,.15);color:#f7b731;}
   .filter-btn[data-cat="weekahead"].active{background:#f7b731;border-color:#f7b731;color:#000;}
   .filter-btn[data-cat="ideetrade"].active{background:#ffa032;border-color:#ffa032;color:#000;}
   .pill.weekahead input:checked+label{background:rgba(247,183,49,.15);border-color:#f7b731;color:#f7b731;font-weight:700;}
@@ -530,6 +545,11 @@
   .cat-badge-extra.banques{background:rgba(0,229,160,.1);color:var(--accent);}
   .cat-badge-extra.trade{background:rgba(0,247,10,.10);color:var(--trade);}
   .cat-badge-extra.tradeinvites{background:rgba(0,5,255,.12);color:#0005ff;}
+  .cat-badge-extra.tradeideas{background:rgba(247,183,49,.12);color:#f7b731;}
+  .cat-badge-extra.wa{background:rgba(247,183,49,.12);color:#f7b731;}
+  .cat-badge-extra.mr{background:rgba(247,183,49,.12);color:#f7b731;}
+  .cat-badge-extra.bm{background:rgba(247,183,49,.12);color:#f7b731;}
+  .cat-badge-extra.tan{background:rgba(247,183,49,.12);color:#f7b731;}
   /* Overlay édition tags */
   .edit-tags-ov{position:fixed;inset:0;background:rgba(2,4,10,.88);backdrop-filter:blur(16px);z-index:500;display:none;align-items:center;justify-content:center;padding:1.5rem;}
   .edit-tags-ov.open{display:flex;}
@@ -550,6 +570,11 @@
   .et-pill.trade input:checked+label{background:rgba(0,247,10,.07);border-color:var(--trade);color:var(--trade);}
   .et-pill.tradeinvites input:checked+label{background:rgba(0,5,255,.08);border-color:#0005ff;color:#0005ff;}
   .et-pill.tous input:checked+label{background:rgba(0,229,160,.08);border-color:var(--accent);color:var(--accent);}
+  .et-pill.tradeideas input:checked+label{background:rgba(247,183,49,.08);border-color:#f7b731;color:#f7b731;}
+  .et-pill.wa input:checked+label{background:rgba(247,183,49,.08);border-color:#f7b731;color:#f7b731;}
+  .et-pill.mr input:checked+label{background:rgba(247,183,49,.08);border-color:#f7b731;color:#f7b731;}
+  .et-pill.bm input:checked+label{background:rgba(247,183,49,.08);border-color:#f7b731;color:#f7b731;}
+  .et-pill.tan input:checked+label{background:rgba(247,183,49,.08);border-color:#f7b731;color:#f7b731;}
   .edit-tags-hint{font-family:var(--mono);font-size:9px;color:var(--dimmed);text-align:center;line-height:1.7;}
   .edit-tags-actions{display:flex;gap:.75rem;}
   .btn-et-save{flex:1;background:var(--accent);border:none;color:#000;font-family:var(--mono);font-size:12px;font-weight:700;padding:11px;border-radius:6px;cursor:pointer;letter-spacing:.08em;transition:opacity .15s;}
@@ -669,6 +694,11 @@
   .pill.mensuel input:checked+label{background:rgba(0,255,255,.12);border-color:var(--accent2);color:var(--accent2);font-weight:700;}
   .pill.trade   input:checked+label{background:rgba(0,247,10,.12);border-color:var(--trade);color:var(--trade);font-weight:700;}
   .pill.tradeinvites input:checked+label{background:rgba(0,5,255,.15);border-color:#0005ff;color:#0005ff;font-weight:700;}
+  .pill.tradeideas input:checked+label{background:rgba(247,183,49,.15);border-color:#f7b731;color:#f7b731;font-weight:700;}
+  .pill.wa   input:checked+label{background:rgba(247,183,49,.15);border-color:#f7b731;color:#f7b731;font-weight:700;}
+  .pill.mr   input:checked+label{background:rgba(247,183,49,.15);border-color:#f7b731;color:#f7b731;font-weight:700;}
+  .pill.bm   input:checked+label{background:rgba(247,183,49,.15);border-color:#f7b731;color:#f7b731;font-weight:700;}
+  .pill.tan  input:checked+label{background:rgba(247,183,49,.15);border-color:#f7b731;color:#f7b731;font-weight:700;}
   .mode-switcher.three-col{grid-template-columns:1fr 1fr 1fr;}
   .mode-switcher.three-col .mode-btn:first-child{border-right:1px solid var(--border2);}
   .mode-switcher.three-col .mode-btn:nth-child(2){border-right:1px solid var(--border2);}
@@ -975,6 +1005,11 @@
     <button class="filter-btn" data-cat="banques">Bank Meeting <span class="fcount" id="fc-banques"></span></button>
     <button class="filter-btn" data-cat="trade">Trades Admins <span class="fcount" id="fc-trade"></span></button>
     <button class="filter-btn" data-cat="tradeinvites">Trades Invites <span class="fcount" id="fc-tradeinvites"></span></button>
+    <button class="filter-btn" data-cat="tradeideas">Trade Ideas <span class="fcount" id="fc-tradeideas"></span></button>
+    <button class="filter-btn" data-cat="wa">WA <span class="fcount" id="fc-wa"></span></button>
+    <button class="filter-btn" data-cat="mr">MR <span class="fcount" id="fc-mr"></span></button>
+    <button class="filter-btn" data-cat="bm">BM <span class="fcount" id="fc-bm"></span></button>
+    <button class="filter-btn" data-cat="tan">TAn <span class="fcount" id="fc-tan"></span></button>
     <div class="search-wrap">
       <span class="search-icon">⌕</span>
       <input type="text" id="searchInput" placeholder="Rechercher...">
@@ -1054,6 +1089,31 @@
           <div class="cat-card" data-cat="trade" style="--cc:#00f70a" onclick="selectCat('trade',this)">
             <span class="cc-ico">⚡</span>
             <span class="cc-lbl">Trades Admins</span>
+            <span class="cc-dot"></span>
+          </div>
+          <div class="cat-card" data-cat="tradeideas" style="--cc:#f7b731" onclick="selectCat('tradeideas',this)">
+            <span class="cc-ico">💡</span>
+            <span class="cc-lbl">Trade Ideas</span>
+            <span class="cc-dot"></span>
+          </div>
+          <div class="cat-card" data-cat="wa" style="--cc:#f7b731" onclick="selectCat('wa',this)">
+            <span class="cc-ico">🔭</span>
+            <span class="cc-lbl">WA</span>
+            <span class="cc-dot"></span>
+          </div>
+          <div class="cat-card" data-cat="mr" style="--cc:#f7b731" onclick="selectCat('mr',this)">
+            <span class="cc-ico">📋</span>
+            <span class="cc-lbl">MR</span>
+            <span class="cc-dot"></span>
+          </div>
+          <div class="cat-card" data-cat="bm" style="--cc:#f7b731" onclick="selectCat('bm',this)">
+            <span class="cc-ico">🏛️</span>
+            <span class="cc-lbl">BM</span>
+            <span class="cc-dot"></span>
+          </div>
+          <div class="cat-card" data-cat="tan" style="--cc:#f7b731" onclick="selectCat('tan',this)">
+            <span class="cc-ico">📐</span>
+            <span class="cc-lbl">TAn</span>
             <span class="cc-dot"></span>
           </div>
         </div>
@@ -1864,6 +1924,26 @@
         <input type="checkbox" id="et-tradeinvites" value="tradeinvites">
         <label for="et-tradeinvites"><span class="ep-ico">🤝</span>Invités<span class="ep-primary">PRINCIPAL</span></label>
       </div>
+      <div class="et-pill tradeideas">
+        <input type="checkbox" id="et-tradeideas" value="tradeideas">
+        <label for="et-tradeideas"><span class="ep-ico">💡</span>Trade Ideas<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
+      <div class="et-pill wa">
+        <input type="checkbox" id="et-wa" value="wa">
+        <label for="et-wa"><span class="ep-ico">🔭</span>WA<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
+      <div class="et-pill mr">
+        <input type="checkbox" id="et-mr" value="mr">
+        <label for="et-mr"><span class="ep-ico">📋</span>MR<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
+      <div class="et-pill bm">
+        <input type="checkbox" id="et-bm" value="bm">
+        <label for="et-bm"><span class="ep-ico">🏛️</span>BM<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
+      <div class="et-pill tan">
+        <input type="checkbox" id="et-tan" value="tan">
+        <label for="et-tan"><span class="ep-ico">📐</span>TAn<span class="ep-primary">PRINCIPAL</span></label>
+      </div>
     </div>
     <div class="edit-tags-hint">
       Le <strong style="color:var(--accent)">premier tag coché</strong> est le tag principal — il détermine la couleur et le template.<br>
@@ -2001,7 +2081,7 @@ async function checkEmailVerified(){
     btn.disabled=false; btn.textContent="✓ J'ai confirmé mon e-mail";
   }
 }
-const CAT_LABEL = {hebdo:"Hebdo",weekahead:"Week Ahead",mensuel:"Monthly Recap",banques:"Bank Meeting",trade:"Trades Admins",tradeinvites:"Trades Invites",tous:"All"};
+const CAT_LABEL = {hebdo:"Hebdo",weekahead:"Week Ahead",mensuel:"Monthly Recap",banques:"Bank Meeting",trade:"Trades Admins",tradeinvites:"Trades Invites",tradeideas:"Trade Ideas",wa:"WA",mr:"MR",bm:"BM",tan:"TAn",tous:"All"};
 
 // ── Firebase ─────────────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -2023,21 +2103,27 @@ let SETTINGS = {
   guestPass : "smfhub2026",
   maxGuests : 10,
   defaultAccessDays: 30,
-  allowedCats: ["hebdo","weekahead","mensuel","banques","trade","tradeinvites"],
+  allowedCats: ["hebdo","weekahead","mensuel","banques","trade","tradeinvites","tradeideas","wa","mr","bm","tan"],
   colors: {
     hebdo:       "#f7b731",
     weekahead:   "#f7b731",
     mensuel:     "#00ffff",
     banques:     "#00e5a0",
     trade:       "#00f70a",
-    tradeinvites:"#0005ff"
+    tradeinvites:"#0005ff",
+    tradeideas:  "#f7b731",
+    wa:          "#f7b731",
+    mr:          "#f7b731",
+    bm:          "#f7b731",
+    tan:         "#f7b731"
   }
 };
 
 // Couleurs par défaut (référence pour reset)
 const DEFAULT_COLORS = {
   tous:"#00e5a0", hebdo:"#f7b731", weekahead:"#f7b731", mensuel:"#00ffff",
-  banques:"#00e5a0", trade:"#00f70a", tradeinvites:"#0005ff"
+  banques:"#00e5a0", trade:"#00f70a", tradeinvites:"#0005ff",
+  tradeideas:"#f7b731", wa:"#f7b731", mr:"#f7b731", bm:"#f7b731", tan:"#f7b731"
 };
 
 // Injecte les couleurs dans les CSS variables du document
@@ -2054,6 +2140,11 @@ function applyColors(colors){
     --col-banques:${c.banques};
     --col-trade:${c.trade};
     --col-tradeinv:${c.tradeinvites};
+    --col-tradeideas:${c.tradeideas||"#f7b731"};
+    --col-wa:${c.wa||"#f7b731"};
+    --col-mr:${c.mr||"#f7b731"};
+    --col-bm:${c.bm||"#f7b731"};
+    --col-tan:${c.tan||"#f7b731"};
     --trade:${c.trade};
     --tradeinv:${c.tradeinvites};
     --weekahead:${c.weekahead};
@@ -2066,6 +2157,11 @@ function applyColors(colors){
   CAT_COLORS.banques     = c.banques;
   CAT_COLORS.trade       = c.trade;
   CAT_COLORS.tradeinvites= c.tradeinvites;
+  CAT_COLORS.tradeideas  = c.tradeideas||"#f7b731";
+  CAT_COLORS.wa          = c.wa||"#f7b731";
+  CAT_COLORS.mr          = c.mr||"#f7b731";
+  CAT_COLORS.bm          = c.bm||"#f7b731";
+  CAT_COLORS.tan         = c.tan||"#f7b731";
 }
 
 async function loadSettings(){
@@ -3243,7 +3339,12 @@ const CAT_LABELS_COLORS = {
   mensuel:     {label:"Monthly",       ico:"📊"},
   banques:     {label:"Bank Meeting",  ico:"🏦"},
   trade:       {label:"Trades Admins", ico:"📈"},
-  tradeinvites:{label:"Trades Invités",ico:"🤝"}
+  tradeinvites:{label:"Trades Invités",ico:"🤝"},
+  tradeideas:  {label:"Trade Ideas",   ico:"💡"},
+  wa:          {label:"WA",            ico:"🔭"},
+  mr:          {label:"MR",            ico:"📋"},
+  bm:          {label:"BM",            ico:"🏛️"},
+  tan:         {label:"TAn",           ico:"📐"}
 };
 
 function renderColorPanel(){
@@ -3733,7 +3834,7 @@ function artMatchesFilt(a, f){
 }
 
 function renderStats(){
-  const counts={tous:0,hebdo:0,weekahead:0,mensuel:0,banques:0,trade:0,tradeinvites:0};
+  const counts={tous:0,hebdo:0,weekahead:0,mensuel:0,banques:0,trade:0,tradeinvites:0,tradeideas:0,wa:0,mr:0,bm:0,tan:0};
   arts.forEach(a=>{
     const cats = artCats(a);
     if(cats.includes("tous")){
@@ -3788,7 +3889,8 @@ function buildCardAvatar(authorName, cat){
   // Couleur selon catégorie
   const catColors = {
     hebdo:"#f7b731", weekahead:"#f7b731", mensuel:"#00ffff",
-    banques:"#00e5a0", trade:"#00f70a", tradeinvites:"#0005ff"
+    banques:"#00e5a0", trade:"#00f70a", tradeinvites:"#0005ff",
+    tradeideas:"#f7b731", wa:"#f7b731", mr:"#f7b731", bm:"#f7b731", tan:"#f7b731"
   };
   const col = catColors[cat] || "#00e5a0";
 
@@ -3808,7 +3910,7 @@ function buildCardAvatar(authorName, cat){
   const cachedPhoto = userPhotoCache[authorName] || null;
   const finalPhoto = isMe ? (myPhoto || cachedPhoto) : cachedPhoto;
   const initials = getInitials(authorName || "SMF");
-  const catColors = {hebdo:"#f7b731",weekahead:"#f7b731",mensuel:"#00ffff",banques:"#00e5a0",trade:"#00f70a",tradeinvites:"#0005ff"};
+  const catColors = {hebdo:"#f7b731",weekahead:"#f7b731",mensuel:"#00ffff",banques:"#00e5a0",trade:"#00f70a",tradeinvites:"#0005ff",tradeideas:"#f7b731",wa:"#f7b731",mr:"#f7b731",bm:"#f7b731",tan:"#f7b731"};
   const col = catColors[cat] || "#00e5a0";
   if(finalPhoto){
     return `<div class="card-av"><img src="${finalPhoto}" alt="${initials}"></div>`;
@@ -3912,7 +4014,7 @@ function openEditTags(e, id){
   // Affiche le titre de l'article
   document.getElementById("etArtTitle").textContent = `"${a.titre}"`;
   // Coche les tags actuels
-  const allCats = ["tous","hebdo","weekahead","mensuel","banques","trade","tradeinvites"];
+  const allCats = ["tous","hebdo","weekahead","mensuel","banques","trade","tradeinvites","tradeideas","wa","mr","bm","tan"];
   allCats.forEach(c=>{
     const cb = document.getElementById("et-"+c);
     if(cb) cb.checked = _etSelectionOrder.includes(c);
@@ -3928,7 +4030,7 @@ function openEditTags(e, id){
 }
 
 function syncEtPrimary(){
-  const allCats=["tous","hebdo","weekahead","mensuel","banques","trade","tradeinvites"];
+  const allCats=["tous","hebdo","weekahead","mensuel","banques","trade","tradeinvites","tradeideas","wa","mr","bm","tan"];
   // Recalcule l'ordre : garde ceux déjà cochés dans l'ordre mémorisé, ajoute les nouveaux
   const checked = allCats.filter(c=> document.getElementById("et-"+c)?.checked);
   // Préserve l'ordre : ceux déjà dans _etSelectionOrder d'abord, puis les nouveaux
@@ -4078,7 +4180,7 @@ let wizBlocks = [];
 
 const WIZ_TITLES = ["Choisir une catégorie","Construire l'article","Aperçu & Publication"];
 const WIZ_SUBS   = ["Étape 1 sur 3","Étape 2 sur 3 · Titre · Blocs · Date","Étape 3 sur 3"];
-const CAT_COLORS = {hebdo:"#f7b731",weekahead:"#f7b731",mensuel:"#0ff",banques:"#00e5a0",trade:"#00f70a",tradeinvites:"#0005ff"};
+const CAT_COLORS = {hebdo:"#f7b731",weekahead:"#f7b731",mensuel:"#0ff",banques:"#00e5a0",trade:"#00f70a",tradeinvites:"#0005ff",tradeideas:"#f7b731",wa:"#f7b731",mr:"#f7b731",bm:"#f7b731",tan:"#f7b731"};
 
 // ── BLOCK EDITOR ─────────────────────────────────────────────────────────────
 function initBlocks(){
@@ -4475,6 +4577,11 @@ function generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,blocks,author
     case "weekahead":    return tplWeekAhead(titre,desc,fdate,paire,headerBlock,paraBlocks,by);
     case "mensuel":      return tplMonthly(titre,desc,fdate,paire,headerBlock,paraBlocks,by);
     case "banques":      return tplBankMeeting(titre,desc,fdate,paire,headerBlock,paraBlocks,by);
+    case "tradeideas":
+    case "wa":
+    case "mr":
+    case "bm":
+    case "tan":          return tplHebdo(titre,desc,fdate,paire,headerBlock,paraBlocks,by);
     case "trade": {
       // Construire les blocs trade avec l'image header comme bloc initial
       const coverFromHeader = headerBlock.image ? [{
@@ -5400,12 +5507,14 @@ async function exportHubHTML(){
     // 2. Construire les cartes HTML
     const CAT_COLORS = {
       tous:"#00e5a0", hebdo:"#f7b731", weekahead:"#f7b731",
-      mensuel:"#0ff", banques:"#00e5a0", trade:"#00f70a", tradeinvites:"#0005ff"
+      mensuel:"#0ff", banques:"#00e5a0", trade:"#00f70a", tradeinvites:"#0005ff",
+      tradeideas:"#f7b731", wa:"#f7b731", mr:"#f7b731", bm:"#f7b731", tan:"#f7b731"
     };
     const CAT_LABELS = {
       tous:"All", hebdo:"Hebdo", weekahead:"Week Ahead",
       mensuel:"Monthly Recap", banques:"Bank Meeting",
-      trade:"Trades Admins", tradeinvites:"Trades Invités"
+      trade:"Trades Admins", tradeinvites:"Trades Invités",
+      tradeideas:"Trade Ideas", wa:"WA", mr:"MR", bm:"BM", tan:"TAn"
     };
 
     function fmtDate(d){
