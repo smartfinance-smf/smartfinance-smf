@@ -1678,6 +1678,17 @@
       </div>
     </div>
 
+    <!-- 🏷️ Gestion des Tags — KGB uniquement -->
+    <div id="kgbTagPanel" style="display:none;background:#060a0f;border:1px solid #f7b731;border-radius:10px;padding:1.25rem;margin-top:1rem;">
+      <div style="font-family:var(--mono);font-size:11px;color:#f7b731;letter-spacing:.15em;margin-bottom:.5rem;">🏷️ GESTION DES TAGS <span style="color:#5a6578;font-size:9px;font-weight:400;">(KGB uniquement)</span></div>
+      <div style="font-family:var(--mono);font-size:10px;color:#5a6578;margin-bottom:1rem;line-height:1.6;">Renommez ou supprimez des tags existants. La suppression <span style="color:#ff4d6d;">retire le tag de tous les articles</span> (action irréversible).</div>
+      <div id="tagManagerList" style="display:flex;flex-direction:column;gap:.5rem;max-height:360px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:.75rem;margin-top:1rem;align-items:center;flex-wrap:wrap;">
+        <button onclick="saveTagLabels()" style="background:#f7b731;border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 20px;border-radius:4px;cursor:pointer;">💾 Sauvegarder les noms</button>
+        <span id="tagSaveMsg" style="font-family:var(--mono);font-size:10px;color:#00e5a0;display:none;">✓ Noms sauvegardés !</span>
+      </div>
+    </div>
+
     <!-- 🎨 Couleurs par tag — KGB uniquement -->
     <div id="kgbColorPanel" style="display:none;background:#060a0f;border:1px solid #f7b731;border-radius:10px;padding:1.25rem;margin-top:1rem;">
       <div style="font-family:var(--mono);font-size:11px;color:#f7b731;letter-spacing:.15em;margin-bottom:1rem;">🎨 COULEURS PAR TAG <span style="color:#5a6578;font-size:9px;font-weight:400;">(KGB uniquement)</span></div>
@@ -2169,6 +2180,10 @@ async function loadSettings(){
     const snap = await db.collection("config").doc("settings").get();
     if(snap.exists) SETTINGS = {...SETTINGS,...snap.data()};
   }catch(e){console.warn("settings load",e);}
+  // Applique les noms de tags personnalisés
+  if(SETTINGS.tagLabels){
+    Object.keys(SETTINGS.tagLabels).forEach(k=>{ CAT_LABEL[k] = SETTINGS.tagLabels[k]; });
+  }
   // Applique les couleurs sauvegardées
   if(SETTINGS.colors) applyColors(SETTINGS.colors);
 }
@@ -3034,13 +3049,17 @@ async function openAdminPanel(){
       letter-spacing:.08em;text-transform:uppercase;">${v}</button>`;
   }).join("");
 
-  // Panel couleurs — KGB uniquement
+  // Panels KGB uniquement (couleurs + tags)
   const colorPanel = document.getElementById("kgbColorPanel");
+  const tagPanel   = document.getElementById("kgbTagPanel");
   if(username==="KGB"){
     colorPanel.style.display="block";
     renderColorPanel();
+    tagPanel.style.display="block";
+    renderTagManager();
   } else {
     colorPanel.style.display="none";
+    tagPanel.style.display="none";
   }
 
   // Liste invités
@@ -3454,6 +3473,112 @@ async function saveCatAccess(){
   render();
 }
 
+
+// ── TAG MANAGER (KGB uniquement) ─────────────────────────────────────────────
+
+function renderTagManager(){
+  const list = document.getElementById("tagManagerList");
+  if(!list) return;
+  const allCats = Object.keys(CAT_LABEL);
+  list.innerHTML = allCats.map(k => `
+    <div style="display:flex;align-items:center;gap:.65rem;background:#0b1018;border:1px solid #1c2430;border-radius:6px;padding:.5rem .85rem;">
+      <span style="font-family:var(--mono);font-size:9px;color:#5a6578;width:88px;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0;">${k}</span>
+      <input id="tl-${k}" value="${(CAT_LABEL[k]||k).replace(/"/g,'&quot;')}"
+        style="flex:1;background:#060a0f;border:1px solid #1c2430;color:#d0dae8;font-family:var(--mono);font-size:12px;padding:5px 9px;border-radius:4px;outline:none;transition:border-color .2s;min-width:0;"
+        onfocus="this.style.borderColor='#f7b731'" onblur="this.style.borderColor='#1c2430'">
+      <button data-tag="${k}" class="btn-del-tag"
+        style="background:transparent;border:1px solid rgba(255,77,109,.3);color:#ff4d6d;font-family:var(--mono);font-size:9px;font-weight:700;padding:4px 10px;border-radius:3px;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all .15s;"
+        onmouseover="this.style.background='rgba(255,77,109,.1)'" onmouseout="this.style.background='transparent'">
+        🗑 Suppr.
+      </button>
+    </div>
+  `).join("");
+
+  // Attacher les listeners via délégation pour éviter pb d'échappement
+  list.querySelectorAll(".btn-del-tag").forEach(btn => {
+    btn.addEventListener("click", () => deleteTagGlobal(btn.dataset.tag));
+  });
+}
+
+async function saveTagLabels(){
+  const allCats = Object.keys(CAT_LABEL);
+  allCats.forEach(k => {
+    const inp = document.getElementById("tl-" + k);
+    if(inp && inp.value.trim()) CAT_LABEL[k] = inp.value.trim();
+  });
+  SETTINGS.tagLabels = {...CAT_LABEL};
+  await pushSettings();
+  const msg = document.getElementById("tagSaveMsg");
+  if(msg){ msg.style.display="inline"; setTimeout(()=>{ msg.style.display="none"; }, 2500); }
+  toast("✓ Noms de tags sauvegardés !");
+  // Rafraîchir le panneau catégories et le rendu
+  _refreshCatToggles();
+  render();
+}
+
+async function deleteTagGlobal(tagKey){
+  const label = CAT_LABEL[tagKey] || tagKey;
+  if(!confirm(`⚠ Supprimer le tag "${label}" ?\n\nCela retirera ce tag de TOUS les articles en base. Cette action est irréversible.`)) return;
+
+  const btn = document.querySelector(`.btn-del-tag[data-tag="${tagKey}"]`);
+  if(btn){ btn.disabled=true; btn.textContent="⏳ …"; }
+
+  try {
+    // 1. Mise à jour batch de tous les articles concernés
+    const snap = await db.collection("articles").get();
+    const BATCH_SIZE = 499;
+    const toUpdate = snap.docs.filter(d => {
+      const data = d.data();
+      return data.cat === tagKey || (Array.isArray(data.cats) && data.cats.includes(tagKey));
+    });
+
+    for(let i = 0; i < toUpdate.length; i += BATCH_SIZE){
+      const batch = db.batch();
+      toUpdate.slice(i, i + BATCH_SIZE).forEach(doc => {
+        const data = doc.data();
+        const newCats = (Array.isArray(data.cats) ? data.cats : [data.cat]).filter(c => c !== tagKey);
+        const newCat  = newCats[0] || "tous";
+        batch.update(doc.ref, { cat: newCat, cats: newCats.length ? newCats : firebase.firestore.FieldValue.delete() });
+      });
+      await batch.commit();
+    }
+
+    // 2. Retirer le tag des structures locales
+    delete CAT_LABEL[tagKey];
+    delete CAT_COLORS[tagKey];
+    if(SETTINGS.colors) delete SETTINGS.colors[tagKey];
+    const idx = SETTINGS.allowedCats ? SETTINGS.allowedCats.indexOf(tagKey) : -1;
+    if(idx >= 0) SETTINGS.allowedCats.splice(idx, 1);
+
+    // 3. Persister
+    SETTINGS.tagLabels = {...CAT_LABEL};
+    await pushSettings();
+
+    toast(`✓ Tag "${label}" supprimé — ${toUpdate.length} article(s) mis à jour`);
+    renderTagManager();
+    _refreshCatToggles();
+    render();
+  } catch(e) {
+    console.error("deleteTagGlobal:", e);
+    toast("✕ Erreur : " + e.message, true);
+    if(btn){ btn.disabled=false; btn.textContent="🗑 Suppr."; }
+  }
+}
+
+function _refreshCatToggles(){
+  const ct = document.getElementById("catToggles");
+  if(!ct) return;
+  ct.innerHTML = Object.entries(CAT_LABEL).map(([k,v]) => {
+    const on = SETTINGS.allowedCats && SETTINGS.allowedCats.includes(k);
+    return `<button id="catbtn_${k}" onclick="toggleCat('${k}')" style="
+      background:${on?"rgba(0,229,160,.15)":"transparent"};
+      border:1px solid ${on?"#00e5a0":"#1c2430"};
+      color:${on?"#00e5a0":"#5a6578"};
+      font-family:var(--mono);font-size:10px;font-weight:700;
+      padding:6px 14px;border-radius:4px;cursor:pointer;
+      letter-spacing:.08em;text-transform:uppercase;">${v}</button>`;
+  }).join("");
+}
 
 // ── ÉDITION D'ARTICLE (KGB uniquement) ───────────────────────────────────────
 let _eaTargetId   = null;   // id de l'article en cours d'édition
