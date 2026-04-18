@@ -583,6 +583,8 @@
   .card-author-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
   .card-actions{display:flex;align-items:center;gap:.4rem;flex-shrink:0;}
   .card-open{font-family:var(--mono);font-size:9.5px;color:var(--accent);font-weight:700;letter-spacing:.06em;white-space:nowrap;}
+  .btn-permalink{background:transparent;border:none;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px;opacity:.45;transition:opacity .15s,background .15s;line-height:1;flex-shrink:0;}
+  .btn-permalink:hover{opacity:1;background:rgba(0,229,160,.08);}
   .btn-edit-art{background:transparent;border:1px solid rgba(0,229,160,.2);color:var(--accent);font-family:var(--mono);font-size:9px;font-weight:700;cursor:pointer;padding:3px 8px;border-radius:3px;transition:all .15s;line-height:1;letter-spacing:.05em;}
   .btn-edit-art:hover{background:rgba(0,229,160,.12);border-color:var(--accent);}
   .btn-del{background:transparent;border:none;color:var(--dimmed);font-size:13px;cursor:pointer;padding:2px 5px;border-radius:3px;transition:color .15s;line-height:1;}
@@ -1206,7 +1208,7 @@
 
 <!-- ====== ÉCRAN D'ACCÈS ====== -->
 <!-- ====== LANDING PAGE ====== -->
-<div id="gateScreen" style="position:fixed;inset:0;background:#02040a;z-index:1000;overflow-y:auto;display:flex;flex-direction:column;">
+<div id="gateScreen" style="position:fixed;inset:0;background:#02040a;z-index:1000;overflow-y:auto;display:none;flex-direction:column;">
 
   <!-- CSS landing spécifique -->
   <style>
@@ -1948,12 +1950,13 @@
     <span class="art-reader-title" id="artReaderTitle"></span>
     <button class="art-reader-newtab" id="artReaderNewTab" onclick="openArtNewTab()">↗ Nouvel onglet</button>
   </div>
-  <iframe class="art-reader-frame" id="artReaderFrame" sandbox="allow-scripts allow-same-origin"></iframe>
+  <iframe class="art-reader-frame" id="artReaderFrame" sandbox="allow-scripts allow-same-origin allow-popups allow-downloads"></iframe>
 </div>
 
 <script>
 // ── HASH ROUTING ──────────────────────────────────────────────────────────────
 let _artReaderBlobUrl = null;
+let _currentArtId = null;
 
 function pushHash(params){
   const parts = Object.entries(params).map(([k,v])=>`${k}=${encodeURIComponent(v)}`);
@@ -2018,6 +2021,7 @@ window.addEventListener("popstate", ()=> {
 
 // ── Ouvrir un article dans le reader ─────────────────────────────────────────
 async function _openArtInReader(id, pushToHistory = true){
+  _currentArtId = id;
   const a = arts.find(x => x.id === id);
   if(!a){ toast("⚠ Article introuvable", true); return; }
   const primaryCat = artCats(a)[0];
@@ -2037,9 +2041,18 @@ async function _openArtInReader(id, pushToHistory = true){
   if(Array.isArray(a.blocks) && a.blocks.length > 0){
     const fdate = fmtD(a.date, a.time || "");
     const by = a.submittedBy || "Admin";
-    html = primaryCat === "tradeinvites"
-      ? tplTradeInvites(a.titre, a.desc||"", fdate, a.paire||"", a.blocks, by)
-      : tplTrade(a.titre, a.desc||"", fdate, a.paire||"", a.blocks, by);
+    if(primaryCat === "tradeinvites"){
+      html = tplTradeInvites(a.titre, a.desc||"", fdate, a.paire||"", a.blocks, by);
+    } else if(primaryCat === "trade"){
+      html = tplTrade(a.titre, a.desc||"", fdate, a.paire||"", a.blocks, by);
+    } else {
+      // Tous les autres tags : régénérer depuis les blocs avec le template universel (style MR)
+      const acc    = CAT_COLORS[primaryCat] || "#00e5a0";
+      const catLbl = CAT_LABEL[primaryCat] || primaryCat;
+      const oldWizCat = wizCat; wizCat = primaryCat;
+      html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", a.blocks, by);
+      wizCat = oldWizCat;
+    }
   } else {
     html = await fbGetHtml(id);
     if(!html) html = a.html || "";
@@ -2073,6 +2086,9 @@ async function _openArtInReader(id, pushToHistory = true){
 
   document.getElementById("artReaderOv").classList.add("open");
   document.body.style.overflow = "hidden";
+  // Restaurer la grille (cachée si ouverture via lien direct)
+  const _grid = document.getElementById("articlesGrid");
+  _grid.style.visibility=""; _grid.style.opacity="";
 
   if(pushToHistory){
     const hashParams = { article: id };
@@ -2082,7 +2098,31 @@ async function _openArtInReader(id, pushToHistory = true){
 }
 
 function openArtNewTab(){
-  if(_artReaderBlobUrl) window.open(_artReaderBlobUrl, "_blank");
+  // Utiliser l'URL permanente (hash) plutôt que le blob temporaire
+  if(_currentArtId) window.open(getArticleUrl(_currentArtId), "_blank");
+  else if(_artReaderBlobUrl) window.open(_artReaderBlobUrl, "_blank");
+}
+
+function getArticleUrl(id){
+  return location.origin + location.pathname + "#article=" + encodeURIComponent(id);
+}
+
+function copyArticleLink(e, id){
+  e.stopPropagation();
+  const url = getArticleUrl(id);
+  navigator.clipboard.writeText(url).then(()=>{
+    toast("🔗 Lien copié !");
+  }).catch(()=>{
+    // Fallback
+    const ta = document.createElement("textarea");
+    ta.value = url;
+    ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    toast("🔗 Lien copié !");
+  });
 }
 
 function closeArtReader(){
@@ -2096,6 +2136,7 @@ function closeArtReader(){
 }
 
 function _closeArtReaderSilent(){
+  _currentArtId = null;
   const ov = document.getElementById("artReaderOv");
   if(!ov) return;
   ov.classList.remove("open");
@@ -3956,12 +3997,24 @@ async function loadUserPhotoCache(){
 // ── FIRESTORE ARTICLES ────────────────────────────────────────────────────────
 function startRealtimeSync(){
   if(unsubscribe) unsubscribe();
-  // Lance le cache photos en arrière-plan sans bloquer l'affichage
-  loadUserPhotoCache().then(()=>render());
+  const _hashArticle = parseHash().article || null;
+  let   _hashHandled = false;
+
+  // Si un lien direct vers un article est demandé, ne pas afficher la grille
+  if(!_hashArticle) loadUserPhotoCache().then(()=>render());
+
   unsubscribe = db.collection("articles").orderBy("date","desc")
     .onSnapshot(snap=>{
       arts=snap.docs.map(d=>({id:d.id,...d.data()}));
-      save(); render();
+      save();
+      if(_hashArticle && !_hashHandled){
+        // Premier chargement avec un hash article → ouvrir directement
+        _hashHandled = true;
+        loadUserPhotoCache(); // en arrière-plan (pas besoin d'attendre)
+        applyHash();
+      } else {
+        render();
+      }
     }, err=>console.error("sync",err));
 
   // Real-time ban/status watch for guests
@@ -4252,7 +4305,7 @@ function renderGrid(){
     if(canAdd) addBtn=`<button class="btn-add-block ${primaryCat}" onclick="openAddBlock(event,'${a.id}')" title="Ajouter le prochain bloc">➕ Suite</button>`;
     const extraBadges = extraCats.map(c=>`<span class="cat-badge-extra ${c}">${CAT_LABEL[c]||c}</span>`).join("");
     const editTagBtn = role==="admin" ? `<button class="btn-edit-tag" onclick="openEditTags(event,'${a.id}')" title="Modifier les tags">✏️</button>` : "";
-    return `<div class="article-card" data-cat="${primaryCat}" onclick="openArt('${a.id}')">
+    return `<div class="article-card" data-cat="${primaryCat}" onclick="window.open(getArticleUrl('${a.id}'),'_blank')">
       <div class="card-body">
         <div class="card-left">
           <div class="card-top">
@@ -4281,7 +4334,7 @@ function renderGrid(){
           ${(role==="admin"&&sessionStorage.getItem("smf_username")==="KGB")?`<button class="btn-edit-art" onclick="openEditArt(event,'${a.id}')" title="Modifier l'article">✏ Modifier</button>`:""}
           ${role==="admin"?`<button class="btn-del" onclick="delArt(event,'${a.id}')" title="Supprimer">🗑</button>`:""}
           ${isMyPost(a)?`<button class="btn-del" onclick="delOwnArt(event,'${a.id}')" title="Supprimer" style="color:var(--red);">🗑</button>`:""}
-          <span class="card-open">Lire →</span>
+          <button class="btn-permalink" onclick="copyArticleLink(event,'${a.id}')" title="Copier le lien permanent">🔗</button><span class="card-open">↗ Lire</span>
         </div>
       </div>
     </div>`;
@@ -4955,10 +5008,6 @@ function generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,blocks,author
   const paraBlocks  = blocks.filter(b=>b.type==="para");
   const by = author || sessionStorage.getItem("smf_username") || "Admin";
   switch(wizCat){
-    case "ws":
-    case "wr":
-    case "mr":
-    case "other":          return tplHebdo(titre,desc,fdate,paire,headerBlock,paraBlocks,by);
     case "trade": {
       // Construire les blocs trade avec l'image header comme bloc initial
       const coverFromHeader = headerBlock.image ? [{
@@ -4984,7 +5033,8 @@ function generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,blocks,author
       if(tradeBlocks.length===0) tradeBlocks.push({text:"",images:[],image:null,date:""});
       return tplTradeInvites(titre,desc,fdate,paire,tradeBlocks,by);
     }
-    default:             return tplDefault(titre,desc,fdate,paire,acc,catLbl,headerBlock,paraBlocks,by);
+    // Tous les autres tags utilisent le même template universel (style MR)
+    default: return tplUniversal(titre,desc,fdate,paire,headerBlock,paraBlocks,by,acc,catLbl);
   }
 }
 
@@ -5013,6 +5063,47 @@ function renderParaHTML(paraBlocks){
 
 // ── FONTS ─────────────────────────────────────────────────────────────────────
 const FONTS=`<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,400&display=swap" rel="stylesheet">`;
+const SHARED_IMGS=`
+<style>
+.art-fig{position:relative;}
+.art-fig .img-expand-btn{
+  position:absolute;top:8px;right:8px;
+  background:rgba(0,0,0,.65);color:#fff;
+  border:none;border-radius:4px;
+  padding:4px 8px;font-size:11px;cursor:pointer;
+  opacity:0;transition:opacity .18s;pointer-events:auto;
+  text-decoration:none;display:inline-flex;align-items:center;gap:4px;
+  font-family:monospace;letter-spacing:.04em;
+}
+.art-fig:hover .img-expand-btn{opacity:1;}
+.art-fig img{cursor:zoom-in;}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.art-fig img, .cover-img').forEach(function(img){
+    // Ajouter bouton ↗ sur les figures
+    var fig = img.closest('.art-fig');
+    if(fig && !fig.querySelector('.img-expand-btn')){
+      var btn = document.createElement('a');
+      btn.className='img-expand-btn';
+      btn.innerHTML='&#8599; Voir';
+      btn.target='_blank';
+      btn.rel='noopener';
+      btn.href = img.src;
+      fig.appendChild(btn);
+    }
+    // Clic sur l'image = ouvrir en nouvel onglet
+    img.addEventListener('click',function(e){
+      if(e.target===img){ window.open(img.src,'_blank'); }
+    });
+  });
+  // Cover image (hors figure)
+  document.querySelectorAll('.cover-img-wrap .cover-img').forEach(function(img){
+    img.style.cursor='zoom-in';
+    img.addEventListener('click',function(){ window.open(img.src,'_blank'); });
+  });
+});
+<\/script>`;
 
 // Shared para-block + art-fig CSS injected into each template
 const PARA_CSS=`
@@ -5047,6 +5138,16 @@ function mkChip(label,by,fdate,paire){
 function mkCoverImg(hb,padding="4rem"){
   if(!hb.image) return "";
   return `<div class="cover-img-wrap" style="padding:0 ${padding}"><img src="${hb.image.dataUrl}" alt="" class="cover-img"></div>`;
+}
+function mkHeaderExtras(hb,acc){
+  if(!hb.extras || !hb.extras.length) return "";
+  const html = hb.extras.map(el=>{
+    if(el.type==="text")  return el.value ? `<div class="art-body">${fmtText(el.value)}</div>` : "";
+    if(el.type==="image") return el.data  ? `<figure class="art-fig"><img src="${el.data.dataUrl}" alt=""><figcaption>${el.data.name||""}</figcaption></figure>` : "";
+    return "";
+  }).join("");
+  if(!html) return "";
+  return `<div class="content" style="padding-bottom:0"><div class="para-block" style="--acc:${acc}">${html}</div></div>`;
 }
 function mkParaBlocks(paraBlocks,acc){
   return paraBlocks.map(b=>{
@@ -5148,6 +5249,52 @@ h1{font-size:clamp(1.6rem,3.8vw,2.5rem);font-weight:800;color:${acc};line-height
 }
 
 // ════════════════════════════════════════════════════════════════════
+// TEMPLATE UNIVERSEL — Layout MR appliqué à tous les tags éditoriaux
+// Même rendu que tplHebdo mais avec acc et catLabel paramétrables
+// ════════════════════════════════════════════════════════════════════
+function tplUniversal(titre,desc,fdate,paire,hb,paraBlocks,by,acc,catLabel){
+  let weekNum="—";
+  try{const d=new Date(document.getElementById("wDate").value);const j=new Date(d.getFullYear(),0,1);weekNum=Math.ceil(((d-j)/86400000+j.getDay()+1)/7);}catch(e){}
+  const subtitle = hb.subtitle||(desc||"");
+  const chip = mkChip((catLabel||"SMF").toUpperCase(),by,fdate,paire);
+  const coverImg = mkCoverImg(hb);
+  const headerExtras = mkHeaderExtras(hb,acc);
+  const blocks = mkParaBlocks(paraBlocks,acc);
+  const rgb = hexToRgb(acc);
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
+<style>
+${sharedCSS(acc,"0.025")}
+/* Universal (MR-style) */
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;}
+.para-block .para-title::first-letter{
+  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:${acc};
+  float:left;line-height:.78;margin:.06em .16em .02em 0;text-shadow:0 0 20px rgba(${rgb},.35);}
+.topbar{border-bottom:3px solid ${acc} !important;}
+.week-badge{font-family:'Space Mono',monospace;font-size:9px;color:${acc};background:rgba(${rgb},.07);border:1px solid rgba(${rgb},.2);padding:3px 10px;border-radius:3px;letter-spacing:.12em;margin-left:.75rem;}
+</style></head><body>
+<div class="topbar">
+  <div class="tb-left">
+    <div class="tb-hex">SMF</div>
+    <div class="tb-brand"><em>S·M·F</em> RESEARCH</div>
+    <div class="week-badge">S${weekNum}</div>
+  </div>
+  <div class="tb-chip">${chip}</div>
+</div>
+<div class="hero">
+  <h1>${titre}</h1>
+  ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
+</div>
+${coverImg}${headerExtras}
+<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+<div class="content">${blocks}</div>
+<div class="footer">
+  <span><em>S·M·F</em> · ${catLabel||"Research"}</span>
+  <div style="display:flex;align-items:center;gap:.5rem;"><div class="footer-pulse"></div><span>${fdate}</span></div>
+</div>
+${SHARED_IMGS}</body></html>`;
+}
+
+// ════════════════════════════════════════════════════════════════════
 // TEMPLATE 1 — HEBDO  (or · Playfair · lettre capitale)
 // ════════════════════════════════════════════════════════════════════
 function tplHebdo(titre,desc,fdate,paire,hb,paraBlocks,by){
@@ -5157,6 +5304,7 @@ function tplHebdo(titre,desc,fdate,paire,hb,paraBlocks,by){
   const subtitle = hb.subtitle||(desc||"");
   const chip = mkChip("HEBDO",by,fdate,paire);
   const coverImg = mkCoverImg(hb);
+  const headerExtras = mkHeaderExtras(hb,acc);
   const blocks = mkParaBlocks(paraBlocks,acc);
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
 <style>
@@ -5183,14 +5331,14 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   <h1>${titre}</h1>
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
-${coverImg}
+${coverImg}${headerExtras}
 <div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
 <div class="content">${blocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Analyse Hebdomadaire</span>
   <div style="display:flex;align-items:center;gap:.5rem;"><div class="footer-pulse"></div><span>${fdate}</span></div>
 </div>
-</body></html>`;
+${SHARED_IMGS}</body></html>`;
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -5201,6 +5349,7 @@ function tplMonthly(titre,desc,fdate,paire,hb,paraBlocks,by){
   const subtitle = hb.subtitle||(desc||"");
   const chip = mkChip("MONTHLY RECAP",by,fdate,paire);
   const coverImg = mkCoverImg(hb);
+  const headerExtras = mkHeaderExtras(hb,acc);
   const blocks = mkParaBlocks(paraBlocks,acc);
   const monthLabel = fdate?fdate.split(" ").filter(w=>isNaN(w)&&w.length>3).join(" "):"";
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
@@ -5224,14 +5373,14 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   <h1>${titre}</h1>
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
-${coverImg}
+${coverImg}${headerExtras}
 <div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
 <div class="content">${blocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Monthly Recap</span>
   <div style="display:flex;align-items:center;gap:.5rem;"><div class="footer-pulse"></div><span>${fdate}</span></div>
 </div>
-</body></html>`;
+${SHARED_IMGS}</body></html>`;
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -5242,6 +5391,7 @@ function tplBankMeeting(titre,desc,fdate,paire,hb,paraBlocks,by){
   const subtitle = hb.subtitle||(desc||"");
   const chip = mkChip("BANK MEETING",by,fdate,paire);
   const coverImg = mkCoverImg(hb);
+  const headerExtras = mkHeaderExtras(hb,acc);
   const blocks = mkParaBlocks(paraBlocks,acc);
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
 <style>
@@ -5264,14 +5414,14 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   <h1>${titre}</h1>
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
-${coverImg}
+${coverImg}${headerExtras}
 <div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
 <div class="content">${blocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Bank Meeting Note</span>
   <div style="display:flex;align-items:center;gap:.5rem;"><div class="footer-pulse"></div><span>${fdate}</span></div>
 </div>
-</body></html>`;
+${SHARED_IMGS}</body></html>`;
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -5337,7 +5487,7 @@ ${coverImg}
   <span><em>S·M·F</em> · Trades Admins</span>
   <div style="display:flex;align-items:center;gap:.5rem;"><div class="footer-pulse"></div><span>${fdate}</span></div>
 </div>
-</body></html>`;
+${SHARED_IMGS}</body></html>`;
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -5403,7 +5553,7 @@ ${coverImg}
   <span><em>S·M·F</em> · Trades Invités</span>
   <div style="display:flex;align-items:center;gap:.5rem;"><div class="footer-pulse"></div><span>${fdate}</span></div>
 </div>
-</body></html>`;
+${SHARED_IMGS}</body></html>`;
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -5413,6 +5563,7 @@ function tplDefault(titre,desc,fdate,paire,acc,catLbl,hb,paraBlocks,by){
   const subtitle = hb.subtitle||(desc||"");
   const chip = mkChip(catLbl.toUpperCase(),by,fdate,paire);
   const coverImg = mkCoverImg(hb);
+  const headerExtras = mkHeaderExtras(hb,acc);
   const blocks = mkParaBlocks(paraBlocks,acc);
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
 <style>
@@ -5431,20 +5582,21 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   <h1>${titre}</h1>
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
-${coverImg}
+${coverImg}${headerExtras}
 <div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
 <div class="content">${blocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Smart Finance Research</span>
   <div style="display:flex;align-items:center;gap:.5rem;"><div class="footer-pulse"></div><span>${fdate}</span></div>
 </div>
-</body></html>`;
+${SHARED_IMGS}</body></html>`;
 }
 function tplWeekAhead(titre,desc,fdate,paire,hb,paraBlocks,by){
   const acc="#f7b731";
   const subtitle = hb.subtitle||(desc||"");
   const chip = mkChip("WEEK AHEAD",by,fdate,paire);
   const coverImg = mkCoverImg(hb);
+  const headerExtras = mkHeaderExtras(hb,acc);
   const blocks = mkParaBlocks(paraBlocks,acc);
 
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
@@ -5469,14 +5621,14 @@ h1{font-family:'Space Mono',monospace !important;font-size:clamp(1.6rem,3.8vw,2.
   <h1>${titre}</h1>
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
-${coverImg}
+${coverImg}${headerExtras}
 <div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
 <div class="content">${blocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Week Ahead</span>
   <div style="display:flex;align-items:center;gap:.5rem;"><div class="footer-pulse"></div><span>${fdate}</span></div>
 </div>
-</body></html>`;
+${SHARED_IMGS}</body></html>`;
 }
 
 let guestMode="text", guestPendingImages=[], guestPendingPdf=null;
@@ -5867,10 +6019,16 @@ const QUOTES=[
     }
     document.getElementById("gateScreen").style.display="none";
     renderHeaderActions();
+    // Si lien direct vers un article : masquer la grille pendant le chargement
+    if(parseHash().article){
+      document.getElementById("articlesGrid").style.visibility="hidden";
+      document.getElementById("articlesGrid").style.opacity="0";
+    }
     startRealtimeSync();
-    // Appliquer le hash après un court délai (laisser arts se charger)
-    setTimeout(applyHash, 600);
+    // Appliquer le hash (filtres, etc.) — les liens article sont gérés dans startRealtimeSync
+    if(!parseHash().article) setTimeout(applyHash, 600);
   } else {
+    document.getElementById("gateScreen").style.display="flex";
     renderHeaderActions();
     render();
     setTimeout(()=>document.getElementById("lUser").focus(),100);
