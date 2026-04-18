@@ -15,7 +15,8 @@
     --mono:'Space Mono',monospace;--sans:'Syne',sans-serif;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+  html{overflow-x:hidden;} /* ← ici et pas sur body pour ne pas bloquer le scroll vertical */
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
   body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 
   /* HEADER */
@@ -366,7 +367,7 @@
   .btn-add-header{background:var(--accent);border:none;color:#000;font-family:var(--mono);font-size:11px;font-weight:700;padding:7px 18px;border-radius:4px;cursor:pointer;letter-spacing:.08em;transition:opacity .15s;white-space:nowrap;display:flex;align-items:center;gap:.5rem;}
   .btn-add-header:hover{opacity:.85;}
 
-  .container{max-width:1400px;margin:0 auto;padding:2rem;position:relative;z-index:1;}
+  .container{max-width:1400px;margin:0 auto;padding:2rem 2rem 4rem;position:relative;z-index:1;}
 
   .fcount{font-family:var(--mono);font-size:10px;opacity:.7;margin-left:2px;}
 
@@ -730,6 +731,9 @@
   .btn-add-block.trade:hover{background:rgba(0,247,10,.08);}
   .btn-add-block.tradeinvites{border-color:#0005ff;color:#0005ff;}
   .btn-add-block.tradeinvites:hover{background:rgba(0,5,255,.1);}
+  /* ── WS CONTINUER ── */
+  .btn-ws-continue{background:transparent;border:1px dashed var(--accent);color:var(--accent);font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 9px;border-radius:3px;cursor:pointer;letter-spacing:.05em;transition:all .15s;white-space:nowrap;}
+  .btn-ws-continue:hover{background:rgba(0,229,160,.1);}
   .ab-block-form{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:1.25rem;display:flex;flex-direction:column;gap:1rem;}
   .ab-block-num{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.1rem;}
 
@@ -1894,6 +1898,50 @@
         </div>
       </div>
       <button class="btn-submit" id="abBtnSubmit" onclick="submitAddBlock()">➕ Publier ce bloc</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MODAL WS CONTINUER ====== -->
+<div class="overlay" id="wsContinueOv">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-head">
+      <div>
+        <div class="modal-head-title" id="wscModalTitle">✏ Continuer l'article WS</div>
+        <div class="modal-head-sub" id="wscModalSub" style="color:var(--accent);"></div>
+      </div>
+      <button class="btn-x" onclick="closeWsContinue()">✕ Fermer</button>
+    </div>
+    <div class="modal-body">
+      <div id="wscExistingInfo" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-family:var(--mono);font-size:10px;color:var(--muted);display:flex;align-items:center;gap:.75rem;">
+        <span style="font-size:18px;">📄</span>
+        <div>
+          <div id="wscArtTitre" style="color:var(--text);font-weight:700;margin-bottom:2px;"></div>
+          <div id="wscArtSections" style="color:var(--muted);"></div>
+        </div>
+      </div>
+      <div class="ab-block-num" id="wscSectionNum" style="color:var(--accent);margin-bottom:1rem;"></div>
+      <div class="field">
+        <label>Date de cette section *</label>
+        <input type="date" id="wscDate">
+      </div>
+      <div class="field">
+        <label>Titre de la section <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel — affiché en vert dans l'article)</span></label>
+        <input type="text" id="wscTitle" placeholder="Ex: Analyse de mi-semaine · Mise à jour macro · Conclusion…" maxlength="200">
+      </div>
+      <div class="field">
+        <label>Contenu *</label>
+        <textarea id="wscText" style="min-height:160px;" placeholder="Continue ton analyse ici…"></textarea>
+      </div>
+      <div class="field">
+        <label>Image <span style="font-size:10px;color:var(--muted);font-weight:400;">(graphique, screenshot — optionnel)</span></label>
+        <div class="img-drop" id="wscImgDrop">
+          <input type="file" id="wscImgInput" accept="image/*" onchange="onWscImgSelected(this.files)">
+          <div class="img-drop-txt">📸 Clique ou glisse une image<br><span>JPG · PNG · WebP</span></div>
+        </div>
+        <div id="wscImgPreview" style="margin-top:.5rem;"></div>
+      </div>
+      <button class="btn-submit" id="wscBtnSubmit" onclick="submitWsContinue()">✏ Ajouter cette section à l'article</button>
     </div>
   </div>
 </div>
@@ -3995,32 +4043,70 @@ async function loadUserPhotoCache(){
 }
 
 // ── FIRESTORE ARTICLES ────────────────────────────────────────────────────────
+const ART_PAGE_SIZE = 20; // Articles chargés par batch
+let _lastArtDoc = null;   // Curseur pagination
+let _allLoaded  = false;  // Plus d'articles à charger
+
 function startRealtimeSync(){
   if(unsubscribe) unsubscribe();
+  _lastArtDoc = null;
+  _allLoaded  = false;
+  arts = [];
+
   const _hashArticle = parseHash().article || null;
   let   _hashHandled = false;
 
-  // Si un lien direct vers un article est demandé, ne pas afficher la grille
-  if(!_hashArticle) loadUserPhotoCache().then(()=>render());
+  // Lancer le render immédiatement + charger les photos en parallèle (non-bloquant)
+  if(!_hashArticle){
+    render(); // render immédiat sans attendre les photos
+    loadUserPhotoCache().then(()=>renderGrid()); // mise à jour avatars quand prêt
+  }
 
+  // Si un lien direct vers un article est demandé, ne pas afficher la grille pendant le chargement
+  if(_hashArticle){
+    document.getElementById("articlesGrid").style.visibility="hidden";
+    document.getElementById("articlesGrid").style.opacity="0";
+    loadUserPhotoCache(); // en arrière-plan
+  }
+
+  // Charger uniquement les ART_PAGE_SIZE premiers articles + écouter les nouveaux
   unsubscribe = db.collection("articles").orderBy("date","desc")
+    .limit(ART_PAGE_SIZE)
     .onSnapshot(snap=>{
-      arts=snap.docs.map(d=>({id:d.id,...d.data()}));
+      arts = snap.docs.map(d=>({id:d.id,...d.data()}));
+      _lastArtDoc = snap.docs[snap.docs.length - 1] || null;
+      _allLoaded  = snap.docs.length < ART_PAGE_SIZE;
       save();
       if(_hashArticle && !_hashHandled){
-        // Premier chargement avec un hash article → ouvrir directement
         _hashHandled = true;
-        loadUserPhotoCache(); // en arrière-plan (pas besoin d'attendre)
+        loadUserPhotoCache();
         applyHash();
       } else {
         render();
       }
     }, err=>console.error("sync",err));
 
-  // Real-time ban/status watch for guests
   if(role==="guest" && currentUser){
     startBanWatch();
   }
+}
+
+// Charger la page suivante d'articles
+async function loadMoreArts(){
+  if(_allLoaded || !_lastArtDoc) return;
+  const btn = document.getElementById("loadMoreBtn");
+  if(btn){ btn.disabled=true; btn.textContent="⏳ Chargement…"; }
+  try{
+    const snap = await db.collection("articles").orderBy("date","desc")
+      .startAfter(_lastArtDoc).limit(ART_PAGE_SIZE).get();
+    const newArts = snap.docs.map(d=>({id:d.id,...d.data()}));
+    arts = [...arts, ...newArts];
+    _lastArtDoc = snap.docs[snap.docs.length - 1] || _lastArtDoc;
+    _allLoaded  = snap.docs.length < ART_PAGE_SIZE;
+    save();
+    renderGrid(); // re-render avec les nouveaux articles
+  }catch(e){ console.error("loadMoreArts:", e); }
+  if(btn){ btn.disabled=false; btn.textContent="⬇ Charger plus d'articles"; }
 }
 
 let banWatchUnsub = null;
@@ -4104,6 +4190,7 @@ async function fbUpdate(id, data){
     const ops = [db.collection("articles").doc(id).update(meta)];
     if(html) ops.push(db.collection("articles_html").doc(id).set({html}));
     await Promise.all(ops);
+    invalidateHtmlCache(id); // vider le cache pour forcer rechargement
     return true;
   }
   catch(e){
@@ -4126,14 +4213,25 @@ async function fbDel(id){
   }
 }
 
+// Cache mémoire HTML — évite de refaire une requête Firestore à chaque réouverture
+const _htmlCache = new Map();
+
 // Charge le HTML complet depuis articles_html (appelé à l'ouverture d'un article)
 async function fbGetHtml(id){
+  if(_htmlCache.has(id)) return _htmlCache.get(id);
   try{
     const snap = await db.collection("articles_html").doc(id).get();
-    if(snap.exists) return snap.data().html || null;
+    if(snap.exists){
+      const html = snap.data().html || null;
+      if(html) _htmlCache.set(id, html);
+      return html;
+    }
   }catch(e){ console.error("fbGetHtml:", e); }
   return null;
 }
+
+// Invalider le cache quand un article est modifié
+function invalidateHtmlCache(id){ _htmlCache.delete(id); }
 
 
 // ── STATS & GRID ──────────────────────────────────────────────────────────────
@@ -4292,7 +4390,7 @@ function renderGrid(){
       const m=a.html.match(/<img[^>]+src="(data:image[^"]+)"/);
       if(m) thumbSrc=m[1];
     }
-    const thumb=thumbSrc?`<img class="card-thumb" src="${thumbSrc}" alt="">`:"";
+    const thumb=thumbSrc?`<img class="card-thumb" src="${thumbSrc}" alt="" loading="lazy">`:"";
     const authorName=a.submittedBy||"";
     let blocksBadge="", addBtn="";
     const nbBlocks=isBlocks?a.blocks.length:0;
@@ -4303,9 +4401,13 @@ function renderGrid(){
       role==="admin"||(role==="guest"&&cats.includes("tradeinvites")&&currentUser&&a.submittedById===currentUser.id)
     );
     if(canAdd) addBtn=`<button class="btn-add-block ${primaryCat}" onclick="openAddBlock(event,'${a.id}')" title="Ajouter le prochain bloc">➕ Suite</button>`;
+
+    // ── Bouton WS Continuer (admin uniquement, article avec blocs)
+    const isAdminWS = cats.includes("ws") && role==="admin" && Array.isArray(a.blocks) && a.blocks.length > 0;
+    const wsBtn = isAdminWS ? `<button class="btn-ws-continue" onclick="openWsContinue(event,'${a.id}')" title="Ajouter une section à cet article WS">✏ Continuer</button>` : "";
     const extraBadges = extraCats.map(c=>`<span class="cat-badge-extra ${c}">${CAT_LABEL[c]||c}</span>`).join("");
     const editTagBtn = role==="admin" ? `<button class="btn-edit-tag" onclick="openEditTags(event,'${a.id}')" title="Modifier les tags">✏️</button>` : "";
-    return `<div class="article-card" data-cat="${primaryCat}" onclick="window.open(getArticleUrl('${a.id}'),'_blank')">
+    return `<div class="article-card" data-cat="${primaryCat}" onmouseenter="prefetchArt('${a.id}')" onclick="openArt('${a.id}')">
       <div class="card-body">
         <div class="card-left">
           <div class="card-top">
@@ -4319,7 +4421,7 @@ function renderGrid(){
           <div class="card-desc">${a.desc||""}</div>
         </div>
         <div class="card-right${thumbSrc?"":" no-img"}">
-          ${thumbSrc?`<img src="${thumbSrc}" alt="">`:""}
+          ${thumbSrc?`<img src="${thumbSrc}" alt="" loading="lazy">`:""}
         </div>
       </div>
       <div class="card-footer">
@@ -4330,6 +4432,7 @@ function renderGrid(){
         </div>
         <div class="card-actions">
           ${addBtn}
+          ${wsBtn}
           ${editTagBtn}
           ${(role==="admin"&&sessionStorage.getItem("smf_username")==="KGB")?`<button class="btn-edit-art" onclick="openEditArt(event,'${a.id}')" title="Modifier l'article">✏ Modifier</button>`:""}
           ${role==="admin"?`<button class="btn-del" onclick="delArt(event,'${a.id}')" title="Supprimer">🗑</button>`:""}
@@ -4339,6 +4442,14 @@ function renderGrid(){
       </div>
     </div>`;
   }).join("");
+
+  // Bouton "Charger plus" si il reste des articles
+  if(!_allLoaded){
+    const loadMoreDiv = document.createElement("div");
+    loadMoreDiv.style.cssText = "grid-column:1/-1;display:flex;justify-content:center;padding:1.5rem 0;";
+    loadMoreDiv.innerHTML = `<button id="loadMoreBtn" onclick="loadMoreArts()" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:12px;padding:10px 28px;border-radius:8px;cursor:pointer;letter-spacing:.06em;transition:border-color .2s,color .2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'">⬇ Charger plus d'articles</button>`;
+    g.appendChild(loadMoreDiv);
+  }
 }
 
 // Vérifie si l'article appartient à l'invité connecté (double vérif ID + username)
@@ -4478,6 +4589,16 @@ async function openArt(id){
   await _openArtInReader(id, true);
 }
 
+// Précharge le HTML d'un article en cache dès que l'utilisateur survole la carte
+function prefetchArt(id){
+  const a = arts.find(x=>x.id===id);
+  if(!a || _htmlCache.has(id)) return;
+  // Uniquement les articles sans blocs (ceux qui nécessitent une requête Firestore)
+  if(!Array.isArray(a.blocks) || a.blocks.length===0){
+    fbGetHtml(id); // fire-and-forget
+  }
+}
+
 // ── WIZARD STATE ─────────────────────────────────────────────────────────────
 // Steps: 1=Catégorie, 2=Config(mode+date), 3+=Blocs (step 3 = bloc 0, step 4 = bloc 1, ...)
 let wizStep = 1;
@@ -4485,6 +4606,7 @@ let wizCat  = null;
 let wizMode = "manual";
 let wizPendingHTML = null;
 let wizBlocks = []; // [{type:'header',...}, {type:'para',...}, ...]
+let _wizContinuationId = null; // si défini → mode "Continuer WS" (appende au lieu de créer)
 
 const CAT_COLORS = {hebdo:"#f7b731",weekahead:"#f7b731",mensuel:"#0ff",banques:"#00e5a0",trade:"#00f70a",tradeinvites:"#0005ff",tradeideas:"#f7b731",wa:"#f7b731",mr:"#f7b731",bm:"#f7b731",tan:"#f7b731"};
 
@@ -4752,9 +4874,15 @@ function wizUpdateUI(){
 
   const inBlocks = wizStep >= 3;
   const blockIdx = wizBlockIdx();
+  const isContinuation = !!_wizContinuationId;
 
   // Titre / sous-titre dynamique
-  if(wizStep === 1){
+  if(isContinuation){
+    const a = arts.find(x => x.id === _wizContinuationId);
+    const blockLabel = wizBlocks.length === 1 ? "Nouvelle section" : `Section ${blockIdx + 1} / ${wizBlocks.length}`;
+    document.getElementById("wizTitle").textContent = "✏ Continuer l'article WS";
+    document.getElementById("wizSub").textContent   = (a?.titre || "") + " · " + blockLabel;
+  } else if(wizStep === 1){
     document.getElementById("wizTitle").textContent = "Choisir une catégorie";
     document.getElementById("wizSub").textContent   = "Étape 1 sur 3";
   } else if(wizStep === 2){
@@ -4788,13 +4916,15 @@ function wizUpdateUI(){
   const back = document.getElementById("wizBtnBack");
   const next = document.getElementById("wizBtnNext");
   const pub  = document.getElementById("wizBtnPublish");
-  back.style.visibility = wizStep > 1 ? "visible":"hidden";
+  // En mode continuation : toujours en blocs, pas de retour vers étapes 1/2
+  back.style.visibility = (isContinuation || wizStep <= 1) ? "hidden" : "visible";
 
   if(inBlocks){
-    // En mode blocs : Retour + Publier, plus de "Suivant"
     next.style.display = "none";
     pub.style.display  = "flex";
-    pub.textContent    = role==="guest" ? "📤 Soumettre" : "✦ Publier l'article";
+    pub.textContent    = isContinuation
+      ? "✏ Ajouter ces sections à l'article"
+      : (role==="guest" ? "📤 Soumettre" : "✦ Publier l'article");
   } else {
     next.style.display = "flex";
     pub.style.display  = "none";
@@ -4803,7 +4933,7 @@ function wizUpdateUI(){
 
   const isTradeOnly = wizCat==="trade"||wizCat==="tradeinvites";
   const mt = document.getElementById("wizModeToggle");
-  if(mt) mt.style.display = (isTradeOnly||wizStep!==2) ? "none":"grid";
+  if(mt) mt.style.display = (isTradeOnly||isContinuation||wizStep!==2) ? "none":"grid";
   if(isTradeOnly && wizMode==="html") setWizMode("manual");
 
   // Render le bloc courant + aperçu
@@ -4843,24 +4973,33 @@ function compileBlocksForTrade(){
 
 function wizBuildPreview(){
   if(wizStep < 3) return;
-  const titre  = (wizBlocks[0]?.titre||document.getElementById("wTitre")?.value||"").trim();
-  const desc   = (wizBlocks[0]?.subtitle||titre||"").trim();
-  const date   = document.getElementById("wDate")?.value||"";
-  const time   = document.getElementById("wTime")?.value||"";
-  const paire  = document.getElementById("wPaire")?.value.trim()||"";
   const acc    = CAT_COLORS[wizCat]||"#00e5a0";
   const catLbl = CAT_LABEL[wizCat]||wizCat||"";
-  const timeStr = time ? ` · ${time}` : "";
-  const fdate  = date ? new Date(date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})+timeStr : "";
-
+  const by     = sessionStorage.getItem("smf_username")||"Admin";
   let bodyHTML = "";
-  if(wizMode==="html"&&wizPendingHTML){
+
+  if(_wizContinuationId){
+    // Mode continuation : aperçu = article existant + nouvelles sections
+    const a = arts.find(x => x.id === _wizContinuationId);
+    if(a && Array.isArray(a.blocks)){
+      const fdate = fmtD(a.date, a.time||"");
+      const allBlocks = [...a.blocks, ...wizBlocks]; // blocs existants + nouveaux
+      bodyHTML = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", allBlocks, by);
+    }
+  } else if(wizMode==="html" && wizPendingHTML){
     bodyHTML = wizPendingHTML;
   } else {
-    const by = sessionStorage.getItem("smf_username")||"Admin";
-    bodyHTML = generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,wizBlocks,by);
+    const titre  = (wizBlocks[0]?.titre||document.getElementById("wTitre")?.value||"").trim();
+    const desc   = (wizBlocks[0]?.subtitle||titre||"").trim();
+    const date   = document.getElementById("wDate")?.value||"";
+    const time   = document.getElementById("wTime")?.value||"";
+    const paire  = document.getElementById("wPaire")?.value.trim()||"";
+    const timeStr = time ? ` · ${time}` : "";
+    const fdate  = date ? new Date(date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})+timeStr : "";
+    bodyHTML = generateArticleTemplate(titre, desc, catLbl, acc, fdate, paire, wizBlocks, by);
   }
-  const fr=document.getElementById("wizPreviewFrame");
+
+  const fr = document.getElementById("wizPreviewFrame");
   try{ fr.srcdoc = bodyHTML; } catch(e){ fr.src="about:blank"; }
 }
 
@@ -4884,7 +5023,8 @@ function openImport(){
 function closeImport(){
   document.getElementById("wizOv").classList.remove("open");
   document.body.style.overflow="";
-  // Retirer le readonly des champs date/heure (pour que l'admin puisse les modifier)
+  _wizContinuationId = null; // reset mode continuation
+  // Retirer le readonly des champs date/heure
   const _wDate = document.getElementById("wDate");
   const _wTime = document.getElementById("wTime");
   if(_wDate){ _wDate.readOnly=false; _wDate.style.opacity=""; _wDate.style.cursor=""; _wDate.title=""; }
@@ -4917,17 +5057,46 @@ function resetWizHtml(){
 
 async function wizPublish(){
   if(role!=="admin" && role!=="guest"){toast("⚠ Accès requis",true);return;}
-  // Les guests ne peuvent publier qu'en tradeinvites
-  if(role==="guest" && wizCat!=="tradeinvites"){
-    wizCat="tradeinvites";
+  if(role==="guest" && wizCat!=="tradeinvites") wizCat="tradeinvites";
+
+  const adminUsername = sessionStorage.getItem("smf_username")||"Admin";
+  const btn = document.getElementById("wizBtnPublish");
+
+  // ── MODE CONTINUATION WS ─────────────────────────────────────────────────────
+  if(_wizContinuationId){
+    const a = arts.find(x => x.id === _wizContinuationId);
+    if(!a){ toast("⚠ Article introuvable", true); return; }
+
+    const date = document.getElementById("wDate")?.value || new Date().toISOString().slice(0,10);
+    const newParaBlocks = wizBlocks.filter(b => b.type === "para").map(b => ({
+      ...b,
+      date,
+      addedBy: adminUsername,
+      isContinuation: true
+    }));
+    if(newParaBlocks.length === 0){ toast("⚠ Ajoute au moins un bloc", true); return; }
+
+    btn.disabled = true; btn.textContent = "Publication…";
+    const updatedBlocks = [...(a.blocks || []), ...newParaBlocks];
+    const ok = await fbUpdate(_wizContinuationId, { blocks: updatedBlocks });
+    btn.disabled = false; btn.textContent = "✏ Ajouter ces sections à l'article";
+
+    if(ok){
+      invalidateHtmlCache(_wizContinuationId);
+      closeImport();
+      toast(`✓ ${newParaBlocks.length} section${newParaBlocks.length > 1 ? "s" : ""} ajoutée${newParaBlocks.length > 1 ? "s" : ""} — article WS mis à jour !`);
+    } else {
+      toast("✕ Erreur lors de la sauvegarde", true);
+    }
+    return;
   }
+
+  // ── MODE NORMAL (création d'un nouvel article) ────────────────────────────────
   const titre = (wizBlocks[0]?.titre||document.getElementById("wTitre").value||"").trim();
   const desc  = (wizBlocks[0]?.subtitle||titre||"").trim();
   const date  = document.getElementById("wDate").value;
   const time  = document.getElementById("wTime").value;
   const paire = document.getElementById("wPaire").value.trim();
-  const adminUsername = sessionStorage.getItem("smf_username")||"Admin";
-  // Auteur selon le rôle
   const isGuestPublish = role === "guest" && currentUser;
   const authorName = isGuestPublish
     ? (((currentUser.prenom||"")+" "+(currentUser.nom||"")).trim() || currentUser.username || "Invité")
@@ -4947,44 +5116,28 @@ async function wizPublish(){
       const headerBlock = wizBlocks.find(b=>b.type==="header")||{};
       const paraBlocks  = wizBlocks.filter(b=>b.type==="para");
       const blocksData  = [];
-
-      // Bloc 0 : image principale du Bloc 1 (si présente)
       if(headerBlock.image){
-        blocksData.push({
-          text: "",   // subtitle already shown in hero section — avoid duplicate
-          images: [headerBlock.image.dataUrl],
-          image: headerBlock.image.dataUrl,
-          date,
-          isInitial: true
-        });
+        blocksData.push({text:"",images:[headerBlock.image.dataUrl],image:headerBlock.image.dataUrl,date,isInitial:true});
       }
-
-      // Blocs paragraphes
       paraBlocks.forEach(b=>{
-        blocksData.push({
-          text: b.text||"",
-          images: b.image ? [b.image.dataUrl] : [],
-          image: b.image?.dataUrl||null,
-          date
-        });
+        blocksData.push({text:b.text||"",images:b.image?[b.image.dataUrl]:[],image:b.image?.dataUrl||null,date});
       });
-
       if(blocksData.length===0) blocksData.push({text:"",images:[],image:null,date});
       newArt={type:"manual",titre,desc,date,time,cat:wizCat,paire,blocks:blocksData,submittedBy:authorName,
-            ...(isGuestPublish ? {submittedById:authorId, submittedByUsername:authorUsername} : {})};
+              ...(isGuestPublish ? {submittedById:authorId, submittedByUsername:authorUsername} : {})};
     } else {
       const acc=CAT_COLORS[wizCat]||"#00e5a0";
       const catLbl=CAT_LABEL[wizCat]||wizCat;
       const generatedHTML=generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,wizBlocks,adminUsername);
-      // On stocke aussi les blocs pour pouvoir régénérer avec le dernier template à l'ouverture
-      // On stocke uniquement le HTML final — artBlocks non stockés pour rester sous 1Mo Firestore
+      // ★ Pour les articles WS : stocker aussi les blocs pour permettre la continuation
+      const blocksToStore = wizCat === "ws" ? wizBlocks : undefined;
       newArt={type:"html",titre,desc,date,time,cat:wizCat,paire,html:generatedHTML,
+              ...(blocksToStore ? {blocks:blocksToStore} : {}),
               submittedBy:authorName,
               ...(isGuestPublish ? {submittedById:authorId, submittedByUsername:authorUsername} : {})};
     }
   }
 
-  const btn=document.getElementById("wizBtnPublish");
   btn.disabled=true; btn.textContent="Publication…";
   const id=await fbAdd(newArt);
   btn.disabled=false; btn.textContent = role==="guest" ? "📤 Soumettre" : "✦ Publier l'article";
@@ -5771,6 +5924,46 @@ async function submitGuestTrade(){
 }
 
 
+// ── WS CONTINUER ─────────────────────────────────────────────────────────────
+let _wscTargetId = null; // legacy — gardé pour compatibilité
+let _wscImg      = null;
+
+function openWsContinue(e, id){
+  e.stopPropagation();
+  if(role !== "admin"){ toast("⚠ Accès réservé à l'administrateur", true); return; }
+  const a = arts.find(x => x.id === id);
+  if(!a){ toast("⚠ Article introuvable", true); return; }
+  if(!Array.isArray(a.blocks) || a.blocks.length === 0){
+    toast("⚠ Cet article WS doit être republié avec le Wizard (mode Manuel) pour activer la continuation.", true);
+    return;
+  }
+
+  // Ouvrir le wizard en mode continuation
+  _wizContinuationId = id;
+  wizStep   = 3;
+  wizCat    = "ws";
+  wizMode   = "manual";
+  wizPendingHTML = null;
+
+  // Un seul bloc para vide pour commencer (pas de header — c'est une continuation)
+  wizBlocks = [{ type:"para", title:"", elements:[{type:"text", value:""}] }];
+
+  // Date du jour pré-remplie
+  document.getElementById("wDate").value = new Date().toISOString().slice(0,10);
+  document.getElementById("wTime").value = new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+
+  wizUpdateUI();
+  document.getElementById("wizOv").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeWsContinue(){
+  // Alias — ferme le wizard si ouvert en mode continuation
+  if(_wizContinuationId) closeImport();
+}
+function onWscImgSelected(){} // stub legacy
+async function submitWsContinue(){} // stub legacy
+
 // ── ADD BLOCK (mise à jour chronologique) ─────────────────────────────────────
 let _abTargetId=null, _abImgs=[];
 
@@ -5884,7 +6077,7 @@ if(abd){
 // ── FILTERS ───────────────────────────────────────────────────────────────────
 // Les boutons de filtre sont créés dynamiquement par renderFilterBar() — pas d'init ici
 document.getElementById("searchInput").addEventListener("input",e=>{sq=e.target.value;renderGrid();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeArtReader();closeImport();closeAdminPanel();closeAuthorProfile();}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeArtReader();closeImport();closeAdminPanel();closeAuthorProfile();closeWsContinue();}});
 
 // ── VIEW MODE ─────────────────────────────────────────────────────────────────
 let viewMode = localStorage.getItem("smf_view") || "grid";
