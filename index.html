@@ -6,6 +6,9 @@
 <title>S-M-F · Research Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.gstatic.com">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"></noscript>
 <script>window._emailJsLoaded=false;function _loadEmailJs(){if(window._emailJsLoaded)return;window._emailJsLoaded=true;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';s.onload=function(){if(window.EMAILJS_KEY)emailjs.init(window.EMAILJS_KEY);};document.head.appendChild(s);}</script>
@@ -20,10 +23,10 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   html{overflow-x:hidden;} /* ← ici et pas sur body pour ne pas bloquer le scroll vertical */
   body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
-  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;will-change:transform;}
 
   /* HEADER */
-  header{position:sticky;top:0;z-index:100;background:rgba(8,12,16,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 2rem;}
+  header{position:sticky;top:0;z-index:100;background:rgba(8,12,16,.97);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:0 2rem;}
   .header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:68px;gap:2rem;}
 
   /* ── PROFILE AVATAR ── */
@@ -166,7 +169,7 @@
     /* Empêche tout débordement de l'élément hors du wrap */
     overflow:hidden;
     /* Isolation : les transforms ne propagent pas au layout parent */
-    will-change:opacity,filter,transform;
+    will-change:opacity,transform;
     transform-origin:center center;
     transform-box:fill-box;
   }
@@ -519,12 +522,11 @@
   .online-badge{
     width:8px;height:8px;border-radius:50%;
     background:#00f70a;flex-shrink:0;
-    box-shadow:0 0 0 0 rgba(0,247,10,.6);
     animation:onlinePulse 1.8s ease-in-out infinite;
   }
   @keyframes onlinePulse{
-    0%,100%{box-shadow:0 0 0 0 rgba(0,247,10,.7);}
-    50%    {box-shadow:0 0 0 5px rgba(0,247,10,.0);}
+    0%,100%{transform:scale(1);opacity:1;}
+    50%    {transform:scale(1.5);opacity:.6;}
   }
   /* ── EDIT TAGS ── */
   .btn-edit-tag{background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:10px;cursor:pointer;padding:2px 6px;border-radius:3px;transition:all .15s;line-height:1;font-family:var(--mono);}
@@ -741,6 +743,20 @@
   .ab-block-num{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.1rem;}
 
   /* TOAST */
+  /* ── MULTI-SELECT DROPDOWN ── */
+  .msd-wrap{position:relative;display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:6px 10px;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--accent);gap:.5rem;user-select:none;transition:border-color .15s;}
+  .msd-wrap:hover{border-color:var(--accent);}
+  .msd-wrap.open{border-color:var(--accent);}
+  .msd-val{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .msd-arrow{flex-shrink:0;font-size:10px;color:var(--muted);transition:transform .15s;}
+  .msd-wrap.open .msd-arrow{transform:rotate(180deg);}
+  .msd-drop{display:none;position:fixed;background:var(--surface);border:1px solid var(--border2);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:1000;overflow:hidden;max-height:220px;overflow-y:auto;min-width:180px;}
+  .msd-wrap.open .msd-drop{display:block;}
+  .msd-item{display:flex;align-items:center;gap:.5rem;padding:7px 10px;font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;transition:background .12s,color .12s;}
+  .msd-item:hover{background:var(--surface2);color:var(--text);}
+  .msd-item.msd-sel{color:var(--accent);}
+  .msd-chk{width:12px;font-size:10px;color:var(--accent);flex-shrink:0;}
+
   .toast{position:fixed;bottom:2rem;right:2rem;background:var(--accent);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;padding:10px 20px;border-radius:5px;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;}
   .toast.show{transform:translateY(0);opacity:1;}
   .toast.err{background:var(--red);color:#fff;}
@@ -752,6 +768,18 @@
     .field-row,.cat-pills{grid-template-columns:repeat(2,1fr);}
   }
 
+  /* ── PERFORMANCE : cartes hors-viewport ignorées par le moteur de rendu ── */
+  .article-card{content-visibility:auto;contain-intrinsic-size:0 220px;}
+
+  /* ── ACCESSIBILITÉ : désactiver les animations lourdes si l'utilisateur le préfère ── */
+  @media(prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+    .orbital-svg{animation:none;}
+    .orbital-hex-glow{animation:none;}
+    .fab{animation:none;}
+    .online-badge{animation:none;}
+  }
+
   /* ═══════════════════════════════════════
      FAB — Floating Action Button
   ═══════════════════════════════════════ */
@@ -760,14 +788,14 @@
     width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;
     background:var(--accent);color:#000;font-size:24px;
     display:flex;align-items:center;justify-content:center;
-    box-shadow:0 0 0 0 rgba(0,229,160,.5),0 8px 32px rgba(0,229,160,.35);
+    box-shadow:0 8px 32px rgba(0,229,160,.35);
     animation:fabPulse 2.8s ease-in-out infinite;
     transition:transform .2s,box-shadow .2s;
   }
-  .fab:hover{transform:scale(1.1) rotate(45deg);box-shadow:0 0 0 8px rgba(0,229,160,.12),0 12px 40px rgba(0,229,160,.4);}
+  .fab:hover{transform:scale(1.1) rotate(45deg);box-shadow:0 12px 40px rgba(0,229,160,.4);}
   @keyframes fabPulse{
-    0%,100%{box-shadow:0 0 0 0 rgba(0,229,160,.4),0 8px 28px rgba(0,229,160,.3);}
-    50%    {box-shadow:0 0 0 10px rgba(0,229,160,.08),0 10px 36px rgba(0,229,160,.45);}
+    0%,100%{transform:scale(1);}
+    50%    {transform:scale(1.04);}
   }
   .fab-label{
     position:fixed;bottom:2.45rem;right:5.5rem;z-index:200;
@@ -995,10 +1023,6 @@
   .wb-add-btn.sub:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,229,160,.06);}
 </style>
 
-  <!-- Firebase compat (global SDK) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -2000,6 +2024,11 @@
   <iframe class="art-reader-frame" id="artReaderFrame" sandbox="allow-scripts allow-same-origin allow-popups allow-downloads"></iframe>
 </div>
 
+<!-- Firebase compat (global SDK) — chargé en body pour ne pas bloquer le premier rendu HTML/CSS -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
 <script>
 // ── HASH ROUTING ──────────────────────────────────────────────────────────────
 let _artReaderBlobUrl = null;
@@ -2098,7 +2127,7 @@ async function _openArtInReader(id, pushToHistory = true){
       const acc    = CAT_COLORS[primaryCat] || "#00e5a0";
       const catLbl = CAT_LABEL[primaryCat] || primaryCat;
       const oldWizCat = wizCat; wizCat = primaryCat;
-      html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", a.blocks, by);
+      html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", a.blocks, by, a.pages||null);
       wizCat = oldWizCat;
     }
   } else {
@@ -2113,7 +2142,7 @@ async function _openArtInReader(id, pushToHistory = true){
         const catLbl = CAT_LABEL[primaryCat] || primaryCat;
         const oldWizCat = wizCat; wizCat = primaryCat;
         html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"",
-          [{type:"header",subtitle:a.desc||"",image:null}, ...mb], by);
+          [{type:"header",subtitle:a.desc||"",image:null}, ...mb], by, a.pages||null);
         wizCat = oldWizCat;
       }
     }
@@ -2386,7 +2415,12 @@ let pendingHTML=null, pendingImages=[];
 let unsubscribe = null;
 
 // ── Utils ────────────────────────────────────────────────────────────────────
-function save(){ localStorage.setItem(SK, JSON.stringify(arts)); }
+let _saveTimer = null;
+function save(){
+  // Debounce : évite de bloquer le thread principal à chaque snapshot Firestore
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(()=>{ localStorage.setItem(SK, JSON.stringify(arts)); }, 300);
+}
 function fmtD(s,t){ const d=new Date(s+"T00:00:00").toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"}); return t?d+" · "+t:d; }
 function fmtSz(b){ return b<1024?"< 1 Ko":b<1048576?(b/1024).toFixed(0)+" Ko":(b/1048576).toFixed(1)+" Mo"; }
 function toast(msg,err=false){
@@ -4357,34 +4391,7 @@ function filtered(){
   return l;
 }
 
-// Construit le mini avatar pour une carte article
-function buildCardAvatar(authorName, cat){
-  // Chercher photo dans le cache
-  const photo = userPhotoCache[authorName] || null;
-  // Si c'est l'utilisateur connecté, utiliser sa propre photo
-  const myPhoto = getProfilePhoto();
-  const isMe = (role==="guest" && currentUser && (
-    authorName === ((currentUser.prenom||"")+" "+(currentUser.nom||"")).trim() ||
-    authorName === currentUser.username
-  )) || (role==="admin" && authorName === sessionStorage.getItem("smf_username"));
-  const finalPhoto = isMe ? (myPhoto || photo) : photo;
-
-  const initials = getInitials(authorName || "SMF");
-  // Couleur selon catégorie
-  const catColors = {
-    hebdo:"#f7b731", weekahead:"#f7b731", mensuel:"#00ffff",
-    banques:"#00e5a0", trade:"#00f70a", tradeinvites:"#0005ff",
-    tradeideas:"#f7b731", wa:"#f7b731", mr:"#f7b731", bm:"#f7b731", tan:"#f7b731"
-  };
-  const col = catColors[cat] || "#00e5a0";
-
-  if(finalPhoto){
-    return `<div class="card-av"><img src="${finalPhoto}" alt="${initials}"></div>`;
-  }
-  return `<div class="card-av" style="color:${col};border-color:${col}22;">${initials}</div>`;
-}
-
-// Construit le mini avatar pour une carte article
+// buildCardAvatar — défini une seule fois ci-dessous (doublon supprimé)
 function buildCardAvatar(authorName, cat){
   const myPhoto = getProfilePhoto();
   const isMe = (role==="guest" && currentUser && (
@@ -4402,7 +4409,14 @@ function buildCardAvatar(authorName, cat){
   return `<div class="card-av" style="color:${col};border-color:${col}22;">${initials}</div>`;
 }
 
+// Debounce renderGrid via requestAnimationFrame pour éviter les re-rendus excessifs
+let _renderGridRaf = null;
 function renderGrid(){
+  if(_renderGridRaf) cancelAnimationFrame(_renderGridRaf);
+  _renderGridRaf = requestAnimationFrame(_doRenderGrid);
+}
+function _doRenderGrid(){
+  _renderGridRaf = null;
   const g=document.getElementById("articlesGrid");
   const l=filtered();
   if(!l.length){
@@ -4424,7 +4438,7 @@ function renderGrid(){
       const m=a.html.match(/<img[^>]+src="(data:image[^"]+)"/);
       if(m) thumbSrc=m[1];
     }
-    const thumb=thumbSrc?`<img class="card-thumb" src="${thumbSrc}" alt="" loading="lazy">`:"";
+    const thumb=thumbSrc?`<img class="card-thumb" src="${thumbSrc}" alt="" loading="lazy" decoding="async">`:"";
     const authorName=a.submittedBy||"";
     let blocksBadge="", addBtn="";
     const nbBlocks=isBlocks?a.blocks.length:0;
@@ -4656,7 +4670,7 @@ async function openArt(id){
       const acc    = CAT_COLORS[primaryCat] || "#00e5a0";
       const catLbl = CAT_LABEL[primaryCat] || primaryCat;
       const oldWizCat = wizCat; wizCat = primaryCat;
-      html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", a.blocks, by);
+      html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", a.blocks, by, a.pages||null);
       wizCat = oldWizCat;
     }
     if(html) _htmlCache.set(id, html);
@@ -4672,7 +4686,7 @@ async function openArt(id){
         const catLbl = CAT_LABEL[primaryCat] || primaryCat;
         const oldWizCat = wizCat; wizCat = primaryCat;
         html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"",
-          [{type:"header",subtitle:a.desc||"",image:null}, ...mb], by);
+          [{type:"header",subtitle:a.desc||"",image:null}, ...mb], by, a.pages||null);
         wizCat = oldWizCat;
       }
     }
@@ -4702,7 +4716,7 @@ function prefetchArt(id){
         const acc = CAT_COLORS[primaryCat]||"#00e5a0";
         const catLbl = CAT_LABEL[primaryCat]||primaryCat;
         const old = wizCat; wizCat = primaryCat;
-        html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", a.blocks, by);
+        html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", a.blocks, by, a.pages||null);
         wizCat = old;
       }
       if(html) _htmlCache.set(id, html);
@@ -4721,6 +4735,18 @@ let wizMode = "manual";
 let wizPendingHTML = null;
 let wizBlocks = []; // [{type:'header',...}, {type:'para',...}, ...]
 let _wizContinuationId = null; // si défini → mode "Continuer WS" (appende au lieu de créer)
+let wizPages = []; // [{id, name}] — pages pour les articles WS uniquement
+const WS_DEFAULT_PAGES = [
+  {id:1, name:"Analyse USD"},
+  {id:2, name:"Analyse CAD"},
+  {id:3, name:"Analyse EUR"},
+  {id:4, name:"Analyse GBP"},
+  {id:5, name:"Analyse CHF"},
+  {id:6, name:"Analyse JPY"},
+  {id:7, name:"Analyse AUD"},
+  {id:8, name:"Analyse NZD"},
+  {id:9, name:"Analyse Trades"}
+];
 
 const CAT_COLORS = {hebdo:"#f7b731",weekahead:"#f7b731",mensuel:"#0ff",banques:"#00e5a0",trade:"#00f70a",tradeinvites:"#0005ff",tradeideas:"#f7b731",wa:"#f7b731",mr:"#f7b731",bm:"#f7b731",tan:"#f7b731"};
 
@@ -4779,10 +4805,13 @@ function removeElemImg(idx, ei){
 
 function initBlocks(){
   wizBlocks = [{ type:"header", titre:"", subtitle:"", image:null, extras:[] }];
+  wizPages = (wizCat === "ws") ? WS_DEFAULT_PAGES.map(p=>({...p})) : [];
 }
 
 function addParaBlock(){
-  wizBlocks.push({ type:"para", title:"", subtitle:"", date: new Date().toISOString().slice(0,10), time: new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}), elements:[{type:"text",value:""}] });
+  const newBlock = { type:"para", title:"", subtitle:"", date: new Date().toISOString().slice(0,10), time: new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}), elements:[{type:"text",value:""}] };
+  if(wizCat === "ws") newBlock.pages = [];
+  wizBlocks.push(newBlock);
   wizStep = wizBlocks.length + 2;
   wizUpdateUI();
 }
@@ -4834,6 +4863,7 @@ function updateAbImgName(i, val){
 
 function syncBlockParaTitle(idx, val)    { if(wizBlocks[idx]) wizBlocks[idx].title    = val; schedulePreview(); }
 function syncBlockParaSubtitle(idx, val) { if(wizBlocks[idx]) wizBlocks[idx].subtitle = val; schedulePreview(); }
+function syncBlockShowInMain(idx, val)   { if(wizBlocks[idx]) wizBlocks[idx].showInMain = val; schedulePreview(); }
 function syncBlockDate(idx, val)       { if(wizBlocks[idx]) wizBlocks[idx].date  = val;    schedulePreview(); }
 function syncBlockTime(idx, val)       { if(wizBlocks[idx]) wizBlocks[idx].time  = val;    schedulePreview(); }
 function syncBlockSubtitle(val)        { if(wizBlocks[0])   wizBlocks[0].subtitle = val;   schedulePreview(); }
@@ -4904,6 +4934,150 @@ function mkAddRow(blockIdx){
   </div>`;
 }
 
+// ── WS PAGE MANAGER ───────────────────────────────────────────────────────────
+function renderWsPageManager(){
+  if(wizCat !== "ws" || wizPages.length === 0) return "";
+  const pills = wizPages.map(p=>`
+    <div style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(247,183,49,.08);border:1px solid rgba(247,183,49,.25);border-radius:5px;padding:3px 10px 3px 9px;">
+      <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:#f7b731;letter-spacing:.04em;">${p.name}</span>
+      ${p.id > 9 ? `<button onclick="removeWsPage(${p.id})" style="background:transparent;border:none;color:#ff4d6d;font-size:12px;cursor:pointer;line-height:1;padding:0 0 0 3px;" title="Supprimer cette page">✕</button>` : ""}
+    </div>`).join("");
+  return `
+  <div id="wsPageManager" style="background:rgba(247,183,49,.04);border:1px solid rgba(247,183,49,.2);border-radius:8px;padding:.9rem 1rem;margin-bottom:1rem;">
+    <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:#f7b731;letter-spacing:.16em;text-transform:uppercase;margin-bottom:.6rem;">📑 PAGES DE L'ARTICLE WS</div>
+    <div style="display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin-bottom:.65rem;">${pills}</div>
+    <div style="display:flex;gap:.5rem;align-items:center;">
+      <input id="wsNewPageInput" class="wiz-input" type="text" maxlength="40"
+        placeholder="Nom de la nouvelle page…"
+        onkeydown="if(event.key==='Enter')addWsPage()"
+        style="flex:1;font-size:11px;padding:5px 9px;">
+      <button onclick="addWsPage()" style="background:#f7b731;border:none;color:#000;font-family:var(--mono);font-size:10px;font-weight:700;padding:5px 13px;border-radius:4px;cursor:pointer;white-space:nowrap;transition:opacity .15s;" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">＋ Page</button>
+    </div>
+  </div>`;
+}
+
+function addWsPage(){
+  const inp = document.getElementById("wsNewPageInput");
+  if(!inp) return;
+  const name = inp.value.trim();
+  if(!name){ toast("⚠ Saisis un nom de page", true); return; }
+  const maxId = Math.max(...wizPages.map(p=>p.id), 9);
+  wizPages.push({id: maxId + 1, name});
+  inp.value = "";
+  renderBlocks();
+  toast(`✓ Page "${name}" ajoutée`);
+}
+
+function removeWsPage(id){
+  if(id <= 9){ toast("⚠ Les 10 pages par défaut ne peuvent pas être supprimées", true); return; }
+  const page = wizPages.find(p=>p.id===id);
+  const affected = wizBlocks.filter(b=>b.type==="para" && (
+    Array.isArray(b.pages) ? b.pages.includes(id) : b.page===id
+  )).length;
+  const msg = affected > 0
+    ? `Supprimer la page "${page?.name}" ? Les ${affected} bloc(s) assigné(s) perdront cette page.`
+    : `Supprimer la page "${page?.name}" ?`;
+  if(!confirm(msg)) return;
+  wizPages = wizPages.filter(p => p.id !== id);
+  wizBlocks.forEach(b=>{
+    if(b.type==="para"){
+      if(Array.isArray(b.pages)){
+        b.pages = b.pages.filter(p => p !== id);
+        if(b.pages.length === 0) b.pages = [0];
+      } else if(b.page === id){
+        b.page = 0;
+      }
+    }
+  });
+  renderBlocks();
+  toast(`✓ Page supprimée`);
+}
+
+function toggleMsd(e, wrapId){
+  e.stopPropagation();
+  const wrap = document.getElementById(wrapId);
+  if(!wrap) return;
+  const isOpen = wrap.classList.contains('open');
+  document.querySelectorAll('.msd-wrap.open').forEach(w => w.classList.remove('open'));
+  if(!isOpen){
+    const rect = wrap.getBoundingClientRect();
+    const drop = wrap.querySelector('.msd-drop');
+    if(drop){
+      drop.style.top   = (rect.bottom + 4) + 'px';
+      drop.style.left  = rect.left + 'px';
+      drop.style.width = rect.width + 'px';
+    }
+    wrap.classList.add('open');
+  }
+}
+
+function toggleMsdItem(e, blockIdx, pageId, wrapId){
+  e.stopPropagation();
+  if(!wizBlocks[blockIdx]) return;
+  let pages = Array.isArray(wizBlocks[blockIdx].pages) ? [...wizBlocks[blockIdx].pages]
+            : (wizBlocks[blockIdx].page !== undefined ? [wizBlocks[blockIdx].page] : [0]);
+  if(pages.includes(pageId)){
+    pages = pages.filter(p => p !== pageId);
+    if(pages.length === 0) pages = [0];
+  } else {
+    pages.push(pageId);
+  }
+  wizBlocks[blockIdx].pages = pages;
+  delete wizBlocks[blockIdx].page;
+  // Mettre à jour l'affichage sans fermer le dropdown
+  const wrap = document.getElementById(wrapId);
+  if(wrap){
+    // Mettre à jour la valeur affichée
+    const valEl = document.getElementById(wrapId + '-val');
+    if(valEl){
+      const labels = pages.map(id=>{ const p=wizPages.find(x=>x.id===id); return p?p.name:''; }).filter(Boolean);
+      valEl.textContent = labels.join(', ') || 'Aucune page';
+    }
+    // Mettre à jour les items
+    wrap.querySelectorAll('.msd-item').forEach(item => {
+      const pid = parseInt(item.getAttribute('data-pid'));
+      const chk = item.querySelector('.msd-chk');
+      if(pages.includes(pid)){
+        item.classList.add('msd-sel');
+        if(chk) chk.textContent = '✓';
+      } else {
+        item.classList.remove('msd-sel');
+        if(chk) chk.textContent = '';
+      }
+    });
+  }
+  schedulePreview();
+}
+
+// Fermer les dropdowns au clic dehors
+document.addEventListener('click', ()=>{
+  document.querySelectorAll('.msd-wrap.open').forEach(w => w.classList.remove('open'));
+});
+
+function syncBlockPagesSelect(idx, selectEl){
+  if(!wizBlocks[idx]) return;
+  const selected = Array.from(selectEl.selectedOptions).map(o => parseInt(o.value));
+  wizBlocks[idx].pages = selected.length > 0 ? selected : [0];
+  delete wizBlocks[idx].page;
+  schedulePreview();
+}
+
+function syncBlockPages(idx, pageId, checked){
+  if(!wizBlocks[idx]) return;
+  // Migration old format (single .page) -> new format (.pages array)
+  let pages = Array.isArray(wizBlocks[idx].pages) ? [...wizBlocks[idx].pages]
+            : (wizBlocks[idx].page !== undefined ? [wizBlocks[idx].page] : [0]);
+  if(checked){
+    if(!pages.includes(pageId)) pages.push(pageId);
+  } else {
+    pages = pages.filter(p => p !== pageId);
+    if(pages.length === 0) pages = [0]; // toujours au moins une page
+  }
+  wizBlocks[idx].pages = pages;
+  delete wizBlocks[idx].page; // nettoyer l ancien format
+  schedulePreview();
+}
+
 // Render le bloc courant (wizBlocks[wizBlockIdx()])
 function renderBlocks(){
   const list = document.getElementById("wbList");
@@ -4936,7 +5110,7 @@ function renderBlocks(){
              oninput="syncBlockImgName(${i},this.value)">
          </div>`
       : `<div class="wb-img-zone" onclick="setImgPasteSlot('cover',${i})"><input type="file" accept="image/*" onchange="onBlockImg(${i},this.files)"><div class="iz-txt">🖼️ Image de couverture — <strong style="color:var(--accent)">coller</strong> ou parcourir</div><div class="iz-sub" style="display:block">Ctrl+V · Glisser-déposer · Cliquer</div></div>`;
-    list.innerHTML = `<div class="wb">
+    list.innerHTML = renderWsPageManager() + `<div class="wb">
       <div class="wb-head"><span class="wb-num is-header" style="color:${acc};">BLOC 1 · EN-TÊTE DE L'ARTICLE</span></div>
       <div class="wb-body">
         <div class="wiz-field">
@@ -4975,6 +5149,32 @@ function renderBlocks(){
             style="font-family:var(--mono);font-size:13px;color:var(--accent);max-width:130px;">
         </div>
       </div>` : "";
+    const currentPages = Array.isArray(b.pages) ? b.pages : (b.page !== undefined ? [b.page] : [0]);
+    const pageSelector = (wizCat === "ws" && wizPages.length > 0) ? `
+      <div class="wiz-field" style="position:relative;">
+        <label>📑 Pages de ce bloc</label>
+        <div class="msd-wrap" id="msd-${i}" onclick="toggleMsd(event,'msd-${i}')">
+          <span class="msd-val" id="msd-val-${i}">${currentPages.map(id=>{ const p=wizPages.find(x=>x.id===id); return p?p.name:''; }).filter(Boolean).join(', ')||'Aucune page'}</span>
+          <span class="msd-arrow">▾</span>
+          <div class="msd-drop" id="msd-drop-${i}" onclick="event.stopPropagation()">
+            ${wizPages.map(p=>`
+            <div class="msd-item${currentPages.includes(p.id)?' msd-sel':''}" data-pid="${p.id}" onclick="toggleMsdItem(event,${i},${p.id},'msd-${i}')">
+              <span class="msd-chk">${currentPages.includes(p.id)?'✓':''}</span>
+              ${p.name}
+            </div>`).join("")}
+          </div>
+        </div>
+      </div>` : "";
+    const showInMainCheck = (wizCat === "ws") ? `
+      <div class="wiz-field" style="padding:.65rem .85rem;background:rgba(247,183,49,.04);border:1px solid rgba(247,183,49,.15);border-radius:6px;">
+        <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;margin:0;">
+          <input type="checkbox" style="accent-color:#f7b731;width:14px;height:14px;cursor:pointer;flex-shrink:0;"
+            ${b.showInMain ? 'checked' : ''}
+            onchange="syncBlockShowInMain(${i},this.checked)">
+          <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:#f7b731;letter-spacing:.06em;">Afficher dans la vue principale</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--dimmed);font-weight:400;">(visible par défaut à l'ouverture)</span>
+        </label>
+      </div>` : "";
     list.innerHTML = `<div class="wb">
       <div class="wb-head">
         <span class="wb-num">BLOC ${i+1} · PARAGRAPHE</span>
@@ -4985,6 +5185,8 @@ function renderBlocks(){
         </div>
       </div>
       <div class="wb-body">
+        ${showInMainCheck}
+        ${pageSelector}
         ${dateField}
         <div class="wiz-field">
           <label>Titre du bloc <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
@@ -5178,7 +5380,7 @@ function wizBuildPreview(){
     if(a && Array.isArray(a.blocks)){
       const fdate = fmtD(a.date, a.time||"");
       const allBlocks = [...a.blocks, ...wizBlocks]; // blocs existants + nouveaux
-      bodyHTML = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", allBlocks, by);
+      bodyHTML = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", allBlocks, by, a.pages||null);
     }
   } else if(wizMode==="html" && wizPendingHTML){
     bodyHTML = wizPendingHTML;
@@ -5190,7 +5392,7 @@ function wizBuildPreview(){
     const paire  = document.getElementById("wPaire")?.value.trim()||"";
     const timeStr = time ? ` · ${time}` : "";
     const fdate  = date ? new Date(date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})+timeStr : "";
-    bodyHTML = generateArticleTemplate(titre, desc, catLbl, acc, fdate, paire, wizBlocks, by);
+    bodyHTML = generateArticleTemplate(titre, desc, catLbl, acc, fdate, paire, wizBlocks, by, wizPages);
   }
 
   const fr = document.getElementById("wizPreviewFrame");
@@ -5200,7 +5402,7 @@ function wizBuildPreview(){
 function openImport(){
   if(role!=="admin"){toast("⚠ Accès réservé à l'administrateur",true);return;}
   wizStep=1; wizCat=null; wizMode="manual";
-  wizPendingHTML=null; wizBlocks=[];
+  wizPendingHTML=null; wizBlocks=[]; wizPages=[];
   document.getElementById("wTitre").value="";
   document.getElementById("wDesc").value="";
   document.getElementById("wDate").value=new Date().toISOString().slice(0,10);
@@ -5324,11 +5526,13 @@ async function wizPublish(){
     } else {
       const acc=CAT_COLORS[wizCat]||"#00e5a0";
       const catLbl=CAT_LABEL[wizCat]||wizCat;
-      const generatedHTML=generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,wizBlocks,adminUsername);
+      const generatedHTML=generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,wizBlocks,adminUsername,wizPages);
       // ★ Pour les articles WS : stocker aussi les blocs pour permettre la continuation
       const blocksToStore = wizCat === "ws" ? wizBlocks : undefined;
+      const pagesToStore  = wizCat === "ws" ? wizPages  : undefined;
       newArt={type:"html",titre,desc,date,time,cat:wizCat,paire,html:generatedHTML,
               ...(blocksToStore ? {blocks:blocksToStore} : {}),
+              ...(pagesToStore  ? {pages: pagesToStore}  : {}),
               submittedBy:authorName,
               ...(isGuestPublish ? {submittedById:authorId, submittedByUsername:authorUsername} : {})};
     }
@@ -5352,11 +5556,15 @@ function submitImport(){ wizPublish(); }
 function updateModeForCat(cat){}
 
 // ── TEMPLATE DISPATCHER ───────────────────────────────────────────────────────
-function generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,blocks,author){
+function generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,blocks,author,pages){
   const headerBlock = blocks.find(b=>b.type==="header")||{subtitle:"",image:null};
   const paraBlocks  = blocks.filter(b=>b.type==="para");
   const by = author || sessionStorage.getItem("smf_username") || "Admin";
   switch(wizCat){
+    case "ws": {
+      const resolvedPages = (pages && pages.length) ? pages : WS_DEFAULT_PAGES.map(p=>({...p}));
+      return tplWS(titre, desc, fdate, paire, blocks, by, resolvedPages);
+    }
     case "trade": {
       // Construire les blocs trade avec l'image header comme bloc initial
       const coverFromHeader = headerBlock.image ? [{
@@ -5959,6 +6167,159 @@ ${coverImg}${headerExtras}
 </div>
 ${SHARED_IMGS}</body></html>`;
 }
+// ════════════════════════════════════════════════════════════════════
+// TEMPLATE WS — Weekly Summary (onglets par pages)
+// ════════════════════════════════════════════════════════════════════
+function tplWS(titre, desc, fdate, paire, blocks, author, pages){
+  const acc = "#f7b731";
+  const headerBlock = blocks.find(b=>b.type==="header")||{subtitle:"",image:null,extras:[]};
+  const paraBlocks  = blocks.filter(b=>b.type==="para");
+  const by = author || sessionStorage.getItem("smf_username") || "Admin";
+  const subtitle = headerBlock.subtitle||(desc||"");
+  const chip = mkChip("WS",by,fdate,paire);
+  const coverImg = mkCoverImg(headerBlock);
+  const headerExtras = mkHeaderExtras(headerBlock,acc);
+
+  // Pages list (fallback si pas de pages sauvegardées)
+  const pageList = (pages && pages.length) ? pages : WS_DEFAULT_PAGES.map(p=>({...p}));
+
+  // Grouper les blocs para par page (support multi-pages)
+  const pageGroups = {};
+  pageList.forEach(p=>{ pageGroups[p.id] = []; });
+  paraBlocks.forEach(b=>{
+    // Support nouveau format (.pages array) et ancien format (.page)
+    const pids = Array.isArray(b.pages) ? b.pages : (b.page !== undefined ? [b.page] : [0]);
+    pids.forEach(pid=>{
+      if(pageGroups[pid] !== undefined) pageGroups[pid].push(b);
+      else if(pageGroups[0] !== undefined) pageGroups[0].push(b); // fallback page 0
+    });
+  });
+
+
+  // Filtrer les pages qui ont au moins un bloc
+  const nonEmptyPages = pageList.filter(p => (pageGroups[p.id] || []).length > 0);
+  if(nonEmptyPages.length === 0){
+    // Fallback : afficher toutes les pages si toutes sont vides
+    nonEmptyPages.push(...pageList);
+  }
+
+  // Tabs (premier actif par défaut)
+  const tabsHtml = nonEmptyPages.map((p, i) => `
+    <button class="ws-tab${i===0?' active':''}" data-pid="${p.id}">${p.name}</button>`).join("");
+
+  // Pages (première visible par défaut)
+  const pagesHtml = nonEmptyPages.map((p, i) => {
+    const content = mkParaBlocks(pageGroups[p.id] || [], acc);
+    return `<div class="ws-page${i===0?' active':''}" data-pid="${p.id}"><div class="content">${content}</div></div>`;
+  }).join("");
+
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FONTS}<title>${titre}</title>
+<style>
+${sharedCSS(acc,"0.02")}
+${PARA_CSS}
+
+.topbar{border-bottom:3px solid ${acc} !important;gap:0 !important;}
+h1{font-family:'Space Mono',monospace;font-size:clamp(1.6rem,3.8vw,2.4rem);letter-spacing:.02em;}
+
+/* ── TABS dans topbar ── */
+.ws-tabs-inline{
+  display:flex;align-items:stretch;flex:1;
+  overflow-x:auto;scrollbar-width:none;justify-content:flex-end;margin:0 .5rem;
+}
+.ws-tabs-inline::-webkit-scrollbar{display:none;}
+.ws-tab{
+  background:transparent;border:none;
+  border-bottom:3px solid transparent;border-top:3px solid transparent;
+  color:#5a6578;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;
+  padding:0 1.1rem;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;
+  white-space:nowrap;transition:color .18s,border-color .18s,background .18s;
+  flex-shrink:0;height:100%;
+}
+.ws-tab:hover{color:#d0dae8;background:rgba(247,183,49,.04);}
+.ws-tab.active{color:${acc};border-bottom-color:${acc};background:rgba(247,183,49,.06);}
+
+/* ── PAGES — seule l'active est visible ── */
+.ws-page{display:none;}
+.ws-page.active{display:block;}
+@keyframes wsFadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.ws-page.entering{animation:wsFadeIn .32s cubic-bezier(.22,1,.36,1) forwards;}
+
+.ws-page-pill{
+  display:inline-block;margin-bottom:.5rem;
+  font-family:'Space Mono',monospace;font-size:9px;font-weight:700;
+  color:${acc};letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid rgba(247,183,49,.3);border-radius:3px;padding:2px 8px;background:rgba(247,183,49,.06);
+}
+</style></head><body>
+
+<!-- TOPBAR — identique en permanence -->
+<div class="topbar">
+  <div class="tb-left">
+    <div class="tb-hex" style="background:${acc};color:#000;cursor:pointer;" onclick="wsGoMain()" title="Retour page principale">SMF</div>
+    <div class="tb-brand"><em>S·M·F</em> RESEARCH</div>
+  </div>
+  <div class="ws-tabs-inline">${tabsHtml}</div>
+  <div class="tb-chip" style="flex-shrink:0;">${chip}</div>
+</div>
+
+<!-- EN-TÊTE article (masqué dès qu'un onglet est sélectionné) -->
+<div id="wsHeader">
+<div class="hero"><h1>${titre}</h1>${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}</div>
+${coverImg}${headerExtras}
+<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+</div>
+
+<!-- CONTENU : seule la page active est affichée -->
+<div id="wsContent">${pagesHtml}</div>
+
+<div class="footer">
+  <span><em>S·M·F</em> · Weekly Summary</span>
+  <div style="display:flex;align-items:center;gap:.5rem;"><div class="footer-pulse"></div><span>${fdate}</span></div>
+</div>
+
+<script>
+(function(){
+  var tabs     = document.querySelectorAll('.ws-tab');
+  var pages    = document.querySelectorAll('.ws-page');
+  var wsHeader = document.getElementById('wsHeader');
+
+  function goPage(pid){
+    tabs.forEach(function(t){ t.classList.remove('active'); });
+    pages.forEach(function(p){ p.classList.remove('active','entering'); });
+    var activeTab = document.querySelector('.ws-tab[data-pid="'+pid+'"]');
+    if(activeTab) activeTab.classList.add('active');
+    var target = document.querySelector('.ws-page[data-pid="'+pid+'"]');
+    if(target){
+      target.classList.add('active','entering');
+      wsHeader.style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }
+
+  function goMain(){
+    // Désactiver tous les onglets et pages
+    tabs.forEach(function(t){ t.classList.remove('active'); });
+    pages.forEach(function(p){ p.classList.remove('active','entering'); });
+    // Réafficher le header/hero/divider
+    wsHeader.style.display = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  window.wsGoMain = goMain;
+
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      goPage(parseInt(this.dataset.pid));
+    });
+  });
+
+  // Activer le premier onglet au chargement
+  if(tabs.length > 0) goPage(parseInt(tabs[0].dataset.pid));
+})();
+<\/script>
+${SHARED_IMGS}</body></html>`;
+}
+
 function tplWeekAhead(titre,desc,fdate,paire,hb,paraBlocks,by){
   const acc="#f7b731";
   const subtitle = hb.subtitle||(desc||"");
