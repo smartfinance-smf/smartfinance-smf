@@ -25,6 +25,51 @@
   body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
   body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;will-change:transform;}
 
+  /* ── SKELETON LOADER ── */
+  @keyframes skeletonShimmer{
+    0%{background-position:-600px 0}
+    100%{background-position:600px 0}
+  }
+  .skeleton-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:4px 0;}
+  @media(max-width:1100px){.skeleton-grid{grid-template-columns:1fr;}}
+  .skeleton-card{
+    background:var(--surface);border:1px solid var(--border2);border-radius:10px;
+    overflow:hidden;height:130px;position:relative;
+  }
+  .skeleton-card::before{
+    content:'';position:absolute;inset:0;height:3px;background:var(--border2);
+  }
+  .skeleton-shimmer{
+    background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);
+    background-size:600px 100%;
+    animation:skeletonShimmer 1.5s infinite linear;
+    border-radius:4px;
+  }
+  .skeleton-inner{padding:1rem;display:flex;flex-direction:column;gap:.6rem;}
+  .skel-badge{width:70px;height:16px;}
+  .skel-title{width:85%;height:18px;}
+  .skel-desc{width:65%;height:13px;}
+  .skel-footer{width:40%;height:12px;margin-top:auto;}
+  .loading-state-wrap{
+    display:flex;flex-direction:column;align-items:center;gap:1rem;
+    padding:1.5rem 0 .5rem;
+  }
+  .loading-state-label{
+    font-family:var(--mono);font-size:11px;color:var(--muted);
+    letter-spacing:.15em;text-transform:uppercase;
+    display:flex;align-items:center;gap:.5rem;
+  }
+  .loading-dot{
+    width:6px;height:6px;border-radius:50%;background:var(--accent);
+    display:inline-block;animation:loadingBounce 1.2s ease-in-out infinite;
+  }
+  .loading-dot:nth-child(2){animation-delay:.2s;}
+  .loading-dot:nth-child(3){animation-delay:.4s;}
+  @keyframes loadingBounce{
+    0%,80%,100%{transform:translateY(0);opacity:.4;}
+    40%{transform:translateY(-5px);opacity:1;}
+  }
+
   /* HEADER */
   header{position:sticky;top:0;z-index:100;background:rgba(8,12,16,.97);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:0 2rem;}
   .header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:68px;gap:2rem;}
@@ -4010,19 +4055,21 @@ async function loadUserPhotoCache(){
 }
 
 // ── FIRESTORE ARTICLES ────────────────────────────────────────────────────────
-const ART_PAGE_SIZE = 10; // ✅ Réduit de 20→10 pour limiter la consommation de données initiale
-let _lastArtDoc = null;   // Curseur pagination
-let _allLoaded  = false;  // Plus d'articles à charger
+const INITIAL_PAGE_SIZE = 5;  // 1er chargement ultra-léger (connexion faible)
+const ART_PAGE_SIZE     = 10; // Pagination "Charger plus"
+let _lastArtDoc    = null;   // Curseur pagination
+let _allLoaded     = false;  // Plus d'articles à charger
+let _isLoadingArts = false;  // Vrai pendant le 1er chargement Firestore
 
-function startRealtimeSync(){
+async function startRealtimeSync(){
   if(unsubscribe) stopSync();
-  _lastArtDoc = null;
-  _allLoaded  = false;
+  _lastArtDoc    = null;
+  _allLoaded     = false;
 
   const _hashArticle = parseHash().article || null;
   let   _hashHandled = false;
 
-  // ✅ Affichage immédiat depuis localStorage si on a des données en cache
+  // ── PHASE 0 : Cache localStorage → affichage instantané ──────────────────
   const cached = localStorage.getItem(SK);
   if(cached){
     try{
@@ -4033,33 +4080,69 @@ function startRealtimeSync(){
     arts = [];
   }
 
-  // Lancer les photos en parallèle (non-bloquant)
-  if(!_hashArticle){
-    loadUserPhotoCache().then(()=>renderGrid());
-  }
+  // Skeleton si rien à afficher
+  _isLoadingArts = arts.length === 0;
+  if(_isLoadingArts && !_hashArticle) renderGrid();
 
-  // Si un lien direct vers un article est demandé, ne pas afficher la grille pendant le chargement
+  // Masquer la grille si lien direct vers un article
   if(_hashArticle){
     document.getElementById("articlesGrid").style.visibility="hidden";
     document.getElementById("articlesGrid").style.opacity="0";
-    loadUserPhotoCache();
   }
 
-  // Charger les articles + écouter les nouveaux en temps réel
-  unsubscribe = db.collection("articles").orderBy("date","desc")
-    .limit(ART_PAGE_SIZE)
-    .onSnapshot(snap=>{
-      arts = snap.docs.map(d=>({id:d.id,...d.data()}));
-      _lastArtDoc = snap.docs[snap.docs.length - 1] || null;
-      _allLoaded  = snap.docs.length < ART_PAGE_SIZE;
-      save();
-      if(_hashArticle && !_hashHandled){
-        _hashHandled = true;
-        applyHash();
-      } else {
-        render();
-      }
-    }, err=>console.error("sync",err));
+  // ── PHASE 1 : Fetch initial léger — .get() simple (pas de WebSocket) ──────
+  // Charge seulement INITIAL_PAGE_SIZE articles → rapide même sur connexion faible
+  try{
+    const snap = await db.collection("articles").orderBy("date","desc")
+      .limit(INITIAL_PAGE_SIZE).get();
+    _isLoadingArts = false;
+    arts           = snap.docs.map(d=>({id:d.id,...d.data()}));
+    _lastArtDoc    = snap.docs[snap.docs.length - 1] || null;
+    _allLoaded     = snap.docs.length < INITIAL_PAGE_SIZE;
+    save();
+    if(_hashArticle && !_hashHandled){
+      _hashHandled = true;
+      applyHash();
+    } else {
+      render();
+    }
+  }catch(e){
+    _isLoadingArts = false;
+    console.error("fetch initial:", e);
+    render();
+  }
+
+  // ── PHASE 2 : Photos avatars (différées 2 s) — non bloquantes ────────────
+  // Les cartes s'affichent sans photos, les avatars arrivent après
+  setTimeout(()=>{
+    if(!_hashArticle) loadUserPhotoCache().then(()=>renderGrid());
+    else              loadUserPhotoCache();
+  }, 2000);
+
+  // ── PHASE 3 : Écoute temps réel (différée 5 s) — WebSocket après rendu ───
+  // L'utilisateur voit déjà les articles ; le listener se connecte en arrière-plan
+  setTimeout(()=>{
+    if(unsubscribe) return; // sécurité : ne pas démarrer deux fois
+    unsubscribe = db.collection("articles").orderBy("date","desc")
+      .limit(ART_PAGE_SIZE)
+      .onSnapshot(snap=>{
+        const prevIds = arts.map(a=>a.id).join(",");
+        arts        = snap.docs.map(d=>({id:d.id,...d.data()}));
+        _lastArtDoc = snap.docs[snap.docs.length - 1] || null;
+        _allLoaded  = snap.docs.length < ART_PAGE_SIZE;
+        save();
+        const newIds = arts.map(a=>a.id).join(",");
+        // Re-render seulement si les articles ont changé
+        if(newIds !== prevIds){
+          if(_hashArticle && !_hashHandled){
+            _hashHandled = true;
+            applyHash();
+          } else {
+            render();
+          }
+        }
+      }, err=>console.error("sync",err));
+  }, 5000);
 
   if(role==="guest" && currentUser){
     startBanWatch();
@@ -4355,6 +4438,31 @@ function _doRenderGrid(){
   const g=document.getElementById("articlesGrid");
   const l=filtered();
   if(!l.length){
+    if(_isLoadingArts){
+      // Skeleton : 4 cartes fantômes + label animé
+      g.innerHTML=`
+        <div class="loading-state-wrap" style="grid-column:1/-1;">
+          <div class="loading-state-label">
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+            Chargement des articles en cours…
+          </div>
+        </div>
+        <div class="skeleton-grid" style="grid-column:1/-1;">
+          ${Array.from({length:4}).map(()=>`
+            <div class="skeleton-card">
+              <div class="skeleton-inner">
+                <div class="skel-badge skeleton-shimmer"></div>
+                <div class="skel-title skeleton-shimmer"></div>
+                <div class="skel-desc skeleton-shimmer"></div>
+                <div class="skel-footer skeleton-shimmer"></div>
+              </div>
+            </div>
+          `).join("")}
+        </div>`;
+      return;
+    }
     g.innerHTML=`<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-text">Aucun article encore</div>${role==="admin"?`<button class="empty-cta" onclick="openImport()">📂 Ajouter mon premier article</button>`:""}</div>`;
     return;
   }
