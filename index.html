@@ -1058,19 +1058,6 @@
       <!-- ── STEP 2 : Config (Mode + Date/Heure/Paire) ── -->
       <div class="wiz-panel" id="wp2">
 
-        <!-- Mode toggle -->
-        <div class="mode-toggle" id="wizModeToggle">
-          <button class="mode-tog-btn" id="wModeHtml" onclick="setWizMode('html')">
-            <span class="mt-ico">🗂️</span>
-            <span class="mt-lbl">Fichier HTML</span>
-            <span class="mt-sub">article déjà fait</span>
-          </button>
-          <button class="mode-tog-btn active" id="wModeManual" onclick="setWizMode('manual')">
-            <span class="mt-ico">📝</span>
-            <span class="mt-lbl">Éditeur par blocs</span>
-            <span class="mt-sub">template auto-appliqué</span>
-          </button>
-        </div>
 
         <!-- HTML mode – drop zone -->
         <div id="wSecHtml" style="display:none;">
@@ -2052,7 +2039,12 @@ async function _openArtInReader(id, pushToHistory = true){
     return;
   }
 
-  if(Array.isArray(a.blocks) && a.blocks.length > 0){
+  // ── Priorité 1 : HTML complet depuis Firestore (images intactes) ──
+  html = await fbGetHtml(id);
+  if(!html) html = a.html || "";
+
+  // ── Priorité 2 : Régénérer depuis les blocs (fallback si pas de HTML stocké) ──
+  if(!html && Array.isArray(a.blocks) && a.blocks.length > 0){
     const fdate = fmtD(a.date, a.time || "");
     const by = a.submittedBy || "Admin";
     if(primaryCat === "tradeinvites"){
@@ -2060,28 +2052,26 @@ async function _openArtInReader(id, pushToHistory = true){
     } else if(primaryCat === "trade"){
       html = tplTrade(a.titre, a.desc||"", fdate, a.paire||"", a.blocks, by);
     } else {
-      // Tous les autres tags : régénérer depuis les blocs avec le template universel (style MR)
       const acc    = CAT_COLORS[primaryCat] || "#00e5a0";
       const catLbl = CAT_LABEL[primaryCat] || primaryCat;
       const oldWizCat = wizCat; wizCat = primaryCat;
       html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", a.blocks, by, a.pages||null);
       wizCat = oldWizCat;
     }
-  } else {
-    html = await fbGetHtml(id);
-    if(!html) html = a.html || "";
-    if(!html && a.type === "html"){
-      const mb = tryRegenArticle(a);
-      if(mb){
-        const fdate = fmtD(a.date, a.time||"");
-        const by = a.submittedBy || "Admin";
-        const acc = CAT_COLORS[primaryCat] || "#00e5a0";
-        const catLbl = CAT_LABEL[primaryCat] || primaryCat;
-        const oldWizCat = wizCat; wizCat = primaryCat;
-        html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"",
-          [{type:"header",subtitle:a.desc||"",image:null}, ...mb], by, a.pages||null);
-        wizCat = oldWizCat;
-      }
+  }
+
+  // ── Priorité 3 : tryRegenArticle (anciens articles HTML sans blocs) ──
+  if(!html && a.type === "html"){
+    const mb = tryRegenArticle(a);
+    if(mb){
+      const fdate = fmtD(a.date, a.time||"");
+      const by = a.submittedBy || "Admin";
+      const acc = CAT_COLORS[primaryCat] || "#00e5a0";
+      const catLbl = CAT_LABEL[primaryCat] || primaryCat;
+      const oldWizCat = wizCat; wizCat = primaryCat;
+      html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"",
+        [{type:"header",subtitle:a.desc||"",image:null}, ...mb], by, a.pages||null);
+      wizCat = oldWizCat;
     }
   }
 
@@ -4370,9 +4360,12 @@ async function fbAdd(art){
   try{
     const ref = db.collection("articles").doc();
     const { meta, html } = artMeta(art);
-    await Promise.all([
-      ref.set(meta),
-      html ? db.collection("articles_html").doc(ref.id).set({html}) : Promise.resolve()
+    await Promise.race([
+      Promise.all([
+        ref.set(meta),
+        html ? db.collection("articles_html").doc(ref.id).set({html}) : Promise.resolve()
+      ]),
+      new Promise((_,reject) => setTimeout(() => reject(new Error("Délai dépassé — vérifiez votre connexion")), 20000))
     ]);
     return ref.id;
   }
@@ -4388,7 +4381,10 @@ async function fbUpdate(id, data){
     const { meta, html } = artMeta(data);
     const ops = [db.collection("articles").doc(id).update(meta)];
     if(html) ops.push(db.collection("articles_html").doc(id).set({html}));
-    await Promise.all(ops);
+    await Promise.race([
+      Promise.all(ops),
+      new Promise((_,reject) => setTimeout(() => reject(new Error("Délai dépassé — vérifiez votre connexion")), 20000))
+    ]);
     invalidateHtmlCache(id);
     return true;
   }
@@ -4808,27 +4804,32 @@ async function openArt(id){
     return;
   }
 
-  // ✅ Cache hit : HTML déjà prêt (pré-généré au hover)
+  // ✅ Cache hit : HTML déjà prêt
   if(_htmlCache.has(id)){
     html = _htmlCache.get(id);
-  } else if(Array.isArray(a.blocks) && a.blocks.length > 0){
-    const fdate = fmtD(a.date, a.time || "");
-    const by = a.submittedBy || "Admin";
-    if(primaryCat === "tradeinvites"){
-      html = tplTradeInvites(a.titre, a.desc||"", fdate, a.paire||"", a.blocks, by);
-    } else if(primaryCat === "trade"){
-      html = tplTrade(a.titre, a.desc||"", fdate, a.paire||"", a.blocks, by);
-    } else {
-      const acc    = CAT_COLORS[primaryCat] || "#00e5a0";
-      const catLbl = CAT_LABEL[primaryCat] || primaryCat;
-      const oldWizCat = wizCat; wizCat = primaryCat;
-      html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", a.blocks, by, a.pages||null);
-      wizCat = oldWizCat;
-    }
-    if(html) _htmlCache.set(id, html);
   } else {
+    // ── Priorité 1 : HTML complet depuis Firestore (images intactes) ──
     html = await fbGetHtml(id);
     if(!html) html = a.html || "";
+
+    // ── Priorité 2 : Régénérer depuis les blocs (fallback si pas de HTML stocké) ──
+    if(!html && Array.isArray(a.blocks) && a.blocks.length > 0){
+      const fdate = fmtD(a.date, a.time || "");
+      const by = a.submittedBy || "Admin";
+      if(primaryCat === "tradeinvites"){
+        html = tplTradeInvites(a.titre, a.desc||"", fdate, a.paire||"", a.blocks, by);
+      } else if(primaryCat === "trade"){
+        html = tplTrade(a.titre, a.desc||"", fdate, a.paire||"", a.blocks, by);
+      } else {
+        const acc    = CAT_COLORS[primaryCat] || "#00e5a0";
+        const catLbl = CAT_LABEL[primaryCat] || primaryCat;
+        const oldWizCat = wizCat; wizCat = primaryCat;
+        html = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", a.blocks, by, a.pages||null);
+        wizCat = oldWizCat;
+      }
+    }
+
+    // ── Priorité 3 : tryRegenArticle (anciens articles HTML sans blocs) ──
     if(!html && a.type === "html"){
       const mb = tryRegenArticle(a);
       if(mb){
@@ -4842,6 +4843,7 @@ async function openArt(id){
         wizCat = oldWizCat;
       }
     }
+
     if(html) _htmlCache.set(id, html);
   }
 
@@ -4869,9 +4871,11 @@ let wizCat  = null;
 let wizMode = "manual";
 let wizPendingHTML = null;
 let wizBlocks = []; // [{type:'header',...}, {type:'para',...}, ...]
-let _wizContinuationId = null; // si défini → mode "Continuer WS" (appende au lieu de créer)
-let _wizEditingId = null;      // si défini → mode "Modifier article" (met à jour au lieu de créer)
-let wizPages = []; // [{id, name}] — pages pour les articles WS uniquement
+let _wizContinuationId = null;            // si défini → mode "Continuer WS" (appende au lieu de créer)
+let _wizContinuationOriginalCount = 0;   // nb de blocs existants au moment de l'ouverture
+let _wizEditingId = null;                // si défini → mode "Modifier article" (met à jour au lieu de créer)
+let wizPages = []; // [{id, name}] — pages de l'article (toutes catégories)
+let wizActivePage = -1; // -1 = En-tête, 0+ = index dans wizPages
 const WS_DEFAULT_PAGES = [
   {id:1, name:"Analyse USD"},
   {id:2, name:"Analyse CAD"},
@@ -4941,14 +4945,67 @@ function removeElemImg(idx, ei){
 
 function initBlocks(){
   wizBlocks = [{ type:"header", titre:"", subtitle:"", image:null, extras:[] }];
-  wizPages = (wizCat === "ws") ? WS_DEFAULT_PAGES.map(p=>({...p})) : [];
+  wizPages  = (wizCat === "ws") ? WS_DEFAULT_PAGES.map(p=>({...p})) : [];
+  wizActivePage = -1; // commencer sur l'en-tête
 }
 
 function addParaBlock(){
-  const newBlock = { type:"para", title:"", subtitle:"", date: new Date().toISOString().slice(0,10), time: new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}), elements:[{type:"text",value:""}] };
-  if(wizCat === "ws") newBlock.pages = [];
+  const now = new Date();
+  const newBlock = {
+    type:"para", title:"", subtitle:"",
+    date: now.toISOString().slice(0,10),
+    time: now.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}),
+    elements:[{type:"text",value:""}]
+  };
+  // Associer au page active
+  if(wizPages.length > 0 && wizActivePage >= 0 && wizPages[wizActivePage]){
+    newBlock.pages = [wizPages[wizActivePage].id];
+  } else {
+    newBlock.pages = [];
+  }
   wizBlocks.push(newBlock);
-  wizStep = wizBlocks.length + 2;
+  wizUpdateUI();
+}
+
+// ── WIZARD PAGE MANAGEMENT (toutes catégories) ───────────────────────────────
+function addWizPage(){
+  const inp = document.getElementById("wizNewPageInput");
+  if(!inp) return;
+  const name = inp.value.trim();
+  if(!name){ toast("⚠ Saisis un nom de page", true); return; }
+  const maxId = Math.max(...wizPages.map(p=>p.id), 0);
+  wizPages.push({ id: maxId + 1, name });
+  inp.value = "";
+  // Aller sur la nouvelle page
+  wizActivePage = wizPages.length - 1;
+  wizUpdateUI();
+  toast(`✓ Page "${name}" ajoutée`);
+}
+
+function removeWizPage(pageIdx){
+  if(pageIdx < 0 || pageIdx >= wizPages.length) return;
+  const page = wizPages[pageIdx];
+  const affected = wizBlocks.filter(b => b.type === "para" && Array.isArray(b.pages) && b.pages.includes(page.id)).length;
+  const msg = affected > 0
+    ? `Supprimer la page "${page.name}" ? Les ${affected} bloc(s) seront détachés de cette page.`
+    : `Supprimer la page "${page.name}" ?`;
+  if(!confirm(msg)) return;
+  // Retirer cette page des blocs
+  wizBlocks.forEach(b => {
+    if(b.type === "para" && Array.isArray(b.pages)){
+      b.pages = b.pages.filter(id => id !== page.id);
+    }
+  });
+  wizPages.splice(pageIdx, 1);
+  // Ajuster wizActivePage
+  if(wizActivePage >= wizPages.length) wizActivePage = wizPages.length - 1;
+  if(wizActivePage < 0 && wizPages.length === 0) wizActivePage = -1;
+  wizUpdateUI();
+  toast(`✓ Page supprimée`);
+}
+
+function wizGoToPage(pageIdx){
+  wizActivePage = pageIdx;
   wizUpdateUI();
 }
 
@@ -5214,130 +5271,192 @@ function syncBlockPages(idx, pageId, checked){
   schedulePreview();
 }
 
-// Render le bloc courant (wizBlocks[wizBlockIdx()])
+// Render tous les blocs de la page active (ou l'en-tête si wizActivePage === -1)
 function renderBlocks(){
   const list = document.getElementById("wbList");
   if(!list) return;
-  const i   = wizBlockIdx();
-  const b   = wizBlocks[i];
-  if(!b){ list.innerHTML=""; return; }
-  const isHeader = b.type === "header";
   const acc = CAT_COLORS[wizCat]||"#00e5a0";
 
-  // Migrate old para block format to elements array
-  if(!isHeader && !b.elements){
-    b.elements = [];
-    if(b.text)   b.elements.push({type:"text",  value:b.text});
-    if(b.image)  b.elements.push({type:"image", data:b.image});
-    if(b.text2)  b.elements.push({type:"text",  value:b.text2});
-    if(b.image2) b.elements.push({type:"image", data:b.image2});
-    if(b.elements.length===0) b.elements.push({type:"text",value:""});
-  }
-  // Migrate old header
-  if(isHeader && !b.extras) b.extras = [];
-
-  if(isHeader){
+  // ── CAS 1 : En-tête (wizActivePage === -1) ──────────────────────────────────
+  if(wizActivePage === -1){
+    const b = wizBlocks[0];
+    if(!b || b.type !== "header"){ list.innerHTML="<div style='font-family:var(--mono);font-size:11px;color:var(--muted);padding:1rem;text-align:center;'>Bloc en-tête introuvable</div>"; return; }
+    if(!b.extras) b.extras = [];
     const coverZone = b.image
-      ? `<div class="wb-img-prev"><img src="${b.image.dataUrl}" alt=""><button class="rm-img" onclick="removeBlockImg(${i})">✕</button></div>
+      ? `<div class="wb-img-prev"><img src="${b.image.dataUrl}" alt=""><button class="rm-img" onclick="removeBlockImg(0)">✕</button></div>
          <div class="wiz-field" style="margin-top:.5rem;">
            <label style="font-size:9px;letter-spacing:.08em;">📝 Légende / Nom de l'image de couverture</label>
            <input class="wiz-input" type="text" placeholder="Ex : Vue hebdomadaire — S&P 500"
              value="${(b.image.name||'').replace(/"/g,'&quot;')}"
-             oninput="syncBlockImgName(${i},this.value)">
+             oninput="syncBlockImgName(0,this.value)">
          </div>`
-      : `<div class="wb-img-zone" onclick="setImgPasteSlot('cover',${i})"><input type="file" accept="image/*" onchange="onBlockImg(${i},this.files)"><div class="iz-txt">🖼️ Image de couverture — <strong style="color:var(--accent)">coller</strong> ou parcourir</div><div class="iz-sub" style="display:block">Ctrl+V · Glisser-déposer · Cliquer</div></div>`;
-    list.innerHTML = renderWsPageManager() + `<div class="wb">
-      <div class="wb-head"><span class="wb-num is-header" style="color:${acc};">BLOC 1 · EN-TÊTE DE L'ARTICLE</span></div>
-      <div class="wb-body">
-        <div class="wiz-field">
-          <label>Titre de l'article *</label>
-          <input class="wiz-input" type="text" placeholder="Ex : Analyse EUR/USD — Semaine du 30 mars"
-            oninput="syncBlockTitre(this.value)" value="${(b.titre||'').replace(/"/g,'&quot;')}">
+      : `<div class="wb-img-zone" onclick="setImgPasteSlot('cover',0)"><input type="file" accept="image/*" onchange="onBlockImg(0,this.files)"><div class="iz-txt">🖼️ Image de couverture — <strong style="color:var(--accent)">coller</strong> ou parcourir</div><div class="iz-sub" style="display:block">Ctrl+V · Glisser-déposer · Cliquer</div></div>`;
+
+    list.innerHTML = `
+      <!-- Gestionnaire de pages -->
+      ${renderWizPageManagerInline()}
+      <div class="wb" style="border-color:rgba(247,183,49,.3);">
+        <div class="wb-head"><span class="wb-num is-header" style="color:${acc};">✦ EN-TÊTE DE L'ARTICLE</span></div>
+        <div class="wb-body">
+          <div class="wiz-field">
+            <label>Titre de l'article *</label>
+            <input class="wiz-input" type="text" placeholder="Ex : Analyse EUR/USD — Semaine du 30 mars"
+              oninput="syncBlockTitre(this.value)" value="${(b.titre||'').replace(/"/g,'&quot;')}">
+          </div>
+          <div class="wiz-field">
+            <label>Sous-titre / Accroche</label>
+            <textarea class="wiz-textarea" style="min-height:48px;"
+              placeholder="Ex : Semaine marquée par la Fed hawkish..."
+              oninput="syncBlockSubtitle(this.value)">${b.subtitle||""}</textarea>
+          </div>
+          <div class="wiz-field" style="margin-bottom:0;">
+            <label>Image principale</label>${coverZone}
+          </div>
+          ${mkElemHTML(0, b.extras)}
+          ${mkAddRow(0)}
         </div>
-        <div class="wiz-field">
-          <label>Sous-titre / Accroche</label>
-          <textarea class="wiz-textarea" style="min-height:48px;"
-            placeholder="Ex : Semaine marquée par la Fed hawkish..."
-            oninput="syncBlockSubtitle(this.value)">${b.subtitle||""}</textarea>
-        </div>
-        <div class="wiz-field" style="margin-bottom:0;">
-          <label>Image principale</label>${coverZone}
-        </div>
-        ${mkElemHTML(i, b.extras)}
-        ${mkAddRow(i)}
+      </div>`;
+    return;
+  }
+
+  // ── CAS 2 : Page active (wizActivePage >= 0) ─────────────────────────────────
+  const currentPage = wizPages[wizActivePage];
+  if(!currentPage){ list.innerHTML="<div style='font-family:var(--mono);font-size:11px;color:var(--muted);padding:1rem;text-align:center;'>Page introuvable</div>"; return; }
+
+  // Filtrer les blocs para appartenant à cette page
+  const pageBlockIndexes = [];
+  wizBlocks.forEach((b, i) => {
+    if(b.type !== "para") return;
+    const bPages = Array.isArray(b.pages) ? b.pages : (b.page !== undefined ? [b.page] : []);
+    if(bPages.includes(currentPage.id)) pageBlockIndexes.push(i);
+  });
+
+  // Header de la page
+  let html = `
+    <div style="background:rgba(0,229,160,.04);border:1px solid rgba(0,229,160,.15);border-radius:8px;padding:.65rem 1rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <span style="font-family:var(--mono);font-size:9px;font-weight:700;color:${acc};letter-spacing:.15em;text-transform:uppercase;">📑 PAGE :</span>
+        <input id="wizPageRename_${wizActivePage}" class="wiz-input" type="text" maxlength="40"
+          value="${currentPage.name.replace(/"/g,'&quot;')}"
+          onblur="renameWizPage(${wizActivePage},this.value)"
+          onkeydown="if(event.key==='Enter')this.blur()"
+          style="font-size:12px;font-weight:700;color:${acc};padding:3px 8px;max-width:200px;background:transparent;border-color:rgba(0,229,160,.2);" title="Cliquer pour renommer">
       </div>
+      <button onclick="removeWizPage(${wizActivePage})" style="background:transparent;border:1px solid rgba(255,77,109,.3);color:var(--red);font-family:var(--mono);font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;" title="Supprimer cette page">🗑 Supprimer</button>
+    </div>`;
+
+  if(pageBlockIndexes.length === 0){
+    html += `<div style="border:2px dashed var(--border2);border-radius:10px;padding:2rem 1rem;text-align:center;margin-bottom:.75rem;">
+      <div style="font-size:28px;margin-bottom:.5rem;opacity:.4;">📝</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--dimmed);line-height:1.8;">Aucun bloc sur cette page.<br>Clique sur le bouton ci-dessous pour ajouter du contenu.</div>
     </div>`;
   } else {
-    const dateField = _wizContinuationId ? `
-      <div class="wiz-field">
-        <label style="display:flex;align-items:center;gap:.4rem;">
-          📅 Date &amp; heure de cette mise à jour
-          <span style="font-size:10px;color:var(--muted);font-weight:400;">(obligatoire)</span>
-        </label>
-        <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;">
-          <input class="wiz-input" type="date"
-            value="${b.date || new Date().toISOString().slice(0,10)}"
-            oninput="syncBlockDate(${i},this.value)"
-            style="font-family:var(--mono);font-size:13px;color:var(--accent);max-width:180px;">
-          <input class="wiz-input" type="time"
-            value="${b.time || new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}"
-            oninput="syncBlockTime(${i},this.value)"
-            style="font-family:var(--mono);font-size:13px;color:var(--accent);max-width:130px;">
-        </div>
-      </div>` : "";
-    const currentPages = Array.isArray(b.pages) ? b.pages : (b.page !== undefined ? [b.page] : [0]);
-    const pageSelector = (wizCat === "ws" && wizPages.length > 0) ? `
-      <div class="wiz-field" style="position:relative;">
-        <label>📑 Pages de ce bloc</label>
-        <div class="msd-wrap" id="msd-${i}" onclick="toggleMsd(event,'msd-${i}')">
-          <span class="msd-val" id="msd-val-${i}">${currentPages.map(id=>{ const p=wizPages.find(x=>x.id===id); return p?p.name:''; }).filter(Boolean).join(', ')||'Aucune page'}</span>
-          <span class="msd-arrow">▾</span>
-          <div class="msd-drop" id="msd-drop-${i}" onclick="event.stopPropagation()">
-            ${wizPages.map(p=>`
-            <div class="msd-item${currentPages.includes(p.id)?' msd-sel':''}" data-pid="${p.id}" onclick="toggleMsdItem(event,${i},${p.id},'msd-${i}')">
-              <span class="msd-chk">${currentPages.includes(p.id)?'✓':''}</span>
-              ${p.name}
-            </div>`).join("")}
+    pageBlockIndexes.forEach((blockIdx, rank) => {
+      const b = wizBlocks[blockIdx];
+      if(!b.elements){
+        b.elements = [];
+        if(b.text)   b.elements.push({type:"text",  value:b.text});
+        if(b.image)  b.elements.push({type:"image", data:b.image});
+        if(b.elements.length===0) b.elements.push({type:"text",value:""});
+      }
+      const canUp = rank > 0;
+      const canDn = rank < pageBlockIndexes.length - 1;
+      const upIdx  = canUp ? pageBlockIndexes[rank-1] : -1;
+      const dnIdx  = canDn ? pageBlockIndexes[rank+1] : -1;
+      html += `
+        <div class="wb" style="margin-bottom:.65rem;" id="wb-block-${blockIdx}">
+          <div class="wb-head">
+            <span class="wb-num">BLOC ${rank+1}</span>
+            <div class="wb-actions">
+              ${canUp ? `<button class="wb-btn mv" onclick="swapPageBlocks(${blockIdx},${upIdx})" title="Monter">↑</button>` : ""}
+              ${canDn ? `<button class="wb-btn mv" onclick="swapPageBlocks(${blockIdx},${dnIdx})" title="Descendre">↓</button>` : ""}
+              <button class="wb-btn del" onclick="removePageBlock(${blockIdx})" title="Supprimer ce bloc">✕</button>
+            </div>
           </div>
-        </div>
-      </div>` : "";
-    const showInMainCheck = (wizCat === "ws") ? `
-      <div class="wiz-field" style="padding:.65rem .85rem;background:rgba(247,183,49,.04);border:1px solid rgba(247,183,49,.15);border-radius:6px;">
-        <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;margin:0;">
-          <input type="checkbox" style="accent-color:#f7b731;width:14px;height:14px;cursor:pointer;flex-shrink:0;"
-            ${b.showInMain ? 'checked' : ''}
-            onchange="syncBlockShowInMain(${i},this.checked)">
-          <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:#f7b731;letter-spacing:.06em;">Afficher dans la vue principale</span>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--dimmed);font-weight:400;">(visible par défaut à l'ouverture)</span>
-        </label>
-      </div>` : "";
-    list.innerHTML = `<div class="wb">
-      <div class="wb-head">
-        <span class="wb-num">BLOC ${i+1} · PARAGRAPHE</span>
-        <div class="wb-actions">
-          ${i > 1 ? `<button class="wb-btn mv" onclick="moveBlock(${i},-1)" title="Monter">↑</button>` : ""}
-          ${i < wizBlocks.length-1 ? `<button class="wb-btn mv" onclick="moveBlock(${i},1)" title="Descendre">↓</button>` : ""}
-          <button class="wb-btn del" onclick="removeParaBlock(${i})" title="Supprimer ce bloc">✕</button>
-        </div>
-      </div>
-      <div class="wb-body">
-        ${showInMainCheck}
-        ${pageSelector}
-        ${dateField}
-        <div class="wiz-field">
-          <label>Titre du bloc <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
-          <input class="wiz-input" type="text" maxlength="200"
-            placeholder="Ex: Sentiment de marché · Zone clé · Biais directionnel…"
-            oninput="syncBlockParaTitle(${i},this.value)" value="${(b.title||'').replace(/"/g,'&quot;')}">
-        </div>
-        ${mkElemHTML(i, b.elements)}
-        ${mkAddRow(i)}
-      </div>
-    </div>`;
+          <div class="wb-body">
+            <!-- DATE DE PUBLICATION DU BLOC -->
+            <div class="wiz-field" style="background:rgba(0,229,160,.04);border:1px solid rgba(0,229,160,.12);border-radius:6px;padding:.55rem .75rem;margin-bottom:.6rem;">
+              <label style="display:flex;align-items:center;gap:.35rem;margin-bottom:.4rem;">
+                📅 <span>Date &amp; heure de publication de ce bloc</span>
+              </label>
+              <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;">
+                <input class="wiz-input" type="date"
+                  value="${b.date || new Date().toISOString().slice(0,10)}"
+                  oninput="syncBlockDate(${blockIdx},this.value)"
+                  style="font-family:var(--mono);font-size:12px;color:${acc};max-width:170px;">
+                <input class="wiz-input" type="time"
+                  value="${b.time || ''}"
+                  oninput="syncBlockTime(${blockIdx},this.value)"
+                  style="font-family:var(--mono);font-size:12px;color:${acc};max-width:120px;">
+              </div>
+            </div>
+            <!-- TITRE OPTIONNEL DU BLOC -->
+            <div class="wiz-field">
+              <label>Titre du bloc <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
+              <input class="wiz-input" type="text" maxlength="200"
+                placeholder="Ex: Sentiment de marché · Zone clé · Biais directionnel…"
+                oninput="syncBlockParaTitle(${blockIdx},this.value)" value="${(b.title||'').replace(/"/g,'&quot;')}">
+            </div>
+            ${mkElemHTML(blockIdx, b.elements)}
+            ${mkAddRow(blockIdx)}
+          </div>
+        </div>`;
+    });
   }
+
+  // Bouton ajouter un bloc
+  html += `
+    <button class="btn-add-para" onclick="addParaBlock()" style="margin-top:.25rem;">
+      ＋ Ajouter un bloc à cette page
+    </button>`;
+
+  list.innerHTML = html;
 }
 
-// ── STEP BAR DYNAMIQUE ────────────────────────────────────────────────────────
+// Gestionnaire de pages en ligne dans l'en-tête
+function renderWizPageManagerInline(){
+  if(wizPages.length === 0){
+    return `<div style="background:rgba(0,229,160,.04);border:1px solid rgba(0,229,160,.12);border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;">
+      <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--accent);letter-spacing:.16em;text-transform:uppercase;margin-bottom:.5rem;">📑 PAGES DE L'ARTICLE</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--dimmed);margin-bottom:.5rem;">Aucune page encore — ajoute des pages via le bouton <strong style="color:var(--accent)">＋</strong> dans la barre du haut.</div>
+    </div>`;
+  }
+  const pills = wizPages.map((p,i)=>`
+    <div style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);border-radius:5px;padding:3px 10px 3px 9px;cursor:pointer;" onclick="wizGoToPage(${i})">
+      <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.04em;">${p.name}</span>
+      <button onclick="event.stopPropagation();removeWizPage(${i})" style="background:transparent;border:none;color:#ff4d6d;font-size:11px;cursor:pointer;line-height:1;padding:0 0 0 3px;" title="Supprimer">✕</button>
+    </div>`).join("");
+  return `<div style="background:rgba(0,229,160,.04);border:1px solid rgba(0,229,160,.12);border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;">
+    <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--accent);letter-spacing:.16em;text-transform:uppercase;margin-bottom:.5rem;">📑 PAGES DE L'ARTICLE</div>
+    <div style="display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;">${pills}</div>
+  </div>`;
+}
+
+// Renommer une page
+function renameWizPage(pageIdx, newName){
+  if(!newName.trim()) return;
+  if(wizPages[pageIdx]) wizPages[pageIdx].name = newName.trim();
+  renderWizSteps();
+  schedulePreview();
+}
+
+// Supprimer un bloc et le retirer de sa page
+function removePageBlock(blockIdx){
+  if(blockIdx === 0) return; // ne pas supprimer l'en-tête
+  wizBlocks.splice(blockIdx, 1);
+  renderBlocks();
+  schedulePreview();
+}
+
+// Swap deux blocs (pour les monter/descendre dans une page)
+function swapPageBlocks(idxA, idxB){
+  if(idxA < 1 || idxB < 1) return;
+  [wizBlocks[idxA], wizBlocks[idxB]] = [wizBlocks[idxB], wizBlocks[idxA]];
+  renderBlocks();
+  schedulePreview();
+}
+
+// ── STEP BAR DYNAMIQUE (pages) ───────────────────────────────────────────────
 function renderWizSteps(){
   const bar = document.getElementById("wizStepsBar");
   if(!bar) return;
@@ -5353,35 +5472,63 @@ function renderWizSteps(){
   html += `<div class="wiz-step ${s2}"><div class="sn"><span>2</span></div>Config</div>`;
 
   if(inBlocks){
-    // Une étape par bloc
-    wizBlocks.forEach((b, i) => {
-      const stepN = i + 3;
-      const done   = wizStep > stepN;
-      const active = wizStep === stepN;
-      const cls    = done?"done":active?"active":"";
-      const lbl    = i===0 ? "En-tête" : `Bloc ${i+1}`;
-      html += `<div class="wiz-step blk ${cls}" onclick="wizGoToBlock(${i})" title="${lbl}">
-        <div class="sn"><span>${i+1}</span></div>${lbl}
+    // Onglet En-tête
+    const hdrActive = wizActivePage === -1;
+    html += `<div class="wiz-step blk ${hdrActive?"active":"done"}" onclick="wizGoToPage(-1)" title="En-tête de l'article" style="cursor:pointer;">
+      <div class="sn" style="background:${hdrActive?"var(--warn)":"rgba(247,183,49,.3)"};"><span style="color:#000;">✦</span></div>En-tête
+    </div>`;
+
+    // Onglets Pages
+    wizPages.forEach((p, i) => {
+      const active = wizActivePage === i;
+      const cls = active ? "active" : (wizActivePage > i ? "done" : "");
+      html += `<div class="wiz-step blk ${cls}" onclick="wizGoToPage(${i})" title="${p.name}" style="cursor:pointer;max-width:100px;overflow:hidden;">
+        <div class="sn"><span>${i+1}</span></div>
+        <span style="max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">${p.name}</span>
       </div>`;
     });
-    // Bouton "+" pour ajouter un bloc (si sur le dernier bloc, max 6)
-    const isLastBlk = wizStep === wizBlocks.length + 2;
-    if(isLastBlk && wizBlocks.length < 6){
-      html += `<div class="wiz-step-add" onclick="addParaBlock()" title="Ajouter un bloc">＋</div>`;
-    }
+
+    // Bouton "+" pour ajouter une page
+    html += `<div class="wiz-step-add" onclick="openWizAddPage()" title="Nouvelle page" style="cursor:pointer;font-size:18px;min-width:36px;padding:0;display:flex;align-items:center;justify-content:center;">＋</div>`;
   } else {
-    // Placeholder blocs (pas encore dans les blocs)
     const s3 = wizStep>2?"":"";
-    html += `<div class="wiz-step ${s3}"><div class="sn"><span>3+</span></div>Blocs</div>`;
+    html += `<div class="wiz-step ${s3}"><div class="sn"><span>3+</span></div>Pages</div>`;
   }
 
   bar.innerHTML = html;
 }
 
-function wizGoToBlock(idx){
-  if(idx < 0 || idx >= wizBlocks.length) return;
-  wizStep = idx + 3;
-  wizUpdateUI();
+// wizGoToPage est défini dans addParaBlock section ci-dessus
+
+// Popup d'ajout de page rapide
+let _wizAddPagePopupOpen = false;
+function openWizAddPage(){
+  // Créer un petit popup inline sous le bouton +
+  let pop = document.getElementById("wizAddPagePop");
+  if(pop){ pop.remove(); _wizAddPagePopupOpen=false; return; }
+  _wizAddPagePopupOpen = true;
+  const bar = document.getElementById("wizStepsBar");
+  pop = document.createElement("div");
+  pop.id = "wizAddPagePop";
+  pop.style.cssText = `position:absolute;top:54px;right:0;z-index:600;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:.6rem .75rem;display:flex;gap:.5rem;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.5);min-width:240px;`;
+  pop.innerHTML = `
+    <input id="wizNewPageInput" class="wiz-input" type="text" maxlength="40"
+      placeholder="Nom de la page…"
+      onkeydown="if(event.key==='Enter'){addWizPage();closeWizAddPage();}"
+      style="flex:1;font-size:11px;padding:5px 9px;">
+    <button onclick="addWizPage();closeWizAddPage();" style="background:var(--accent);border:none;color:#000;font-family:var(--mono);font-size:10px;font-weight:700;padding:5px 12px;border-radius:4px;cursor:pointer;white-space:nowrap;">＋ Ajouter</button>
+    <button onclick="closeWizAddPage();" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:10px;padding:5px 8px;border-radius:4px;cursor:pointer;">✕</button>`;
+  // Positionner relatif à la modale wizard
+  const modal = document.getElementById("wizModal");
+  modal.style.position = "relative";
+  modal.appendChild(pop);
+  setTimeout(()=>{ pop.querySelector("input").focus(); }, 50);
+}
+
+function closeWizAddPage(){
+  const pop = document.getElementById("wizAddPagePop");
+  if(pop) pop.remove();
+  _wizAddPagePopupOpen = false;
 }
 
 function selectCat(cat, el){
@@ -5392,29 +5539,27 @@ function selectCat(cat, el){
 
 function setWizMode(m){
   wizMode = m;
-  document.getElementById("wModeHtml").classList.toggle("active", m==="html");
-  document.getElementById("wModeManual").classList.toggle("active", m==="manual");
-  document.getElementById("wSecHtml").style.display   = m==="html"   ? "block":"none";
+  const secHtml = document.getElementById("wSecHtml");
+  if(secHtml) secHtml.style.display = m==="html" ? "block":"none";
 }
 
 function wizUpdateUI(){
   renderWizSteps();
 
   const inBlocks = wizStep >= 3;
-  const blockIdx = wizBlockIdx();
   const isContinuation = !!_wizContinuationId;
 
   // Titre / sous-titre dynamique
   if(isContinuation){
     const a = arts.find(x => x.id === _wizContinuationId);
-    const blockLabel = wizBlocks.length === 1 ? "Nouvelle section" : `Section ${blockIdx + 1} / ${wizBlocks.length}`;
+    const pageLabel = wizActivePage === -1 ? "En-tête" : (wizPages[wizActivePage]?.name || "Page");
     document.getElementById("wizTitle").textContent = "✏ Continuer l'article WS";
-    document.getElementById("wizSub").textContent   = (a?.titre || "") + " · " + blockLabel;
+    document.getElementById("wizSub").textContent   = (a?.titre || "") + " · " + pageLabel;
   } else if(_wizEditingId){
     const a = arts.find(x => x.id === _wizEditingId);
-    const blockLabel = inBlocks ? (blockIdx===0 ? "En-tête" : `Bloc ${blockIdx+1} / ${wizBlocks.length}`) : (wizStep===1?"Catégorie":"Config");
+    const pageLabel = inBlocks ? (wizActivePage === -1 ? "En-tête" : (wizPages[wizActivePage]?.name || "Page")) : (wizStep===1?"Catégorie":"Config");
     document.getElementById("wizTitle").textContent = "✏ Modifier l'article";
-    document.getElementById("wizSub").textContent   = (a?.titre||"") + " · " + blockLabel;
+    document.getElementById("wizSub").textContent   = (a?.titre||"") + " · " + pageLabel;
   } else if(wizStep === 1){
     document.getElementById("wizTitle").textContent = "Choisir une catégorie";
     document.getElementById("wizSub").textContent   = "Étape 1 sur 3";
@@ -5422,14 +5567,16 @@ function wizUpdateUI(){
     document.getElementById("wizTitle").textContent = "Configuration de l'article";
     document.getElementById("wizSub").textContent   = "Étape 2 sur 3 · Mode · Date · Heure · Paire";
   } else {
-    const lbl = blockIdx===0 ? "En-tête de l'article" : `Bloc ${blockIdx+1} — Paragraphe`;
+    const lbl = wizActivePage === -1 ? "En-tête de l'article" : (wizPages[wizActivePage]?.name || "Page");
     document.getElementById("wizTitle").textContent = lbl;
-    document.getElementById("wizSub").textContent   = `Étape 3 · Bloc ${blockIdx+1} / ${wizBlocks.length}`;
+    const pgCount = wizPages.length > 0 ? ` · ${wizPages.length} page${wizPages.length>1?"s":""}` : "";
+    document.getElementById("wizSub").textContent   = `Éditeur de contenu${pgCount}`;
   }
 
   // Compteur footer
+  const pageCountLabel = wizPages.length > 0 ? `${wizPages.length} page${wizPages.length>1?"s":""}` : "En-tête";
   document.getElementById("wizStepLabel").textContent = inBlocks
-    ? `Bloc ${blockIdx+1} / ${wizBlocks.length}`
+    ? pageCountLabel
     : `${wizStep} / 3`;
 
   // Panels
@@ -5453,7 +5600,6 @@ function wizUpdateUI(){
   const back = document.getElementById("wizBtnBack");
   const next = document.getElementById("wizBtnNext");
   const pub  = document.getElementById("wizBtnPublish");
-  // En mode continuation : toujours en blocs, pas de retour vers étapes 1/2
   back.style.visibility = (isContinuation || wizStep <= 1) ? "hidden" : "visible";
 
   if(inBlocks){
@@ -5471,11 +5617,9 @@ function wizUpdateUI(){
   }
 
   const isTradeOnly = wizCat==="trade"||wizCat==="tradeinvites";
-  const mt = document.getElementById("wizModeToggle");
-  if(mt) mt.style.display = (isTradeOnly||isContinuation||wizStep!==2) ? "none":"grid";
   if(isTradeOnly && wizMode==="html") setWizMode("manual");
 
-  // Render le bloc courant + aperçu
+  // Render les blocs + aperçu
   if(inBlocks){
     renderBlocks();
     schedulePreview();
@@ -5490,15 +5634,14 @@ function wizNext(){
   if(wizStep===2){
     const date=document.getElementById("wDate").value;
     if(!date){ toast("⚠ La date est obligatoire",true); return; }
-    if(wizMode==="html"&&!wizPendingHTML){ toast("⚠ Sélectionne un fichier HTML",true); return; }
     if(wizMode==="manual"&&wizBlocks.length===0) initBlocks();
+    wizActivePage = -1; // commencer sur l'en-tête
     wizStep=3; wizUpdateUI(); return;
   }
 }
 
 function wizBack(){
-  if(wizStep > 3){ wizStep--; wizUpdateUI(); return; }
-  if(wizStep === 3){ wizStep=2; wizUpdateUI(); return; }
+  if(wizStep >= 3){ wizStep=2; wizActivePage=-1; wizUpdateUI(); return; }
   if(wizStep > 1){ wizStep--; wizUpdateUI(); }
 }
 
@@ -5544,7 +5687,7 @@ function wizBuildPreview(){
 
 function openImport(){
   if(role!=="admin"){toast("⚠ Accès réservé à l'administrateur",true);return;}
-  wizStep=1; wizCat=null; wizMode="manual";
+  wizStep=1; wizCat=null; wizMode="manual"; wizActivePage=-1;
   wizPendingHTML=null; wizBlocks=[]; wizPages=[];
   document.getElementById("wTitre").value="";
   document.getElementById("wDesc").value="";
@@ -5567,7 +5710,7 @@ function openEditArtWiz(e, id){
   if(!a){ toast("⚠ Article introuvable",true); return; }
 
   // Réinitialiser l'état du wizard
-  wizStep=1; wizCat=null; wizMode="manual";
+  wizStep=1; wizCat=null; wizMode="manual"; wizActivePage=-1;
   wizPendingHTML=null; wizBlocks=[]; wizPages=[];
   _wizContinuationId=null;
   _wizEditingId=id;
@@ -5591,6 +5734,7 @@ function openEditArtWiz(e, id){
     wizBlocks = JSON.parse(JSON.stringify(a.blocks));
     wizPages  = a.pages ? JSON.parse(JSON.stringify(a.pages)) : [];
     setWizMode("manual");
+    wizActivePage = -1;
     wizStep = 3;
 
   } else if(a.blocks && a.blocks.length>0){
@@ -5641,8 +5785,9 @@ function openEditArtWiz(e, id){
 function closeImport(){
   document.getElementById("wizOv").classList.remove("open");
   document.body.style.overflow="";
-  _wizContinuationId = null; // reset mode continuation
-  _wizEditingId      = null; // reset mode édition
+  _wizContinuationId = null;           // reset mode continuation
+  _wizContinuationOriginalCount = 0;   // reset compteur blocs originaux
+  _wizEditingId      = null;           // reset mode édition
   // Retirer le readonly des champs date/heure
   const _wDate = document.getElementById("wDate");
   const _wTime = document.getElementById("wTime");
@@ -5693,6 +5838,7 @@ async function wizPublish(){
     if(!date) { toast("⚠ La date est obligatoire",true);  return; }
 
     btn.disabled=true; btn.textContent="Sauvegarde…";
+    try {
 
     const update = {
       titre, desc, date, time, paire,
@@ -5725,16 +5871,13 @@ async function wizPublish(){
       const fdate   = date ? new Date(date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})+timeStr : "";
       update.html = generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,wizBlocks,adminUsername,wizPages);
       update.type = "html";
-      if(wizCat==="ws"){
-        update.blocks = wizBlocks;
-        update.pages  = wizPages;
-      } else {
-        update.artBlocks = firebase.firestore.FieldValue.delete();
+      update.blocks = wizBlocks;
+      if(wizPages.length > 0){
+        update.pages = wizPages;
       }
     }
 
     const ok = await fbUpdate(_wizEditingId, update);
-    btn.disabled=false; btn.textContent="💾 Sauvegarder les modifications";
 
     if(ok){
       invalidateHtmlCache(_wizEditingId);
@@ -5742,6 +5885,13 @@ async function wizPublish(){
       toast("✓ Article modifié avec succès !");
     } else {
       toast("✕ Erreur lors de la sauvegarde",true);
+    }
+
+    } catch(e){
+      console.error("wizPublish edit error:", e);
+      toast("✕ Erreur inattendue: "+(e.message||e), true);
+    } finally {
+      btn.disabled=false; btn.textContent="💾 Sauvegarder les modifications";
     }
     return;
   }
@@ -5753,33 +5903,49 @@ async function wizPublish(){
 
     const today = new Date().toISOString().slice(0,10);
     const nowTime = new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
-    const newParaBlocks = wizBlocks.filter(b => b.type === "para").map(b => ({
-      ...b,
-      date: b.date || today,
-      time: b.time || nowTime,
-      addedBy: adminUsername,
-      isContinuation: true
-    }));
-    if(newParaBlocks.length === 0){ toast("⚠ Ajoute au moins un bloc", true); return; }
+
+    // Vérifier qu'il y a du nouveau contenu au-delà des blocs originaux
+    const newBlocks = wizBlocks.slice(_wizContinuationOriginalCount);
+    const hasNewContent = newBlocks.some(b => b.type === "para" && (
+      b.elements?.some(el => el.value?.trim()) || b.image
+    ));
+    if(!hasNewContent){ toast("⚠ Ajoute au moins un contenu dans les nouveaux blocs", true); return; }
+
+    // Horodater les nouveaux blocs avec la date du jour
+    const allBlocks = [
+      ...wizBlocks.slice(0, _wizContinuationOriginalCount),
+      ...newBlocks.map(b => ({
+        ...b,
+        date: b.date || today,
+        time: b.time || nowTime,
+        addedBy: adminUsername,
+        isContinuation: true
+      }))
+    ];
 
     btn.disabled = true; btn.textContent = "Publication…";
-    const updatedBlocks = [...(a.blocks || []), ...newParaBlocks];
-    const ok = await fbUpdate(_wizContinuationId, { blocks: updatedBlocks });
-    btn.disabled = false; btn.textContent = "✏ Ajouter ces sections à l'article";
-
+    try {
+    const ok = await fbUpdate(_wizContinuationId, { blocks: allBlocks });
     if(ok){
       invalidateHtmlCache(_wizContinuationId);
-      // Reset les blocs pour permettre une nouvelle continuation immédiate
-      // Le wizard reste ouvert — la fenêtre revient à son état initial
+      // Remettre le wizard dans l'état "article mis à jour + nouveau bloc vide"
       const todayReset = new Date().toISOString().slice(0,10);
       const nowReset   = new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
-      wizBlocks = [{ type:"para", title:"", date: todayReset, time: nowReset, elements:[{type:"text", value:""}] }];
+      wizBlocks = [...allBlocks];
+      _wizContinuationOriginalCount = wizBlocks.length;
+      wizBlocks.push({ type:"para", title:"", date: todayReset, time: nowReset, elements:[{type:"text", value:""}] });
       document.getElementById("wDate").value = todayReset;
       document.getElementById("wTime").value = nowReset;
       wizUpdateUI();
-      toast(`✓ ${newParaBlocks.length} section${newParaBlocks.length > 1 ? "s" : ""} ajoutée${newParaBlocks.length > 1 ? "s" : ""} — article WS mis à jour !`);
+      toast(`✓ ${newBlocks.length} section${newBlocks.length > 1 ? "s" : ""} ajoutée${newBlocks.length > 1 ? "s" : ""} — article WS mis à jour !`);
     } else {
       toast("✕ Erreur lors de la sauvegarde", true);
+    }
+    } catch(e){
+      console.error("wizPublish continuation error:", e);
+      toast("✕ Erreur inattendue: "+(e.message||e), true);
+    } finally {
+      btn.disabled = false; btn.textContent = "✏ Ajouter ces sections à l'article";
     }
     return;
   }
@@ -5822,11 +5988,11 @@ async function wizPublish(){
       const acc=CAT_COLORS[wizCat]||"#00e5a0";
       const catLbl=CAT_LABEL[wizCat]||wizCat;
       const generatedHTML=generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,wizBlocks,adminUsername,wizPages);
-      // ★ Pour les articles WS : stocker aussi les blocs pour permettre la continuation
-      const blocksToStore = wizCat === "ws" ? wizBlocks : undefined;
-      const pagesToStore  = wizCat === "ws" ? wizPages  : undefined;
+      // ★ Stocker les blocs et pages pour toutes les catégories (permet continuation et édition)
+      const blocksToStore = wizBlocks;
+      const pagesToStore  = wizPages.length > 0 ? wizPages : undefined;
       newArt={type:"html",titre,desc,date,time,cat:wizCat,paire,html:generatedHTML,
-              ...(blocksToStore ? {blocks:blocksToStore} : {}),
+              blocks:blocksToStore,
               ...(pagesToStore  ? {pages: pagesToStore}  : {}),
               submittedBy:authorName,
               ...(isGuestPublish ? {submittedById:authorId, submittedByUsername:authorUsername} : {})};
@@ -5834,11 +6000,17 @@ async function wizPublish(){
   }
 
   btn.disabled=true; btn.textContent="Publication…";
+  try {
   const id=await fbAdd(newArt);
-  btn.disabled=false; btn.textContent = role==="guest" ? "📤 Soumettre" : "✦ Publier l'article";
   if(id){
     closeImport();
     toast(role==="guest" ? "✓ Trade soumis — en attente de validation !" : "✓ Article publié — visible instantanément !");
+  }
+  } catch(e){
+    console.error("wizPublish add error:", e);
+    toast("✕ Erreur inattendue: "+(e.message||e), true);
+  } finally {
+    btn.disabled=false; btn.textContent = role==="guest" ? "📤 Soumettre" : "✦ Publier l'article";
   }
 }
 
@@ -6826,14 +6998,18 @@ function openWsContinue(e, id){
   // Ouvrir le wizard en mode continuation
   _wizContinuationId = id;
   wizStep   = 3;
+  wizActivePage = wizPages.length > 0 ? 0 : -1; // aller sur la 1ère page ou en-tête
   wizCat    = "ws";
   wizMode   = "manual";
   wizPendingHTML = null;
   // ✅ FIX : initialiser wizPages depuis l'article existant (ou defaults)
   wizPages = (a.pages && a.pages.length) ? JSON.parse(JSON.stringify(a.pages)) : WS_DEFAULT_PAGES.map(p=>({...p}));
+  wizActivePage = wizPages.length > 0 ? 0 : -1; // aller sur la 1ère page
 
-  // Un seul bloc para vide pour commencer (pas de header — c'est une continuation)
-  wizBlocks = [{ type:"para", title:"", date: new Date().toISOString().slice(0,10), time: new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}), elements:[{type:"text", value:""}] }];
+  // Charger tous les blocs existants (identique à la publication initiale) + un nouveau bloc vide à la fin
+  wizBlocks = JSON.parse(JSON.stringify(a.blocks));
+  _wizContinuationOriginalCount = wizBlocks.length;
+  wizBlocks.push({ type:"para", title:"", date: new Date().toISOString().slice(0,10), time: new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}), elements:[{type:"text", value:""}] });
 
   // Date du jour pré-remplie
   document.getElementById("wDate").value = new Date().toISOString().slice(0,10);
