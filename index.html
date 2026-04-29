@@ -4310,7 +4310,7 @@ function forcedLogout(msg){
 //                articles_html/{id} = HTML complet avec images base64 intégrées
 // → chaque doc reste sous 1Mo, images en qualité originale
 
-function artMeta(art){
+async function artMeta(art){
   const full = {...art};
   const htmlContent = full.html || "";
   delete full.html;
@@ -4327,7 +4327,7 @@ function artMeta(art){
   }
   // Miniature très compressée (200px, 0.60) pour les cartes de la grille
   if(thumbB64 && typeof thumbB64 === "string" && thumbB64.startsWith("data:")){
-    compressImage(thumbB64, 200, 0.60).then(small => { full.thumb = small; });
+    full.thumb = await compressImage(thumbB64, 200, 0.60);
   }
 
   // ── PURGER les images base64 des blocks avant sauvegarde Firestore ────────────
@@ -4359,7 +4359,7 @@ function artMeta(art){
 async function fbAdd(art){
   try{
     const ref = db.collection("articles").doc();
-    const { meta, html } = artMeta(art);
+    const { meta, html } = await artMeta(art);
     await Promise.race([
       Promise.all([
         ref.set(meta),
@@ -4378,7 +4378,7 @@ async function fbAdd(art){
 
 async function fbUpdate(id, data){
   try{
-    const { meta, html } = artMeta(data);
+    const { meta, html } = await artMeta(data);
     const ops = [db.collection("articles").doc(id).update(meta)];
     if(html) ops.push(db.collection("articles_html").doc(id).set({html}));
     await Promise.race([
