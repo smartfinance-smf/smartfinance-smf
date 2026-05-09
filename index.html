@@ -1107,6 +1107,22 @@
 
           <!-- Éditeur du bloc courant -->
           <div id="wSecManual" style="flex:1;overflow-y:auto;padding:1.25rem;min-width:0;min-height:0;min-width:320px;">
+
+            <!-- ── DATE BAR MODE CONTINUATION ── -->
+            <div id="contDateBar" style="display:none;background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.18);border-radius:8px;padding:.75rem 1rem;margin-bottom:.85rem;">
+              <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--accent);letter-spacing:.14em;text-transform:uppercase;margin-bottom:.55rem;">📅 Date de cette mise à jour</div>
+              <div style="display:grid;grid-template-columns:1fr 120px;gap:.5rem;align-items:end;">
+                <div class="wiz-field" style="margin-bottom:0;">
+                  <label>Date *</label>
+                  <input class="wiz-input" type="date" id="contDate" oninput="syncContDate(this.value)">
+                </div>
+                <div class="wiz-field" style="margin-bottom:0;">
+                  <label>Heure</label>
+                  <input class="wiz-input" type="time" id="contTime" oninput="syncContTime(this.value)">
+                </div>
+              </div>
+            </div>
+
             <div class="wb-list" id="wbList"></div>
           </div>
 
@@ -5847,6 +5863,9 @@ function wizUpdateUI(){
   document.getElementById("wp3").classList.toggle("active", inBlocks);
   // wp3 a besoin de display:flex pour son layout interne (pas display:block du .active)
   document.getElementById("wp3").style.display = inBlocks ? "flex" : "";
+  // Barre date/heure visible uniquement en mode continuation + blocs actifs
+  const _contBar = document.getElementById("contDateBar");
+  if(_contBar) _contBar.style.display = (inBlocks && isContinuation) ? "block" : "none";
 
   // wiz-body: mode split seulement en blocs
   document.getElementById("wizBody").style.padding  = inBlocks ? "0" : "";
@@ -6050,6 +6069,9 @@ function closeImport(){
   _wizContinuationId = null;           // reset mode continuation
   _wizContinuationOriginalCount = 0;   // reset compteur blocs originaux
   _wizEditingId      = null;           // reset mode édition
+  // Cacher la barre date continuation
+  const _contBar = document.getElementById("contDateBar");
+  if(_contBar) _contBar.style.display = "none";
   // Retirer le readonly des champs date/heure
   const _wDate = document.getElementById("wDate");
   const _wTime = document.getElementById("wTime");
@@ -7362,6 +7384,15 @@ async function submitGuestTrade(){
 
 
 // ── WS CONTINUER ─────────────────────────────────────────────────────────────
+// Fonctions de sync pour la barre date/heure en mode continuation
+function syncContDate(v){
+  const d = document.getElementById("wDate");
+  if(d){ d.value = v; applySessionDateToAllBlocks(); }
+}
+function syncContTime(v){
+  const t = document.getElementById("wTime");
+  if(t){ t.value = v; applySessionDateToAllBlocks(); }
+}
 let _wscTargetId = null; // legacy — gardé pour compatibilité
 let _wscImg      = null;
 
@@ -7478,6 +7509,11 @@ function openWsContinue(e, id){
   // Date du jour pré-remplie
   document.getElementById("wDate").value = new Date().toISOString().slice(0,10);
   document.getElementById("wTime").value = new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  // Synchroniser la barre date continuation
+  const _cDate = document.getElementById("contDate");
+  const _cTime = document.getElementById("contTime");
+  if(_cDate) _cDate.value = new Date().toISOString().slice(0,10);
+  if(_cTime) _cTime.value = new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
 
   wizUpdateUI();
   document.getElementById("wizOv").classList.add("open");
