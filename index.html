@@ -2014,7 +2014,7 @@ async function applyHash(){
   }
 
   // Hash vide → reset filtre
-  filt = "tous";
+  filt = "all";
   render();
 }
 
@@ -2030,7 +2030,7 @@ window.addEventListener("popstate", ()=> {
     if(h.filtre && CAT_LABEL[h.filtre]){
       filt = h.filtre;
     } else {
-      filt = "tous";
+      filt = "all";
     }
     render();
   }
@@ -2404,7 +2404,7 @@ async function checkEmailVerified(){
     btn.disabled=false; btn.textContent="✓ J'ai confirmé mon e-mail";
   }
 }
-const CAT_LABEL = {ws:"WS",wr:"WR",mr:"MR",other:"Other"};
+const CAT_LABEL = {all:"All",ws:"WS",wr:"WR",mr:"MR",other:"Other"};
 
 // ── Firebase ─────────────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -2437,7 +2437,7 @@ let SETTINGS = {
 
 // Couleurs par défaut (référence pour reset)
 const DEFAULT_COLORS = {
-  tous:"#00e5a0", ws:"#f7b731", wr:"#f7b731", mr:"#f7b731", other:"#f7b731"
+  tous:"#00e5a0", all:"#00e5a0", ws:"#f7b731", wr:"#f7b731", mr:"#f7b731", other:"#f7b731"
 };
 
 // Injecte les couleurs dans les CSS variables du document
@@ -2484,7 +2484,7 @@ async function pushSettings(){
 let role        = sessionStorage.getItem("smf_role") || null;
 let currentUser = JSON.parse(sessionStorage.getItem("smf_user")||"null");
 let arts        = JSON.parse(localStorage.getItem("smf_hub_v4") || "[]");
-let filt="tous", sq="";
+let filt="all", sq="";
 let authorFilter = null; // { displayName, userId, username }
 let mode="html";
 let pendingHTML=null, pendingImages=[];
@@ -3260,7 +3260,7 @@ function buildProfileMenuContent(initials, isGuest){
   const gestionBtn = (role==="admin" && name!=="SMF")
     ? `<button class="pm-btn" onclick="closeProfileMenu();openAdminPanel()"><span class="pm-ico">⚙</span>Gestion</button>` : "";
   const submitBtn = role==="guest"
-    ? `<button class="pm-btn" onclick="closeProfileMenu();openGuestSubmit()"><span class="pm-ico">📤</span>Soumettre un Trade</button>` : "";
+    ? `<button class="pm-btn" onclick="closeProfileMenu();openGuestSubmit()"><span class="pm-ico">📐</span>Soumettre</button>` : "";
   const contactLink = localStorage.getItem("smf_contact_link") || "";
   const contactBtn = contactLink
     ? `<button class="pm-btn" onclick="closeProfileMenu();window.open('${contactLink.replace(/'/g,"\'")}','_blank')" style="color:#00e5a0;"><span class="pm-ico">💬</span>Contacter l'admin</button>` : "";
@@ -3419,7 +3419,7 @@ function renderHeaderActions(){
       : "INVITÉ";
     const initials = getInitials(displayName);
     div.innerHTML=`
-      <button class="btn-add-header" onclick="openGuestSubmit()" style="background:#0005ff;">📤 Soumettre un Trade</button>
+      <button class="btn-add-header" onclick="openGuestSubmit()" style="background:#f7b731;color:#000;">📐 Soumettre</button>
       ${buildAvatar(initials, "var(--warn)", true, displayName)}`;
     if(fab) fab.style.display="none";
   } else {
@@ -4602,6 +4602,7 @@ function artMatchesFilt(a, f){
   const cats = artCats(a);
   if(cats.includes("tous")) return true;
   if(f==="tous") return true;
+  if(f==="all") return cats.some(c=>["ws","wr","mr"].includes(c));
   return cats.includes(f);
 }
 
@@ -4627,7 +4628,7 @@ function renderFilterBar(){
       row.querySelectorAll(".filter-btn").forEach(x => x.classList.remove("active"));
       btn.classList.add("active");
       filt = k;
-      if(k === "tous"){
+      if(k === "tous" || k === "all"){
         replaceHash({});
       } else {
         replaceHash({ filtre: k });
@@ -4646,13 +4647,15 @@ function renderStats(){
   arts.forEach(a=>{
     const cats = artCats(a);
     if(cats.includes("tous")){
-      allCats.forEach(k => counts[k]++);
+      allCats.filter(k=>k!=="all").forEach(k => counts[k]++);
+      counts.all++;
     } else {
       cats.forEach(c=>{ if(counts[c] !== undefined) counts[c]++; });
+      if(cats.some(c=>["ws","wr","mr"].includes(c))) counts.all++;
     }
   });
   const total = counts.tous || Object.entries(counts)
-    .filter(([k]) => k !== "tradeinvites" && k !== "tous")
+    .filter(([k]) => k !== "tradeinvites" && k !== "tous" && k !== "all")
     .reduce((s, [, v]) => s + v, 0);
   allCats.forEach(k=>{
     const el = document.getElementById("fc-"+k); if(el) el.textContent = counts[k] > 0 ? "("+counts[k]+")" : "";
@@ -4837,7 +4840,7 @@ let _etTargetId = null;
 let _etSelectionOrder = [];
 
 // Icônes par défaut pour les tags connus, fallback 🏷️
-const CAT_ICONS = {tous:"🌐",ws:"💡",wr:"🔭",mr:"📋",other:"📐"};
+const CAT_ICONS = {tous:"🌐",all:"🌐",ws:"💡",wr:"🔭",mr:"📋",other:"📐"};
 
 function openEditTags(e, id){
   e.stopPropagation();
@@ -6105,7 +6108,7 @@ function resetWizHtml(){
 
 async function wizPublish(){
   if(role!=="admin" && role!=="guest"){toast("⚠ Accès requis",true);return;}
-  if(role==="guest" && wizCat!=="tradeinvites") wizCat="tradeinvites";
+  if(role==="guest" && wizCat!=="other") wizCat="other";
 
   const adminUsername = sessionStorage.getItem("smf_username")||"Admin";
   const btn = document.getElementById("wizBtnPublish");
@@ -7241,7 +7244,7 @@ function openGuestSubmit(){
   if(role!=="guest"){toast("⚠ Accès réservé aux invités",true);return;}
   // Utiliser le même wizard — catégorie forcée à tradeinvites, sauter étape 1
   wizStep = 2;
-  wizCat  = "tradeinvites";
+  wizCat  = "other";
   wizMode = "manual";
   wizPendingHTML = null;
   wizBlocks = [];
@@ -7365,12 +7368,12 @@ async function submitGuestTrade(){
     const fc=document.getElementById("gContent").value.trim();
     if(!fc){toast("⚠ Ajoute du texte",true);return;}
     const block1={text:fc,image:null,date};
-    newArt={type:"manual",titre,desc,date,time,cat:"tradeinvites",paire,blocks:[block1],submittedBy,submittedById,submittedByUsername};
+    newArt={type:"manual",titre,desc,date,time,cat:"other",paire,blocks:[block1],submittedBy,submittedById,submittedByUsername};
   } else if(guestMode==="textimg"){
     const fc=document.getElementById("gContentImg").value.trim();
     if(!fc&&guestPendingImages.length===0){toast("⚠ Ajoute du texte ou au moins une image",true);return;}
     const block1={text:fc,images:guestPendingImages.map(i=>i.dataUrl),image:guestPendingImages[0]?.dataUrl||null,date};
-    newArt={type:"manual",titre,desc,date,time,cat:"tradeinvites",paire,blocks:[block1],submittedBy,submittedById,submittedByUsername};
+    newArt={type:"manual",titre,desc,date,time,cat:"other",paire,blocks:[block1],submittedBy,submittedById,submittedByUsername};
   } else {
     toast("⚠ Mode non supporté",true); return;
   }
