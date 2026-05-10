@@ -1106,7 +1106,7 @@
         <div style="display:flex;flex:1;min-height:0;height:100%;">
 
           <!-- Éditeur du bloc courant -->
-          <div id="wSecManual" style="flex:1;overflow-y:auto;padding:1.25rem;min-width:0;min-height:0;min-width:320px;">
+          <div id="wSecManual" style="flex:1;overflow-y:auto;padding:1.25rem;min-width:0;min-height:0;min-width:220px;">
 
             <!-- ── DATE BAR MODE CONTINUATION ── -->
             <div id="contDateBar" style="display:none;background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.18);border-radius:8px;padding:.75rem 1rem;margin-bottom:.85rem;">
@@ -1127,7 +1127,7 @@
           </div>
 
           <!-- Aperçu en direct (droite) -->
-          <div style="flex:2;min-width:0;border-left:1px solid var(--border);background:var(--surface2);display:flex;flex-direction:column;">
+          <div style="flex:4;min-width:0;border-left:1px solid var(--border);background:var(--surface2);display:flex;flex-direction:column;">
             <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:.6rem 1rem;border-bottom:1px solid var(--border);">
               📋 Aperçu en direct
             </div>
@@ -2093,10 +2093,10 @@ async function _openArtInReader(id, pushToHistory = true){
 
   if(!html){ toast("⚠ Contenu introuvable", true); return; }
 
-  // ── PATCH FONT : forcer Playfair Display sur h1 (compatibilité anciens articles stockés) ──
+  // ── PATCH FONT + BARRES : forcer Playfair Display + supprimer barres latérales (compatibilité anciens articles stockés) ──
   html = html.replace(
     '</head>',
-    `<style>h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;}</style></head>`
+    `<style>h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;}.para-block::before,.para-block::after{display:none !important;}.divider{display:none !important;}</style></head>`
   );
 
   // ── PATCH TABS : transforme les onglets WS en sidebar verticale gauche ──
@@ -2115,7 +2115,7 @@ body{display:flex;flex-direction:column;min-height:100vh;margin:0;}
   z-index:80;
 }
 .ws-sidenav-p::-webkit-scrollbar{display:none;}
-.ws-main-p{flex:1;min-width:0;}
+.ws-main-p{flex:1;min-width:0;padding-right:168px;}
 .ws-home-p{
   display:flex;align-items:center;gap:.55rem;
   font-family:'Playfair Display',serif;font-size:9px;font-weight:700;
@@ -5017,10 +5017,10 @@ async function openArt(id){
 
   if(!html){ toast("⚠ Contenu introuvable", true); return; }
 
-  // ── PATCH FONT : forcer Playfair Display sur h1 (compatibilité anciens articles stockés) ──
+  // ── PATCH FONT + BARRES : forcer Playfair Display + supprimer barres latérales (compatibilité anciens articles stockés) ──
   html = html.replace(
     '</head>',
-    `<style>h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;}</style></head>`
+    `<style>h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;}.para-block::before,.para-block::after{display:none !important;}.divider{display:none !important;}</style></head>`
   );
 
   const blob = new Blob([html], {type:"text/html"});
@@ -5987,7 +5987,7 @@ function openImport(){
 }
 
 // ── OUVRIR LE WIZARD EN MODE ÉDITION (KGB uniquement) ────────────────────────
-function openEditArtWiz(e, id){
+async function openEditArtWiz(e, id){
   e.stopPropagation();
   if(!canEditArt()){ toast("⚠ Modification réservée à KGB",true); return; }
   const a = arts.find(x=>x.id===id);
@@ -6050,7 +6050,8 @@ function openEditArtWiz(e, id){
 
   } else {
     // Article HTML pur (fichier uploadé ou généré sans blocs stockés)
-    wizPendingHTML = a.html || "";
+    // ✅ FIX : Charger le HTML complet depuis articles_html (a.html est vide dans arts[])
+    wizPendingHTML = _htmlCache.get(id) || await fbGetHtml(id) || a.html || "";
     setWizMode("html");
     if(a.html){
       document.getElementById("wDropZone").style.display="none";
@@ -6143,6 +6144,26 @@ async function wizPublish(){
       // Trade : reconstruire le format compact
       const hb = wizBlocks.find(b=>b.type==="header")||{};
       const pb = wizBlocks.filter(b=>b.type==="para");
+
+      // ✅ FIX : Restaurer les images depuis articles_html (purgées dans arts[])
+      // Sans ça, les images uploadées disparaissent après chaque modification
+      try {
+        const _oldHtml = _htmlCache.get(_wizEditingId) || await fbGetHtml(_wizEditingId);
+        if(_oldHtml){
+          const _oldImgs = [...new DOMParser().parseFromString(_oldHtml,"text/html")
+            .querySelectorAll('img[src^="data:"]')].map(i=>i.src);
+          let _oi = 0;
+          // Restaurer l'image de couverture du header
+          if(hb.image && hb.image.dataUrl){ _oi++; }
+          else if(_oldImgs[_oi]){ hb.image = {name:"cover", dataUrl:_oldImgs[_oi]}; _oi++; }
+          // Restaurer les images des blocs para
+          pb.forEach(b => {
+            if(b.image && b.image.dataUrl){ _oi++; }
+            else if(_oldImgs[_oi]){ b.image = {name:"", dataUrl:_oldImgs[_oi]}; _oi++; }
+          });
+        }
+      } catch(_imgErr){ console.warn("wizPublish trade edit: image restore failed", _imgErr); }
+
       const bd = [];
       if(hb.image) bd.push({text:"",images:[hb.image.dataUrl],image:hb.image.dataUrl,date,isInitial:true});
       pb.forEach(b=>{ bd.push({text:b.text||"",images:b.image?[b.image.dataUrl]:[],image:b.image?.dataUrl||null,date}); });
@@ -6167,6 +6188,37 @@ async function wizPublish(){
       const catLbl = CAT_LABEL[wizCat]||wizCat;
       const timeStr = time ? ` · ${time}` : "";
       const fdate   = date ? new Date(date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})+timeStr : "";
+
+      // ✅ FIX : Restaurer les images dans wizBlocks depuis articles_html
+      // Les images sont purgées dans arts[] (collection légère) — il faut les récupérer
+      // depuis le HTML complet avant de régénérer le template, sinon elles disparaissent.
+      try {
+        const _oldHtml = _htmlCache.get(_wizEditingId) || await fbGetHtml(_wizEditingId);
+        if(_oldHtml){
+          const _oldImgs = [...new DOMParser().parseFromString(_oldHtml,"text/html")
+            .querySelectorAll('img[src^="data:"]')].map(i=>i.src);
+          let _oi = 0;
+          const _tryRestore = (obj, key) => {
+            if(!obj) return;
+            if(obj[key] && obj[key].dataUrl){ _oi++; return; } // image déjà présente, passer
+            if(_oldImgs[_oi]){
+              if(!obj[key]) obj[key] = {};
+              obj[key].dataUrl = obj[key].dataUrl || _oldImgs[_oi];
+              _oi++;
+            }
+          };
+          wizBlocks.forEach(b => {
+            if(b.type === "header"){
+              _tryRestore(b, "image");
+              (b.extras || []).forEach(el => { if(el.type === "image") _tryRestore(el, "data"); });
+            } else if(b.type === "para"){
+              _tryRestore(b, "image");
+              (b.elements || []).forEach(el => { if(el.type === "image") _tryRestore(el, "data"); });
+            }
+          });
+        }
+      } catch(_imgErr){ console.warn("wizPublish template edit: image restore failed", _imgErr); }
+
       update.html = generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,wizBlocks,adminUsername,wizPages);
       update.type = "html";
       update.blocks = wizBlocks;
@@ -6414,7 +6466,7 @@ function renderParaHTML(paraBlocks){
     const paraTitle    = b.title    ? `<div class="para-title">${b.title}</div>` : "";
     const paraSubtitle = b.subtitle ? `<div class="para-subtitle">${b.subtitle}</div>` : "";
     const txt = b.text ? `<div class="art-body">${fmtText(b.text)}</div>` : "";
-    const img = b.image ? `<figure class="art-fig"><img src="${b.image.dataUrl}" alt=""><figcaption>${b.image.name}</figcaption></figure>` : "";
+    const img = (b.image && b.image.dataUrl) ? `<figure class="art-fig"><img src="${b.image.dataUrl}" alt=""><figcaption>${b.image.name}</figcaption></figure>` : "";
     if(!txt && !img) return "";
     return `<div class="para-block">${paraTitle}${paraSubtitle}${txt}${img}</div>`;
   }).join("");
@@ -6496,14 +6548,14 @@ function mkChip(label,by,fdate,paire){
   return p.join(" · ");
 }
 function mkCoverImg(hb,padding="4rem"){
-  if(!hb.image) return "";
+  if(!hb.image || !hb.image.dataUrl) return "";
   return `<div class="cover-img-wrap" style="padding:0 ${padding}"><img src="${hb.image.dataUrl}" alt="" class="cover-img"></div>`;
 }
 function mkHeaderExtras(hb,acc){
   if(!hb.extras || !hb.extras.length) return "";
   const html = hb.extras.map(el=>{
     if(el.type==="text")  return el.value ? `<div class="art-body">${fmtText(el.value)}</div>` : "";
-    if(el.type==="image") return el.data  ? `<figure class="art-fig"><img src="${el.data.dataUrl}" alt=""><figcaption>${el.data.name||""}</figcaption></figure>` : "";
+    if(el.type==="image") return (el.data && el.data.dataUrl)  ? `<figure class="art-fig"><img src="${el.data.dataUrl}" alt=""><figcaption>${el.data.name||""}</figcaption></figure>` : "";
     return "";
   }).join("");
   if(!html) return "";
@@ -6534,21 +6586,21 @@ function mkParaBlocks(paraBlocks,acc){
       content = b.elements.map(el=>{
         if(el.type==="text")     return el.value ? `<div class="art-body">${fmtText(el.value)}</div>` : "";
         if(el.type==="subtitle") return el.value ? `<div class="para-subtitle" style="color:${acc}">${el.value}</div>` : "";
-        if(el.type==="image")    return el.data  ? `<figure class="art-fig"><img src="${el.data.dataUrl}" alt=""><figcaption>${el.data.name}</figcaption></figure>` : "";
+        if(el.type==="image")    return (el.data && el.data.dataUrl)  ? `<figure class="art-fig"><img src="${el.data.dataUrl}" alt=""><figcaption>${el.data.name}</figcaption></figure>` : "";
         return "";
       }).join("");
     } else {
       // Legacy
       const txt1 = b.text  ? `<div class="art-body">${fmtText(b.text)}</div>`  : "";
       const txt2 = b.text2 ? `<div class="art-body">${fmtText(b.text2)}</div>` : "";
-      const img1 = b.image ? `<figure class="art-fig"><img src="${b.image.dataUrl}" alt=""><figcaption>${b.image.name}</figcaption></figure>` : "";
+      const img1 = (b.image && b.image.dataUrl) ? `<figure class="art-fig"><img src="${b.image.dataUrl}" alt=""><figcaption>${b.image.name}</figcaption></figure>` : "";
       content = txt1+img1+txt2;
     }
     // Render header extras the same way
     if(b.type==="header" && b.extras && b.extras.length){
       content += b.extras.map(el=>{
         if(el.type==="text")  return el.value ? `<div class="art-body">${fmtText(el.value)}</div>` : "";
-        if(el.type==="image") return el.data  ? `<figure class="art-fig"><img src="${el.data.dataUrl}" alt=""><figcaption>${el.data.name}</figcaption></figure>` : "";
+        if(el.type==="image") return (el.data && el.data.dataUrl)  ? `<figure class="art-fig"><img src="${el.data.dataUrl}" alt=""><figcaption>${el.data.name}</figcaption></figure>` : "";
         return "";
       }).join("");
     }
@@ -6597,7 +6649,7 @@ h1{font-size:clamp(1.6rem,3.8vw,2.5rem);font-weight:800;color:${acc};line-height
 .cover-img-wrap{max-width:80%;margin:2rem auto 0;animation:fadeU .8s .25s both;}
 .cover-img{width:100%;border-radius:10px;border:1px solid rgba(${hexToRgb(acc)},.15);max-height:420px;object-fit:cover;display:block;box-shadow:0 4px 40px rgba(${hexToRgb(acc)},.07);}
 /* DIVIDER */
-.divider{max-width:100%;margin:2.5rem 0 0;padding:0 4rem;display:flex;align-items:center;gap:1rem;animation:fadeU .6s .3s both;}
+.divider{display:none;}
 .div-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(${hexToRgb(acc)},.6),rgba(${hexToRgb(acc)},0));}
 .div-line.r{background:linear-gradient(90deg,rgba(${hexToRgb(acc)},0),rgba(${hexToRgb(acc)},.6));}
 .div-dot{width:6px;height:6px;background:${acc};border-radius:50%;box-shadow:0 0 8px rgba(${hexToRgb(acc)},.8);animation:dotP 2s ease-in-out infinite;}
@@ -6607,10 +6659,8 @@ h1{font-size:clamp(1.6rem,3.8vw,2.5rem);font-weight:800;color:${acc};line-height
 /* PARA BLOCKS with bars */
 .para-block{position:relative;padding:1.25rem 1.5rem;margin-bottom:1.5rem;}
 .para-block:last-child{margin-bottom:0;}
-.para-block::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px;
-  background:linear-gradient(180deg,${acc} 0%,rgba(${hexToRgb(acc)},.45) 70%,rgba(${hexToRgb(acc)},.05) 100%);}
-.para-block::after{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;border-radius:2px;
-  background:linear-gradient(180deg,${acc} 0%,rgba(${hexToRgb(acc)},.45) 70%,rgba(${hexToRgb(acc)},.05) 100%);}
+.para-block::before{display:none;}
+.para-block::after{display:none;}
 .art-body{font-size:15px;line-height:1.9;color:#c9d1d9;margin-bottom:.75rem;}
 .art-body p{margin-bottom:1.1rem;}
 .art-body strong{color:#fff;}
@@ -6662,7 +6712,7 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
 ${coverImg}${headerExtras}
-<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+
 <div class="content">${blocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · ${catLabel||"Research"}</span>
@@ -6709,7 +6759,7 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
 ${coverImg}${headerExtras}
-<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+
 <div class="content">${blocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Analyse Hebdomadaire</span>
@@ -6751,7 +6801,7 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
 ${coverImg}${headerExtras}
-<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+
 <div class="content">${blocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Monthly Recap</span>
@@ -6792,7 +6842,7 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
 ${coverImg}${headerExtras}
-<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+
 <div class="content">${blocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Bank Meeting Note</span>
@@ -6858,7 +6908,7 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
 ${coverImg}
-<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+
 <div class="content">${tradeBlocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Trades Admins</span>
@@ -6924,7 +6974,7 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
 ${coverImg}
-<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+
 <div class="content">${tradeBlocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Trades Invités</span>
@@ -6960,7 +7010,7 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
 ${coverImg}${headerExtras}
-<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+
 <div class="content">${blocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Smart Finance Research</span>
@@ -7046,7 +7096,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 }
 .ws-sidenav::-webkit-scrollbar{display:none;}
 
-.ws-main{flex:1;min-width:0;}
+.ws-main{flex:1;min-width:0;padding-right:168px;}
   display:flex;flex-direction:column;
   z-index:80;
   overflow-y:auto;scrollbar-width:none;
@@ -7125,7 +7175,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 <div id="wsHeader">
 <div class="hero"><h1>${titre}</h1>${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}</div>
 ${coverImg}${headerExtras}
-<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+
 ${mainBlocksHtml}
 </div>
 
@@ -7229,7 +7279,7 @@ h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3r
   ${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}
 </div>
 ${coverImg}${headerExtras}
-<div class="divider"><div class="div-line"></div><div class="div-dot"></div><div class="div-line r"></div></div>
+
 <div class="content">${blocks}</div>
 <div class="footer">
   <span><em>S·M·F</em> · Week Ahead</span>
