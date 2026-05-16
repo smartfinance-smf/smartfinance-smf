@@ -5112,7 +5112,7 @@ function removeElemImg(idx, ei){
 }
 
 function initBlocks(){
-  wizBlocks = [{ type:"header", titre:"", subtitle:"", image:null, extras:[] }];
+  wizBlocks = [{ type:"header", titre:"", subtitle:"", subtitle2:"", image:null, extras:[] }];
   wizPages  = (wizCat === "ws") ? WS_DEFAULT_PAGES.map(p=>({...p})) : [];
   wizActivePage = -1; // commencer sur l'en-tête
 }
@@ -5243,6 +5243,7 @@ function applySessionDateToAllBlocks(){
   schedulePreview();
 }
 function syncBlockSubtitle(val)        { if(wizBlocks[0])   wizBlocks[0].subtitle = val;   schedulePreview(); }
+function syncBlockSubtitle2(val)       { if(wizBlocks[0])   wizBlocks[0].subtitle2 = val;  schedulePreview(); }
 function syncBlockTitre(val){
   if(wizBlocks[0]) wizBlocks[0].titre = val;
   const f=document.getElementById("wTitre"); if(f) f.value=val;
@@ -5594,6 +5595,12 @@ function renderBlocks(){
           <div class="wiz-field" style="margin-bottom:0;">
             <label>Image principale</label>${coverZone}
           </div>
+          <div class="wiz-field">
+            <label>Sous-titre secondaire <span style="font-size:10px;color:var(--muted);font-weight:400;">(affiché sous l'image)</span></label>
+            <textarea class="wiz-textarea" style="min-height:48px;"
+              placeholder="Ex : Graphique journalier — résistance clé testée..."
+              oninput="syncBlockSubtitle2(this.value)">${b.subtitle2||""}</textarea>
+          </div>
           ${mkElemHTML(0, b.extras)}
           ${mkAddRow(0)}
         </div>
@@ -5658,6 +5665,24 @@ function renderBlocks(){
       const canDn = rank < pageBlockIndexes.length - 1;
       const upIdx  = canUp ? pageBlockIndexes[rank-1] : -1;
       const dnIdx  = canDn ? pageBlockIndexes[rank+1] : -1;
+      // Bloc dupliqué sur d'autres pages
+      const blockPagesArr = Array.isArray(b.pages) ? b.pages : (b.page !== undefined ? [b.page] : [currentPage.id]);
+      const otherPages = wizPages.filter(p => p.id !== currentPage.id);
+      const alsoOnHtml = otherPages.length > 0 ? `
+        <div class="wiz-field" style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);">
+          <label>📑 Afficher aussi sur <span style="font-size:9px;color:var(--muted);font-weight:400;">(dupliquer ce bloc sur d'autres pages)</span></label>
+          <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.35rem;">
+            ${otherPages.map(p => {
+              const isChecked = blockPagesArr.includes(p.id);
+              return `<label style="display:flex;align-items:center;gap:.35rem;cursor:pointer;background:var(--surface);border:1px solid ${isChecked?"var(--accent)":"var(--border2)"};border-radius:4px;padding:4px 10px;transition:border-color .15s;">
+                <input type="checkbox" style="accent-color:var(--accent);cursor:pointer;width:12px;height:12px;"
+                  ${isChecked?"checked":""}
+                  onchange="syncBlockPages(${blockIdx},${p.id},this.checked);renderBlocks();">
+                <span style="font-family:var(--mono);font-size:9px;font-weight:700;color:${isChecked?"var(--accent)":"var(--muted)"};letter-spacing:.06em;">${p.name}</span>
+              </label>`;
+            }).join("")}
+          </div>
+        </div>` : "";
       html += `
         <div class="wb" style="margin-bottom:.65rem;" id="wb-block-${blockIdx}">
           <div class="wb-head">
@@ -5678,6 +5703,7 @@ function renderBlocks(){
             </div>
             ${mkElemHTML(blockIdx, b.elements)}
             ${mkAddRow(blockIdx)}
+            ${alsoOnHtml}
           </div>
         </div>`;
     });
@@ -5975,8 +6001,8 @@ function openImport(){
   wizPendingHTML=null; wizBlocks=[]; wizPages=[];
   document.getElementById("wTitre").value="";
   document.getElementById("wDesc").value="";
-  document.getElementById("wDate").value=new Date().toISOString().slice(0,10);
-  document.getElementById("wTime").value=new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  document.getElementById("wDate").value="";
+  document.getElementById("wTime").value="";
   document.getElementById("wPaire").value="";
   resetWizHtml();
   document.querySelectorAll(".cat-card").forEach(c=>c.classList.remove("selected"));
@@ -6319,9 +6345,9 @@ async function wizPublish(){
       const nowReset   = new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
       _wizContinuationOriginalCount = 0;
       const _resetFirstPageId = (wizPages.length > 0) ? wizPages[0].id : undefined;
-      wizBlocks = [{ type:"para", title:"", date: todayReset, time: nowReset, elements:[{type:"text", value:""}], pages: _resetFirstPageId !== undefined ? [_resetFirstPageId] : [] }];
-      document.getElementById("wDate").value = todayReset;
-      document.getElementById("wTime").value = nowReset;
+      wizBlocks = [{ type:"para", title:"", date: "", time: "", elements:[{type:"text", value:""}], pages: _resetFirstPageId !== undefined ? [_resetFirstPageId] : [] }];
+      document.getElementById("wDate").value = "";
+      document.getElementById("wTime").value = "";
       wizUpdateUI();
       toast(`✓ ${stampedNewBlocks.length} section${stampedNewBlocks.length > 1 ? "s" : ""} ajoutée${stampedNewBlocks.length > 1 ? "s" : ""} — article WS mis à jour !`);
     } else {
@@ -6549,7 +6575,8 @@ function mkChip(label,by,fdate,paire){
 }
 function mkCoverImg(hb,padding="4rem"){
   if(!hb.image || !hb.image.dataUrl) return "";
-  return `<div class="cover-img-wrap" style="padding:0 ${padding}"><img src="${hb.image.dataUrl}" alt="" class="cover-img"></div>`;
+  const sub2 = hb.subtitle2 ? `<p class="cover-subtitle2">${hb.subtitle2}</p>` : "";
+  return `<div class="cover-img-wrap" style="padding:0 ${padding}"><img src="${hb.image.dataUrl}" alt="" class="cover-img"></div>${sub2}`;
 }
 function mkHeaderExtras(hb,acc){
   if(!hb.extras || !hb.extras.length) return "";
@@ -6648,6 +6675,7 @@ h1{font-size:clamp(1.6rem,3.8vw,2.5rem);font-weight:800;color:${acc};line-height
 /* COVER IMG */
 .cover-img-wrap{max-width:80%;margin:2rem auto 0;animation:fadeU .8s .25s both;}
 .cover-img{width:100%;border-radius:10px;border:1px solid rgba(${hexToRgb(acc)},.15);max-height:420px;object-fit:cover;display:block;box-shadow:0 4px 40px rgba(${hexToRgb(acc)},.07);}
+.cover-subtitle2{font-size:15px;color:rgba(208,218,232,.6);line-height:1.8;max-width:680px;padding:.85rem 7rem 0;animation:fadeU .8s .3s cubic-bezier(.22,1,.36,1) both;}
 /* DIVIDER */
 .divider{display:none;}
 .div-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(${hexToRgb(acc)},.6),rgba(${hexToRgb(acc)},0));}
@@ -7557,16 +7585,16 @@ function openWsContinue(e, id){
   // Les anciens blocs sont récupérés directement depuis arts[] au moment de la sauvegarde
   _wizContinuationOriginalCount = 0;
   const _contFirstPageId = (wizPages.length > 0) ? wizPages[0].id : undefined;
-  wizBlocks = [{ type:"para", title:"", date: new Date().toISOString().slice(0,10), time: new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}), elements:[{type:"text", value:""}], pages: _contFirstPageId !== undefined ? [_contFirstPageId] : [] }];
+  wizBlocks = [{ type:"para", title:"", date: "", time: "", elements:[{type:"text", value:""}], pages: _contFirstPageId !== undefined ? [_contFirstPageId] : [] }];
 
-  // Date du jour pré-remplie
-  document.getElementById("wDate").value = new Date().toISOString().slice(0,10);
-  document.getElementById("wTime").value = new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  // Date laissée vide — l'utilisateur la renseigne lui-même
+  document.getElementById("wDate").value = "";
+  document.getElementById("wTime").value = "";
   // Synchroniser la barre date continuation
   const _cDate = document.getElementById("contDate");
   const _cTime = document.getElementById("contTime");
-  if(_cDate) _cDate.value = new Date().toISOString().slice(0,10);
-  if(_cTime) _cTime.value = new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  if(_cDate) _cDate.value = "";
+  if(_cTime) _cTime.value = "";
 
   wizUpdateUI();
   document.getElementById("wizOv").classList.add("open");
@@ -7667,7 +7695,7 @@ function openAddBlock(e,id){
   document.getElementById("abTitle").value="";
   document.getElementById("abText").value="";
   document.getElementById("abText2").value="";
-  document.getElementById("abDate").value=new Date().toISOString().slice(0,10);
+  document.getElementById("abDate").value="";
   document.getElementById("abImgPreview").innerHTML="";
   document.getElementById("abImgInput").value="";
   document.getElementById("addBlockOv").classList.add("open");
