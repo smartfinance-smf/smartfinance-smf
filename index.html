@@ -5045,15 +5045,11 @@ let _wizEditingId = null;                // si défini → mode "Modifier articl
 let wizPages = []; // [{id, name}] — pages de l'article (toutes catégories)
 let wizActivePage = -1; // -1 = En-tête, 0+ = index dans wizPages
 const WS_DEFAULT_PAGES = [
-  {id:1, name:"Analyse USD"},
-  {id:2, name:"Analyse CAD"},
-  {id:3, name:"Analyse EUR"},
-  {id:4, name:"Analyse GBP"},
-  {id:5, name:"Analyse CHF"},
-  {id:6, name:"Analyse JPY"},
-  {id:7, name:"Analyse AUD"},
-  {id:8, name:"Analyse NZD"},
-  {id:9, name:"Analyse Trades"}
+  {id:1, name:"SCENARIOS DIMANCHE"},
+  {id:2, name:"SCENARIOS MARDI"},
+  {id:3, name:"SCENARIOS JEUDI"},
+  {id:4, name:"RECAP DU SAMEDI"},
+  {id:5, name:"TRADE OF THE WEEK"}
 ];
 
 const CAT_COLORS = {hebdo:"#f7b731",weekahead:"#f7b731",mensuel:"#0ff",banques:"#00e5a0",trade:"#00f70a",tradeinvites:"#0005ff",tradeideas:"#f7b731",wa:"#f7b731",mr:"#f7b731",bm:"#f7b731",tan:"#f7b731"};
@@ -5576,8 +5572,6 @@ function renderBlocks(){
     }
 
     list.innerHTML = `
-      <!-- Gestionnaire de pages -->
-      ${renderWizPageManagerInline()}
       <div class="wb" style="border-color:rgba(247,183,49,.3);">
         <div class="wb-head"><span class="wb-num is-header" style="color:${acc};">✦ EN-TÊTE DE L'ARTICLE</span></div>
         <div class="wb-body">
