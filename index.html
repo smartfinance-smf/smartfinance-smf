@@ -779,7 +779,7 @@
   @keyframes up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 
   /* Step bar */
-  .wiz-steps{display:none !important;}
+  .wiz-steps{display:flex;align-items:stretch;background:var(--surface2);border-bottom:1px solid var(--border);overflow-x:auto;padding-right:44px;/* réserve la place pour le ✕ absolu */}
   .wiz-step{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:3px;padding:9px 8px;cursor:default;position:relative;
@@ -4690,7 +4690,11 @@ window.addEventListener("message", function(e){
     if(idx !== -1) wizGoToPage(idx);
   }
   if(e.data.type === "wizAddPage"){
-    openWizAddPage(e.data.side || "left");
+    // Ouvrir le popup d'ajout en pré-sélectionnant le bon côté
+    openWizAddPage();
+    setTimeout(function(){
+      setWizPageSide(e.data.side || "left");
+    }, 80);
   }
 });
 function renderFilterBar(){
@@ -5904,19 +5908,22 @@ function renderWizSteps(){
 
 // Popup d'ajout de page rapide
 let _wizAddPagePopupOpen = false;
-function openWizAddPage(side){
-  // Créer un petit popup inline — le côté est déterminé par la colonne cliquée
+function openWizAddPage(){
+  // Créer un petit popup inline sous le bouton +
   let pop = document.getElementById("wizAddPagePop");
   if(pop){ pop.remove(); _wizAddPagePopupOpen=false; return; }
   _wizAddPagePopupOpen = true;
-  const resolvedSide = side || "left";
-  const sideLabel = resolvedSide === "right" ? "PAIRE →" : "← TEMPORELLE";
+  const bar = document.getElementById("wizStepsBar");
   pop = document.createElement("div");
   pop.id = "wizAddPagePop";
   pop.style.cssText = `position:absolute;top:54px;right:0;z-index:600;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:.75rem;display:flex;flex-direction:column;gap:.5rem;box-shadow:0 8px 24px rgba(0,0,0,.10);min-width:280px;`;
   pop.innerHTML = `
-    <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.1rem;">Nouvelle page — <span style="color:var(--accent)">${resolvedSide === "right" ? "PAIRE →" : "← TEMPORELLE"}</span></div>
-    <input type="hidden" id="wizNewPageSide" value="${resolvedSide}">
+    <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.1rem;">Position de la page</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;">
+      <button id="wizSideLeft" onclick="setWizPageSide('left')" style="background:var(--accent);border:1px solid var(--accent);color:#000;font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 8px;border-radius:4px;cursor:pointer;letter-spacing:.06em;">← TEMPORELLE</button>
+      <button id="wizSideRight" onclick="setWizPageSide('right')" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 8px;border-radius:4px;cursor:pointer;letter-spacing:.06em;">PAIRE →</button>
+    </div>
+    <input type="hidden" id="wizNewPageSide" value="left">
     <input id="wizNewPageInput" class="wiz-input" type="text" maxlength="40"
       placeholder="Nom de la page… (ex: USDCHF)"
       onkeydown="if(event.key==='Enter'){addWizPage();closeWizAddPage();}"
