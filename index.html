@@ -290,6 +290,24 @@
 
   .container{max-width:1400px;margin:0 auto;padding:2rem 2rem 4rem;position:relative;z-index:1;}
 
+  /* ── DATE & TIME INPUTS — dark mode natif ── */
+  input[type="date"],
+  input[type="time"]{
+    color-scheme:dark;
+  }
+  /* Icône calendrier / horloge */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator{
+    filter:invert(1) brightness(.6) sepia(1) saturate(4) hue-rotate(155deg);
+    cursor:pointer;
+    opacity:.7;
+    transition:opacity .15s;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator:hover,
+  input[type="time"]::-webkit-calendar-picker-indicator:hover{
+    opacity:1;
+  }
+
   .fcount{font-family:var(--mono);font-size:10px;opacity:.7;margin-left:2px;}
 
   /* FILTERS */
@@ -977,6 +995,123 @@
   .wb-add-btn.img:hover{border-color:var(--warn);color:var(--warn);background:rgba(196,122,0,.04);}
   .wb-add-btn.sub{color:var(--accent);border-color:rgba(0,153,170,.3);}
   .wb-add-btn.sub:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,153,170,.06);}
+
+  /* ══════════════════════════════════════════════
+     RESPONSIVE — Tablette (≤ 900px)
+  ══════════════════════════════════════════════ */
+  @media(max-width:900px){
+    /* Header */
+    header{padding:0 1rem;}
+    .orbital-wrap{width:48px;height:48px;}
+    .orbital-smf .o-main{font-size:13px;}
+    .orbital-smf .o-smart,.orbital-smf .o-fin{font-size:7px;}
+    .ticker-bar{display:none;}
+    .btn-add-header{display:none;} /* remplacé par FAB */
+
+    /* Container */
+    .container{padding:1.25rem 1rem 4rem;}
+
+    /* Grilles */
+    .articles-grid{grid-template-columns:1fr;}
+    .stats-bar{grid-template-columns:repeat(2,1fr);}
+    .field-row{grid-template-columns:1fr 1fr;}
+
+    /* Modals */
+    .overlay{padding:.5rem;}
+    .modal{border-radius:10px;}
+    .modal-body{padding:1.25rem;}
+
+    /* Wizard */
+    .wiz-overlay{padding:.5rem;}
+    .wiz-modal{border-radius:12px;max-height:100vh;height:100vh;}
+    .wiz-modal.wide{max-width:100%;height:100vh;}
+
+    /* Filters */
+    .filters{gap:.4rem;}
+    .filter-btn{font-size:10px;padding:4px 10px;}
+  }
+
+  /* ══════════════════════════════════════════════
+     RESPONSIVE — Mobile (≤ 600px)
+  ══════════════════════════════════════════════ */
+  @media(max-width:600px){
+    /* Header — logo compact */
+    header{padding:0 .75rem;}
+    .header-inner{height:56px;gap:.75rem;}
+    body{padding-top:56px;}
+    .orbital-wrap{width:36px;height:36px;}
+    .orbital-smf .o-main{font-size:11px;letter-spacing:.08em;}
+    .orbital-smf .o-smart,.orbital-smf .o-fin{display:none;}
+    .logo-orbital{gap:.5rem;}
+
+    /* Container */
+    .container{padding:1rem .75rem 5rem;}
+
+    /* Stats */
+    .stats-bar{grid-template-columns:1fr 1fr;gap:.5rem;}
+    .stat-card{padding:.65rem .75rem;}
+    .stat-val{font-size:1.3rem;}
+
+    /* Filtres : scroll horizontal */
+    .filters{flex-wrap:nowrap;overflow-x:auto;padding-bottom:.25rem;scrollbar-width:none;}
+    .filters::-webkit-scrollbar{display:none;}
+    .filter-label{display:none;}
+    .filter-btn{flex-shrink:0;font-size:10px;padding:4px 10px;}
+
+    /* Cards */
+    .card-title{font-size:13px;}
+    .card-desc{-webkit-line-clamp:2;}
+
+    /* Modals — plein écran */
+    .overlay{padding:0;align-items:flex-end;}
+    .modal{border-radius:16px 16px 0 0;max-width:100%;max-height:92vh;}
+    .modal-body{padding:1rem;}
+
+    /* Wizard — plein écran */
+    .wiz-overlay{padding:0;align-items:flex-end;}
+    .wiz-modal,.wiz-modal.wide{
+      border-radius:16px 16px 0 0;
+      max-width:100%;max-height:96vh;height:96vh;
+    }
+    .wiz-step{font-size:8px;padding:7px 4px;}
+    .wiz-step .sn{width:18px;height:18px;font-size:9px;}
+    .wiz-body{padding:.6rem .75rem;}
+
+    /* Champs wizard */
+    .wiz-field label{font-size:9px;}
+    .wiz-input{font-size:12px;padding:7px 9px;}
+    .cat-grid{grid-template-columns:repeat(2,1fr);gap:.5rem;}
+    .cat-card{padding:.75rem .5rem;}
+
+    /* Bloc editor */
+    .wb-head{padding:.5rem .65rem;}
+    .wb-body{padding:.5rem .65rem;}
+    .wb-add-row{flex-wrap:wrap;}
+    .wb-add-btn{font-size:9px;}
+
+    /* Profile menu */
+    .profile-menu{right:-.5rem;width:210px;}
+
+    /* FAB */
+    .fab{width:50px;height:50px;font-size:20px;bottom:1.25rem;right:1.25rem;}
+    .fab-label{display:none;}
+
+    /* Grille wiz date/heure */
+    div[style*="grid-template-columns:1fr 120px"]{
+      grid-template-columns:1fr !important;
+    }
+  }
+
+  /* ══════════════════════════════════════════════
+     RESPONSIVE — Très petit (≤ 380px)
+  ══════════════════════════════════════════════ */
+  @media(max-width:380px){
+    .stats-bar{grid-template-columns:1fr;}
+    .orbital-wrap{display:none;}
+    .header-inner{gap:.5rem;}
+    .wiz-step .sn{width:16px;height:16px;font-size:8px;}
+    .wiz-step{font-size:7px;}
+  }
 </style>
 
 </head>
@@ -1117,7 +1252,7 @@
         <!-- Date + Heure + Paire -->
         <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);">
           <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.6rem;">📅 Publication</div>
-          <div style="display:grid;grid-template-columns:1fr 120px 1fr;gap:.6rem;align-items:end;">
+          <div style="display:grid;grid-template-columns:1fr 120px;gap:.6rem;align-items:end;">
             <div class="wiz-field" style="margin-bottom:0;">
               <label>Date *</label>
               <input class="wiz-input" type="date" id="wDate" oninput="applySessionDateToAllBlocks()">
@@ -1125,10 +1260,6 @@
             <div class="wiz-field" style="margin-bottom:0;">
               <label>Heure</label>
               <input class="wiz-input" type="time" id="wTime" placeholder="09:00" oninput="applySessionDateToAllBlocks()">
-            </div>
-            <div class="wiz-field" style="margin-bottom:0;">
-              <label>Paire / Instrument</label>
-              <input class="wiz-input" type="text" id="wPaire" placeholder="EUR/USD, XAU/USD...">
             </div>
           </div>
         </div>
@@ -2023,8 +2154,8 @@
         <textarea id="eaDesc" rows="2" placeholder="Résumé en 1-2 phrases…" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--sans);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;resize:vertical;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'"></textarea>
       </div>
 
-      <!-- Date / Heure / Paire -->
-      <div style="display:grid;grid-template-columns:1fr 120px 1fr;gap:.75rem;">
+      <!-- Date / Heure -->
+      <div style="display:grid;grid-template-columns:1fr 120px;gap:.75rem;">
         <div class="field">
           <label>Date *</label>
           <input type="date" id="eaDate" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
@@ -2032,10 +2163,6 @@
         <div class="field">
           <label>Heure</label>
           <input type="time" id="eaTime" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
-        </div>
-        <div class="field">
-          <label>Paire / Instrument</label>
-          <input type="text" id="eaPaire" placeholder="EUR/USD, XAU/USD…" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 12px;border-radius:5px;outline:none;width:100%;transition:border-color .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
         </div>
       </div>
 
@@ -4427,7 +4554,6 @@ function openEditArt(e, id){
   document.getElementById("eaDesc").value  = a.desc  || "";
   document.getElementById("eaDate").value  = a.date  || "";
   document.getElementById("eaTime").value  = a.time  || "";
-  document.getElementById("eaPaire").value = a.paire || "";
 
   // Contenu HTML
   const htmlVal = a.html || "";
@@ -4442,7 +4568,7 @@ function openEditArt(e, id){
   // Sous-titre du modal
   const cats = artCats(a);
   document.getElementById("editArtSub").textContent =
-    (CAT_LABEL[cats[0]]||cats[0]||"") + (a.paire ? " · "+a.paire : "") + " · " + (a.date||"");
+    (CAT_LABEL[cats[0]]||cats[0]||"") + " · " + (a.date||"");
 
   document.getElementById("editArtOv").classList.add("open");
   document.body.style.overflow = "hidden";
@@ -4487,7 +4613,6 @@ async function saveEditArt(){
   const desc  = document.getElementById("eaDesc").value.trim();
   const date  = document.getElementById("eaDate").value;
   const time  = document.getElementById("eaTime").value;
-  const paire = document.getElementById("eaPaire").value.trim();
   const htmlContent = document.getElementById("eaHtml").value;
 
   if(!titre){ toast("⚠ Le titre est obligatoire",true); return; }
@@ -4496,7 +4621,7 @@ async function saveEditArt(){
   const btn = document.getElementById("eaSaveBtn");
   btn.disabled = true; btn.textContent = "⏳ Sauvegarde…";
 
-  const update = { titre, desc, date, time, paire,
+  const update = { titre, desc, date, time,
                    updatedBy: adminUsername,
                    updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
 
@@ -5584,6 +5709,34 @@ function updateAbImgName(i, val){
 }
 
 function syncBlockParaTitle(idx, val)    { if(wizBlocks[idx]) wizBlocks[idx].title    = val; schedulePreview(); }
+
+// ── TITRE DU BLOC : liste déroulante + saisie libre ──────────────────────────
+const WS_TITRE_PRESETS = [
+  "USD Dollar Américain",
+  "CAD Dollar Canadien",
+  "EUR Euro",
+  "GBP Livre Sterling",
+  "CHF Franc Suisse",
+  "JPY Yen Japonais",
+  "AUD Dollar Australien",
+  "NZD Dollar Néozélandais",
+  "WTI Le Pétrole",
+  "XAU Gold",
+  "Indice US",
+  "Indice UE",
+  "BOND YIELD (Anticipation des futurs taux d'intérêt)",
+];
+function mkTitreField(blockIdx, currentVal){
+  const safeVal = (currentVal||"").replace(/"/g,"&quot;");
+  const listId  = `titreList_${blockIdx}`;
+  const opts    = WS_TITRE_PRESETS.map(v => `<option value="${v.replace(/"/g,"&quot;")}"></option>`).join("");
+  return `<div class="wiz-field">
+    <label>Titre du bloc <span style="font-size:10px;color:var(--muted);font-weight:400;">(ex: USD — Dollar américain)</span></label>
+    <datalist id="${listId}">${opts}</datalist>
+    <input class="wiz-input" type="text" list="${listId}" maxlength="200" placeholder="Ex: USD — Dollar américain"
+      oninput="syncBlockParaTitle(${blockIdx},this.value)" value="${safeVal}">
+  </div>`;
+}
 function syncBlockParaSubtitle(idx, val) { if(wizBlocks[idx]) wizBlocks[idx].subtitle = val; schedulePreview(); }
 function syncBlockShowInMain(idx, val)   { if(wizBlocks[idx]) wizBlocks[idx].showInMain = val; schedulePreview(); }
 function syncBlockDate(idx, val)       { if(wizBlocks[idx]) wizBlocks[idx].date  = val;    schedulePreview(); }
@@ -5894,11 +6047,7 @@ function renderBlocks(){
               </div>
             </div>
             <div class="wb-body">
-              <div class="wiz-field">
-                <label>Titre du bloc <span style="font-size:10px;color:var(--muted);font-weight:400;">(ex: USD — Dollar américain)</span></label>
-                <input class="wiz-input" type="text" maxlength="200" placeholder="Ex: USD — Dollar américain"
-                  oninput="syncBlockParaTitle(${blockIdx},this.value)" value="${(mb.title||'').replace(/"/g,'&quot;')}">
-              </div>
+              ${mkTitreField(blockIdx, mb.title||'')}
               <div class="wiz-field">
                 <label>Direction <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
                 <select class="wiz-input" onchange="syncBlockDirection(${blockIdx},this.value)" style="cursor:pointer;">
@@ -5976,11 +6125,7 @@ function renderBlocks(){
             </div>
           </div>
           <div class="wb-body">
-            <div class="wiz-field">
-              <label>Titre du bloc <span style="font-size:10px;color:var(--muted);font-weight:400;">(ex: USD — Dollar américain)</span></label>
-              <input class="wiz-input" type="text" maxlength="200" placeholder="Ex: USD — Dollar américain"
-                oninput="syncBlockParaTitle(${blockIdx},this.value)" value="${(mb.title||'').replace(/"/g,'&quot;')}">
-            </div>
+            ${mkTitreField(blockIdx, mb.title||'')}
             <div class="wiz-field">
               <label>Direction <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
               <select class="wiz-input" onchange="syncBlockDirection(${blockIdx},this.value)" style="cursor:pointer;">
@@ -6010,6 +6155,13 @@ function renderBlocks(){
             <label>Titre de l'article *</label>
             <input class="wiz-input" type="text" placeholder="Ex : Analyse EUR/USD — Semaine du 30 mars"
               oninput="syncBlockTitre(this.value)" value="${(b.titre||'').replace(/"/g,'&quot;')}">
+          </div>
+
+          <div class="wiz-field">
+            <label>Sous-titre / Accroche</label>
+            <textarea class="wiz-textarea" style="min-height:48px;"
+              placeholder="Ex : Semaine marquée par la Fed hawkish..."
+              oninput="syncBlockSubtitle(this.value)">${b.subtitle||""}</textarea>
           </div>
 
           <div class="wiz-field" style="margin-bottom:0;">
@@ -6095,12 +6247,7 @@ function renderBlocks(){
           </div>
           <div class="wb-body">
             <!-- TITRE OPTIONNEL DU BLOC -->
-            <div class="wiz-field">
-              <label>Titre du bloc <span style="font-size:10px;color:var(--muted);font-weight:400;">(ex: USD — Dollar américain)</span></label>
-              <input class="wiz-input" type="text" maxlength="200"
-                placeholder="Ex: USD — Dollar américain"
-                oninput="syncBlockParaTitle(${blockIdx},this.value)" value="${(b.title||'').replace(/"/g,'&quot;')}">
-            </div>
+            ${mkTitreField(blockIdx, b.title||'')}
             <div class="wiz-field">
               <label>Direction <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
               <select class="wiz-input" onchange="syncBlockDirection(${blockIdx},this.value)" style="cursor:pointer;">
@@ -6418,10 +6565,9 @@ function wizBuildPreview(){
     const desc   = (wizBlocks[0]?.subtitle||titre||"").trim();
     const date   = document.getElementById("wDate")?.value||"";
     const time   = document.getElementById("wTime")?.value||"";
-    const paire  = document.getElementById("wPaire")?.value.trim()||"";
     const timeStr = time ? ` · ${time}` : "";
     const fdate  = date ? new Date(date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})+timeStr : "";
-    bodyHTML = generateArticleTemplate(titre, desc, catLbl, acc, fdate, paire, wizBlocks, by, wizPages, true);
+    bodyHTML = generateArticleTemplate(titre, desc, catLbl, acc, fdate, "", wizBlocks, by, wizPages, true);
   }
 
   const fr = document.getElementById("wizPreviewFrame");
@@ -6457,7 +6603,6 @@ function openImport(){
   document.getElementById("wDesc").value="";
   document.getElementById("wDate").value="";
   document.getElementById("wTime").value="";
-  document.getElementById("wPaire").value="";
   resetWizHtml();
   setWizMode("manual");
   wizUpdateUI();
@@ -6485,10 +6630,9 @@ async function openEditArtWiz(e, id){
     c.classList.toggle("selected", c.dataset.cat===wizCat);
   });
 
-  // Pré-remplir date / heure / paire
+  // Pré-remplir date / heure
   document.getElementById("wDate").value  = a.date  || new Date().toISOString().slice(0,10);
   document.getElementById("wTime").value  = a.time  || "";
-  document.getElementById("wPaire").value = a.paire || "";
   resetWizHtml();
 
   // ── Restaurer les blocs selon le type d'article ───────────────────────────
@@ -6599,7 +6743,6 @@ async function wizPublish(){
     const desc  = (wizBlocks[0]?.subtitle||titre||"").trim();
     const date  = document.getElementById("wDate").value;
     const time  = document.getElementById("wTime").value;
-    const paire = document.getElementById("wPaire").value.trim();
 
     if(!titre){ toast("⚠ Le titre est obligatoire",true); return; }
     if(!date) { toast("⚠ La date est obligatoire",true);  return; }
@@ -6608,7 +6751,7 @@ async function wizPublish(){
     try {
 
     const update = {
-      titre, desc, date, time, paire,
+      titre, desc, date, time,
       updatedBy: adminUsername,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -6820,7 +6963,6 @@ async function wizPublish(){
   const desc  = (wizBlocks[0]?.subtitle||titre||"").trim();
   const date  = document.getElementById("wDate").value;
   const time  = document.getElementById("wTime").value;
-  const paire = document.getElementById("wPaire").value.trim();
   const isGuestPublish = role === "guest" && currentUser;
   const authorName = isGuestPublish
     ? (((currentUser.prenom||"")+" "+(currentUser.nom||"")).trim() || currentUser.username || "Invité")
@@ -6832,7 +6974,7 @@ async function wizPublish(){
   let newArt;
 
   if(wizMode==="html"&&wizPendingHTML){
-    newArt={type:"html",titre,desc,date,time,cat:wizCat,paire,html:wizPendingHTML,
+    newArt={type:"html",titre,desc,date,time,cat:wizCat,html:wizPendingHTML,
             fileName:document.getElementById("wFileName").textContent,submittedBy:authorName,
             ...(isGuestPublish ? {submittedById:authorId, submittedByUsername:authorUsername} : {})};
   } else {
@@ -6847,16 +6989,16 @@ async function wizPublish(){
         blocksData.push({text:b.text||"",images:b.image?[b.image.dataUrl]:[],image:b.image?.dataUrl||null,date});
       });
       if(blocksData.length===0) blocksData.push({text:"",images:[],image:null,date});
-      newArt={type:"manual",titre,desc,date,time,cat:wizCat,paire,blocks:blocksData,submittedBy:authorName,
+      newArt={type:"manual",titre,desc,date,time,cat:wizCat,blocks:blocksData,submittedBy:authorName,
               ...(isGuestPublish ? {submittedById:authorId, submittedByUsername:authorUsername} : {})};
     } else {
       const acc=CAT_COLORS[wizCat]||"#0099aa";
       const catLbl=CAT_LABEL[wizCat]||wizCat;
-      const generatedHTML=generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,wizBlocks,adminUsername,wizPages);
+      const generatedHTML=generateArticleTemplate(titre,desc,catLbl,acc,fdate,"",wizBlocks,adminUsername,wizPages);
       // ★ Stocker les blocs et pages pour toutes les catégories (permet continuation et édition)
       const blocksToStore = wizBlocks;
       const pagesToStore  = wizPages.length > 0 ? wizPages : undefined;
-      newArt={type:"html",titre,desc,date,time,cat:wizCat,paire,html:generatedHTML,
+      newArt={type:"html",titre,desc,date,time,cat:wizCat,html:generatedHTML,
               blocks:blocksToStore,
               ...(pagesToStore  ? {pages: pagesToStore}  : {}),
               submittedBy:authorName,
@@ -6953,7 +7095,7 @@ function renderParaHTML(paraBlocks){
 
 // ── FONTS ─────────────────────────────────────────────────────────────────────
 const FONTS=`<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&family=Inter:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">`;
-const FAVICON=`<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='12' fill='%2302040a'/><rect x='22' y='15' width='56' height='70' rx='4' fill='none' stroke='%2300ffff' stroke-width='5'/><line x1='33' y1='35' x2='67' y2='35' stroke='%2300ffff' stroke-width='5' stroke-linecap='round'/><line x1='33' y1='50' x2='67' y2='50' stroke='%2300ffff' stroke-width='5' stroke-linecap='round'/><line x1='33' y1='65' x2='52' y2='65' stroke='%2300ffff' stroke-width='5' stroke-linecap='round'/></svg>">`;
+const FAVICON=`<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzEyJyBmaWxsPScjMDIwNDBhJy8+PHJlY3QgeD0nMjInIHk9JzE1JyB3aWR0aD0nNTYnIGhlaWdodD0nNzAnIHJ4PSc0JyBmaWxsPSdub25lJyBzdHJva2U9JyMwMGZmZmYnIHN0cm9rZS13aWR0aD0nNScvPjxsaW5lIHgxPSczMycgeTE9JzM1JyB4Mj0nNjcnIHkyPSczNScgc3Ryb2tlPScjMDBmZmZmJyBzdHJva2Utd2lkdGg9JzUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjxsaW5lIHgxPSczMycgeTE9JzUwJyB4Mj0nNjcnIHkyPSc1MCcgc3Ryb2tlPScjMDBmZmZmJyBzdHJva2Utd2lkdGg9JzUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjxsaW5lIHgxPSczMycgeTE9JzY1JyB4Mj0nNTInIHkyPSc2NScgc3Ryb2tlPScjMDBmZmZmJyBzdHJva2Utd2lkdGg9JzUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjwvc3ZnPg==">`;
 const SHARED_IMGS=`
 <style>
 .art-fig{position:relative;}
@@ -7583,7 +7725,9 @@ function tplWS(titre, desc, fdate, paire, blocks, author, pages, isPreview=false
   const paraBlocks  = blocks.filter(b=>b.type==="para");
   const by = author || sessionStorage.getItem("smf_username") || "Admin";
   const subtitle = headerBlock.subtitle||(desc||"");
-  const chip = mkChip("WS",by,fdate,paire);
+  // Chip : date uniquement (sans label "WS" ni heure)
+  const _dateOnly = fdate ? fdate.replace(/\s*·\s*\d{2}:\d{2}.*$/, "") : "";
+  const chip = _dateOnly || fdate;
   const coverImg = mkCoverImg(headerBlock);
   const headerExtras = mkHeaderExtras(headerBlock,acc);
 
@@ -7735,14 +7879,14 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 .ws-tab{
   background:transparent;border:none;
   border-right:2px solid transparent;
-  color:#e8edf5;font-family:'Playfair Display',serif;font-size:9px;font-weight:700;
+  color:rgba(232,237,245,.35);font-family:'Playfair Display',serif;font-size:9px;font-weight:400;
   padding:.75rem 1rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;
   white-space:normal;word-break:break-word;text-align:left;
   transition:color .18s,border-color .18s,background .18s;
   line-height:1.4;width:100%;
 }
-.ws-tab:hover{color:#e8edf5;background:rgba(${hexToRgb(acc)},.04);border-right-color:rgba(${hexToRgb(acc)},.3);}
-.ws-tab.active{color:#e8edf5;font-weight:900;border-right-color:#e8edf5;background:rgba(${hexToRgb(acc)},.06);}
+.ws-tab:hover{color:rgba(232,237,245,.7);background:rgba(${hexToRgb(acc)},.03);border-right-color:rgba(${hexToRgb(acc)},.2);}
+.ws-tab.active{color:#e8edf5;font-weight:700;border-right-color:rgba(${hexToRgb(acc)},.5);background:transparent;}
 
 /* Tab droite : bordure à gauche */
 .ws-tab-r{
@@ -7750,8 +7894,8 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
   border-left:2px solid transparent;
   text-align:right;
 }
-.ws-tab-r:hover{border-left-color:rgba(${hexToRgb(acc)},.3);border-right-color:transparent;}
-.ws-tab-r.active{border-left-color:#e8edf5;border-right-color:transparent;}
+.ws-tab-r:hover{border-left-color:rgba(${hexToRgb(acc)},.2);border-right-color:transparent;}
+.ws-tab-r.active{border-left-color:rgba(${hexToRgb(acc)},.5);border-right-color:transparent;}
 
 /* Pages */
 .ws-page{display:none;}
@@ -7775,18 +7919,19 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 }
 .ws-tab-add:hover{color:${acc};background:rgba(${hexToRgb(acc)},.05);}
 .ws-tab-agg{
-  font-size:8px !important;letter-spacing:.2em !important;font-weight:900 !important;
-  background:rgba(${hexToRgb(acc)},.05) !important;
-  border-bottom:1px solid rgba(${hexToRgb(acc)},.2) !important;
-  color:#e8edf5 !important;
+  font-size:8px !important;letter-spacing:.2em !important;font-weight:700 !important;
+  background:transparent !important;
+  border-bottom:1px solid rgba(${hexToRgb(acc)},.12) !important;
+  color:rgba(232,237,245,.5) !important;
   padding:.9rem 1rem !important;
 }
 .ws-tab-agg.active{
-  background:rgba(${hexToRgb(acc)},.1) !important;
-  border-right-color:#e8edf5 !important;
+  background:transparent !important;
+  color:#e8edf5 !important;
+  border-right-color:rgba(${hexToRgb(acc)},.5) !important;
 }
 .ws-tab-r.ws-tab-agg.active{
-  border-left-color:#e8edf5 !important;
+  border-left-color:rgba(${hexToRgb(acc)},.5) !important;
   border-right-color:transparent !important;
 }
 .ws-trades-section{margin-bottom:2rem;}
@@ -7816,7 +7961,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 <nav class="ws-sidenav" id="wsTabbar">
   <button class="ws-tab ws-tab-agg active" data-pid="week">THE WEEK</button>
   ${leftTabsHtml}
-  <button class="ws-tab-add" data-side="left" style="margin-top:auto;">＋</button>
+  ${isPreview ? `<button class="ws-tab-add" data-side="left" style="margin-top:auto;">＋</button>` : ""}
 </nav>
 
 <!-- CONTENU CENTRAL -->
@@ -7833,7 +7978,7 @@ ${showRightNav ? `
 <nav class="ws-sidenav-r" id="wsTabbarR">
   <button class="ws-tab ws-tab-r ws-tab-agg" data-pid="trades">TRADES</button>
   ${rightTabsHtml}
-  <button class="ws-tab-add" data-side="right" style="margin-top:auto;text-align:right;">＋</button>
+  ${isPreview ? `<button class="ws-tab-add" data-side="right" style="margin-top:auto;text-align:right;">＋</button>` : ""}
 </nav>` : ""}
 
 </div><!-- /.ws-layout -->
@@ -7950,7 +8095,6 @@ function openGuestSubmit(){
   _wTime.title="L'heure est automatiquement fixée à l'instant de la soumission";
   const _gDate=document.getElementById("gDate"); const _gTime=document.getElementById("gTime");
   if(_gDate) _gDate.value=_dateStr; if(_gTime) _gTime.value=_timeStr;
-  document.getElementById("wPaire").value="";
   resetWizHtml();
   document.querySelectorAll(".cat-card").forEach(c=>c.classList.remove("selected"));
   setWizMode("manual");
