@@ -976,6 +976,11 @@
   .wb-img-prev .rm-img{position:absolute;top:-7px;right:-7px;background:var(--red);border:none;color:#fff;border-radius:50%;width:18px;height:18px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .btn-add-para{width:100%;background:transparent;border:1.5px dashed var(--border2);color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;transition:all .18s;letter-spacing:.08em;margin-top:.15rem;}
   .btn-add-para:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,153,170,.04);}
+  .add-trio{display:grid;grid-template-columns:2fr 1fr 1fr;gap:.4rem;margin-top:.4rem;}
+  .add-trio-btn{background:transparent;border:1.5px dashed var(--border2);color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:700;padding:.45rem .5rem;border-radius:7px;cursor:pointer;transition:all .18s;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;gap:.35rem;}
+  .add-trio-btn.bloc:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,153,170,.04);}
+  .add-trio-btn.texte:hover{border-color:#8892a0;color:var(--text);background:rgba(255,255,255,.03);}
+  .add-trio-btn.image:hover{border-color:var(--warn);color:var(--warn);background:rgba(196,122,0,.04);}
   /* ─── ELEMENT LIST ─── */
   .wb-elem{background:rgba(0,0,0,0.01);border:1px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:.4rem;}
   .wb-elem:last-child{margin-bottom:0;}
@@ -5610,6 +5615,30 @@ function addParaBlock(){
   wizUpdateUI();
 }
 
+function _makeSimpleBlock(elemType){
+  const sessionDate = document.getElementById("wDate")?.value || new Date().toISOString().slice(0,10);
+  const sessionTime = document.getElementById("wTime")?.value || "";
+  const el = elemType === "image" ? {type:"image", data:null} : {type:"text", value:""};
+  const newBlock = {
+    type:"para", title:"", subtitle:"",
+    date: sessionDate, time: sessionTime,
+    simple: true,
+    elements:[el]
+  };
+  if(wizActivePage === -1){
+    newBlock.showInMain = true;
+    newBlock.pages = [];
+  } else if(wizPages.length > 0 && wizActivePage >= 0 && wizPages[wizActivePage]){
+    newBlock.pages = [wizPages[wizActivePage].id];
+  } else {
+    newBlock.pages = [];
+  }
+  wizBlocks.push(newBlock);
+  wizUpdateUI();
+}
+function addTextBlock(){  _makeSimpleBlock("text");  }
+function addImageBlock(){ _makeSimpleBlock("image"); }
+
 // ── WIZARD PAGE MANAGEMENT (toutes catégories) ───────────────────────────────
 function setWizPageSide(side){
   document.getElementById("wizNewPageSide").value = side;
@@ -5965,6 +5994,36 @@ function syncBlockPages(idx, pageId, checked){
   schedulePreview();
 }
 
+// ── HELPER : corps d'un bloc selon son mode (simple ou complet) ───────────────
+function mkBlockBodyHTML(blockIdx, b){
+  if(b.simple){
+    // Bloc texte/image isolé : juste l'élément, sans titre/direction/invalidation
+    return `<div class="wb-body">
+      ${mkElemHTML(blockIdx, b.elements)}
+    </div>`;
+  }
+  // Bloc complet
+  return `<div class="wb-body">
+    ${mkTitreField(blockIdx, b.title||'')}
+    <div class="wiz-field">
+      <label>Direction <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
+      <select class="wiz-input" onchange="syncBlockDirection(${blockIdx},this.value)" style="cursor:pointer;">
+        <option value="" ${!b.direction?'selected':''}>— Aucune —</option>
+        <option value="achat" ${b.direction==='achat'?'selected':''}>✅ ACHAT</option>
+        <option value="vente" ${b.direction==='vente'?'selected':''}>🔴 VENTE</option>
+        <option value="neutre" ${b.direction==='neutre'?'selected':''}>⚪ NEUTRE</option>
+      </select>
+    </div>
+    ${mkElemHTML(blockIdx, b.elements)}
+    ${mkAddRow(blockIdx)}
+    <div class="wiz-field" style="margin-top:.5rem;">
+      <label>Invalidation <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel · affiché en bas de la carte)</span></label>
+      <textarea class="wiz-textarea" style="min-height:52px;" placeholder="Ex: Signature d'un accord Iran avec réouverture effective d'Ormuz…"
+        oninput="syncBlockInvalidation(${blockIdx},this.value)">${b.invalidation||''}</textarea>
+    </div>
+  </div>`;
+}
+
 // Render tous les blocs de la page active (ou l'en-tête si wizActivePage === -1)
 function renderBlocks(){
   const list = document.getElementById("wbList");
@@ -6046,25 +6105,7 @@ function renderBlocks(){
                 <button class="wb-btn del" onclick="removePageBlock(${blockIdx})" title="Supprimer ce bloc">✕</button>
               </div>
             </div>
-            <div class="wb-body">
-              ${mkTitreField(blockIdx, mb.title||'')}
-              <div class="wiz-field">
-                <label>Direction <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
-                <select class="wiz-input" onchange="syncBlockDirection(${blockIdx},this.value)" style="cursor:pointer;">
-                  <option value="" ${!mb.direction?'selected':''}>— Aucune —</option>
-                  <option value="achat" ${mb.direction==='achat'?'selected':''}>✅ ACHAT</option>
-                  <option value="vente" ${mb.direction==='vente'?'selected':''}>🔴 VENTE</option>
-                  <option value="neutre" ${mb.direction==='neutre'?'selected':''}>⚪ NEUTRE</option>
-                </select>
-              </div>
-              ${mkElemHTML(blockIdx, mb.elements)}
-              ${mkAddRow(blockIdx)}
-              <div class="wiz-field" style="margin-top:.5rem;">
-                <label>Invalidation <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel · affiché en bas de la carte)</span></label>
-                <textarea class="wiz-textarea" style="min-height:52px;" placeholder="Ex: Signature d'un accord Iran avec réouverture effective d'Ormuz…"
-                  oninput="syncBlockInvalidation(${blockIdx},this.value)">${mb.invalidation||''}</textarea>
-              </div>
-            </div>
+            ${mkBlockBodyHTML(blockIdx, mb)}
           </div>`;
         }).join("");
       }
@@ -6077,7 +6118,11 @@ function renderBlocks(){
           <div style="font-size:24px;margin-bottom:.4rem;opacity:.4;">📝</div>
           <div style="font-family:var(--mono);font-size:10px;color:var(--dimmed);line-height:1.8;">Aucun bloc sur la page principale.<br>Clique ci-dessous pour en ajouter.</div>
         </div>`}
-        <button class="btn-add-para" onclick="addParaBlock()">＋ Ajouter un bloc à la page principale</button>`;
+        <div class="add-trio">
+          <button class="add-trio-btn bloc" onclick="addParaBlock()">＋ Bloc</button>
+          <button class="add-trio-btn texte" onclick="addTextBlock()">＋ Texte</button>
+          <button class="add-trio-btn image" onclick="addImageBlock()">🖼 Image</button>
+        </div>`;
       return;
     }
 
@@ -6124,25 +6169,7 @@ function renderBlocks(){
               <button class="wb-btn del" onclick="removePageBlock(${blockIdx})" title="Supprimer ce bloc">✕</button>
             </div>
           </div>
-          <div class="wb-body">
-            ${mkTitreField(blockIdx, mb.title||'')}
-            <div class="wiz-field">
-              <label>Direction <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
-              <select class="wiz-input" onchange="syncBlockDirection(${blockIdx},this.value)" style="cursor:pointer;">
-                <option value="" ${!mb.direction?'selected':''}>— Aucune —</option>
-                <option value="achat" ${mb.direction==='achat'?'selected':''}>✅ ACHAT</option>
-                <option value="vente" ${mb.direction==='vente'?'selected':''}>🔴 VENTE</option>
-                <option value="neutre" ${mb.direction==='neutre'?'selected':''}>⚪ NEUTRE</option>
-              </select>
-            </div>
-            ${mkElemHTML(blockIdx, mb.elements)}
-            ${mkAddRow(blockIdx)}
-            <div class="wiz-field" style="margin-top:.5rem;">
-              <label>Invalidation <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel · affiché en bas de la carte)</span></label>
-              <textarea class="wiz-textarea" style="min-height:52px;" placeholder="Ex: Signature d'un accord Iran avec réouverture effective d'Ormuz…"
-                oninput="syncBlockInvalidation(${blockIdx},this.value)">${mb.invalidation||''}</textarea>
-            </div>
-          </div>
+          ${mkBlockBodyHTML(blockIdx, mb)}
         </div>`;
       }).join("");
     }
@@ -6181,9 +6208,11 @@ function renderBlocks(){
         ${mainBlocksHtml || `<div style="border:2px dashed var(--border2);border-radius:8px;padding:1.2rem;text-align:center;margin-bottom:.6rem;">
           <div style="font-family:var(--mono);font-size:10px;color:var(--dimmed);line-height:1.8;">Aucun bloc sur la page principale.<br>Clique ci-dessous pour en ajouter.</div>
         </div>`}
-        <button class="btn-add-para" onclick="addParaBlock()" style="margin-top:.25rem;">
-          ＋ Ajouter un bloc à la page principale
-        </button>
+        <div class="add-trio" style="margin-top:.25rem;">
+          <button class="add-trio-btn bloc" onclick="addParaBlock()">＋ Bloc</button>
+          <button class="add-trio-btn texte" onclick="addTextBlock()">＋ Texte</button>
+          <button class="add-trio-btn image" onclick="addImageBlock()">🖼 Image</button>
+        </div>
       </div>`;
     return;
   }
@@ -6234,7 +6263,6 @@ function renderBlocks(){
       const dnIdx  = canDn ? pageBlockIndexes[rank+1] : -1;
       // Bloc dupliqué sur d'autres pages
       const blockPagesArr = Array.isArray(b.pages) ? b.pages : (b.page !== undefined ? [b.page] : [currentPage.id]);
-      const alsoOnHtml = "";
       html += `
         <div class="wb" style="margin-bottom:.65rem;" id="wb-block-${blockIdx}">
           <div class="wb-head">
@@ -6245,36 +6273,17 @@ function renderBlocks(){
               <button class="wb-btn del" onclick="removePageBlock(${blockIdx})" title="Supprimer ce bloc">✕</button>
             </div>
           </div>
-          <div class="wb-body">
-            <!-- TITRE OPTIONNEL DU BLOC -->
-            ${mkTitreField(blockIdx, b.title||'')}
-            <div class="wiz-field">
-              <label>Direction <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel)</span></label>
-              <select class="wiz-input" onchange="syncBlockDirection(${blockIdx},this.value)" style="cursor:pointer;">
-                <option value="" ${!b.direction?'selected':''}>— Aucune —</option>
-                <option value="achat" ${b.direction==='achat'?'selected':''}>✅ ACHAT</option>
-                <option value="vente" ${b.direction==='vente'?'selected':''}>🔴 VENTE</option>
-                <option value="neutre" ${b.direction==='neutre'?'selected':''}>⚪ NEUTRE</option>
-              </select>
-            </div>
-            ${mkElemHTML(blockIdx, b.elements)}
-            ${mkAddRow(blockIdx)}
-            <div class="wiz-field" style="margin-top:.5rem;">
-              <label>Invalidation <span style="font-size:10px;color:var(--muted);font-weight:400;">(optionnel · affiché en bas de la carte)</span></label>
-              <textarea class="wiz-textarea" style="min-height:52px;" placeholder="Ex: Signature d'un accord Iran avec réouverture effective d'Ormuz…"
-                oninput="syncBlockInvalidation(${blockIdx},this.value)">${b.invalidation||''}</textarea>
-            </div>
-            ${alsoOnHtml}
-          </div>
+          ${mkBlockBodyHTML(blockIdx, b)}
         </div>`;
     });
   }
 
-  // Bouton ajouter un bloc
   html += `
-    <button class="btn-add-para" onclick="addParaBlock()" style="margin-top:.25rem;">
-      ＋ Ajouter un bloc à cette page
-    </button>`;
+    <div class="add-trio" style="margin-top:.25rem;">
+      <button class="add-trio-btn bloc" onclick="addParaBlock()">＋ Bloc</button>
+      <button class="add-trio-btn texte" onclick="addTextBlock()">＋ Texte</button>
+      <button class="add-trio-btn image" onclick="addImageBlock()">🖼 Image</button>
+    </div>`;
 
   list.innerHTML = html;
 }
