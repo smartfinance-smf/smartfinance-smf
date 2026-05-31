@@ -367,7 +367,7 @@
   .pill.weekahead input:checked+label{background:rgba(196,122,0,.15);border-color:#c47a00;color:#c47a00;font-weight:700;}
   .card-date{font-family:var(--mono);font-size:10px;color:#e8edf5;letter-spacing:.04em;white-space:nowrap;}
   .card-title{font-size:14px;font-weight:700;color:#00cccc;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
-  .card-desc{font-size:11.5px;color:var(--muted);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1;}
+  .card-desc{font-size:11.5px;color:var(--muted);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1;width:100%;min-width:0;}
   .card-footer{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-top:1px solid var(--border);margin-top:.5rem;gap:.5rem;}
   .card-author{display:flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:9px;color:var(--muted);min-width:0;}
   .card-author-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;background:var(--accent);}
@@ -5114,10 +5114,7 @@ window.addEventListener("message", function(e){
   }
   if(e.data.type === "wizAddPage"){
     // Ouvrir le popup d'ajout en pré-sélectionnant le bon côté
-    openWizAddPage();
-    setTimeout(function(){
-      setWizPageSide(e.data.side || "left");
-    }, 80);
+    openWizAddPage(e.data.side || "left");
   }
 });
 function renderFilterBar(){
@@ -6391,11 +6388,14 @@ function renderWizSteps(){
 
 // Popup d'ajout de page rapide
 let _wizAddPagePopupOpen = false;
-function openWizAddPage(){
+function openWizAddPage(initialSide){
   // Créer un petit popup inline sous le bouton +
   let pop = document.getElementById("wizAddPagePop");
   if(pop){ pop.remove(); _wizAddPagePopupOpen=false; return; }
   _wizAddPagePopupOpen = true;
+  const side0 = initialSide === "right" ? "right" : "left";
+  const _on  = "background:var(--accent);border:1px solid var(--accent);color:#000;font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 8px;border-radius:4px;cursor:pointer;letter-spacing:.06em;";
+  const _off = "background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 8px;border-radius:4px;cursor:pointer;letter-spacing:.06em;";
   const bar = document.getElementById("wizStepsBar");
   pop = document.createElement("div");
   pop.id = "wizAddPagePop";
@@ -6403,10 +6403,10 @@ function openWizAddPage(){
   pop.innerHTML = `
     <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.1rem;">Position de la page</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;">
-      <button id="wizSideLeft" onclick="setWizPageSide('left')" style="background:var(--accent);border:1px solid var(--accent);color:#000;font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 8px;border-radius:4px;cursor:pointer;letter-spacing:.06em;">← TEMPORELLE</button>
-      <button id="wizSideRight" onclick="setWizPageSide('right')" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 8px;border-radius:4px;cursor:pointer;letter-spacing:.06em;">PAIRE →</button>
+      <button id="wizSideLeft" onclick="setWizPageSide('left')" style="${side0==='left'?_on:_off}">← TEMPORELLE</button>
+      <button id="wizSideRight" onclick="setWizPageSide('right')" style="${side0==='right'?_on:_off}">PAIRE →</button>
     </div>
-    <input type="hidden" id="wizNewPageSide" value="left">
+    <input type="hidden" id="wizNewPageSide" value="${side0}">
     <input id="wizNewPageInput" class="wiz-input" type="text" maxlength="40"
       placeholder="Nom de la page… (ex: USDCHF)"
       onkeydown="if(event.key==='Enter'){addWizPage();closeWizAddPage();}"
@@ -6565,7 +6565,7 @@ function wizBuildPreview(){
     if(a && Array.isArray(a.blocks)){
       const fdate = fmtD(a.date, a.time||"");
       const allBlocks = [...a.blocks, ...wizBlocks]; // blocs existants + nouveaux
-      bodyHTML = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", allBlocks, by, a.pages||null);
+      bodyHTML = generateArticleTemplate(a.titre, a.desc||"", catLbl, acc, fdate, a.paire||"", allBlocks, by, wizPages.length > 0 ? wizPages : (a.pages||null), true);
     }
   } else if(wizMode==="html" && wizPendingHTML){
     bodyHTML = wizPendingHTML;
@@ -6748,8 +6748,10 @@ async function wizPublish(){
 
   // ── MODE ÉDITION (KGB — modifier un article existant) ─────────────────────
   if(_wizEditingId){
-    const titre = (wizBlocks[0]?.titre||document.getElementById("wTitre").value||"").trim();
-    const desc  = (wizBlocks[0]?.subtitle||titre||"").trim();
+    const a     = arts.find(x => x.id === _wizEditingId);
+    const paire = document.getElementById("gPaire")?.value?.trim() || a?.paire || "";
+    const titre = (wizBlocks[0]?.titre||document.getElementById("wTitre").value||a?.titre||"").trim();
+    const desc  = (wizBlocks[0]?.subtitle||titre||a?.desc||"").trim();
     const date  = document.getElementById("wDate").value;
     const time  = document.getElementById("wTime").value;
 
@@ -7348,13 +7350,13 @@ body{background:#02040a;color:#e8edf5;font-family:'Playfair Display',serif;min-h
 h1{font-size:clamp(1.6rem,3.8vw,2.5rem);font-weight:800;color:#e8edf5;line-height:1.2;margin-bottom:1.1rem;letter-spacing:.01em;
   animation:titleR .9s cubic-bezier(.22,1,.36,1) both;}
 @keyframes titleR{from{opacity:0;filter:blur(8px);transform:translateY(12px);}to{opacity:1;filter:none;transform:none;}}
-.hero-desc{font-size:15px;color:#e8edf5;line-height:1.8;max-width:680px;
+.hero-desc{font-size:15px;color:#e8edf5;line-height:1.8;max-width:100%;
   animation:fadeU .8s .15s cubic-bezier(.22,1,.36,1) both;}
 @keyframes fadeU{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 /* COVER IMG */
 .cover-img-wrap{max-width:100%;margin:2rem auto 0;animation:fadeU .8s .25s both;}
 .cover-img{width:100%;border-radius:10px;border:1px solid rgba(${hexToRgb(acc)},.15);max-height:420px;object-fit:cover;display:block;box-shadow:0 4px 40px rgba(${hexToRgb(acc)},.07);}
-.cover-subtitle2{font-size:15px;color:#e8edf5;line-height:1.8;max-width:680px;padding:.85rem 7rem 0;animation:fadeU .8s .3s cubic-bezier(.22,1,.36,1) both;}
+.cover-subtitle2{font-size:15px;color:#e8edf5;line-height:1.8;max-width:100%;padding:.85rem 7rem 0;animation:fadeU .8s .3s cubic-bezier(.22,1,.36,1) both;}
 /* DIVIDER */
 .divider{display:none;}
 .div-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(${hexToRgb(acc)},.6),rgba(${hexToRgb(acc)},0));}
@@ -8289,13 +8291,24 @@ async function appendBlocksToExistingHtml(articleId, newBlocks, acc, pages){
             const tab = doc.querySelector(`.ws-tab[data-pid="${pid}"]`);
             if(!tab && pageInfo){
               // Support ancien format (ws-tabs-inline) ET nouveau format (ws-sidenav)
-              const tabsWrap = doc.querySelector(".ws-tabs-inline") || doc.querySelector(".ws-sidenav") || doc.getElementById("wsTabbar");
+              // ✅ FIX : utiliser la bonne sidebar selon le côté de la page
+              let tabsWrap;
+              if(pageInfo.side === "right"){
+                // Page côté droit → nav droite (TRADES)
+                tabsWrap = doc.getElementById("wsTabbarR") || doc.querySelector(".ws-sidenav-r");
+              } else {
+                // Page côté gauche → nav gauche (THE WEEK)
+                tabsWrap = doc.querySelector(".ws-tabs-inline") || doc.getElementById("wsTabbar") || doc.querySelector(".ws-sidenav");
+              }
               if(tabsWrap){
                 const newTab = doc.createElement("button");
-                newTab.className = "ws-tab";
+                newTab.className = pageInfo.side === "right" ? "ws-tab ws-tab-r" : "ws-tab";
                 newTab.setAttribute("data-pid", String(pid));
                 newTab.textContent = pageInfo.name || "Page";
-                tabsWrap.appendChild(newTab);
+                // Insérer avant le bouton + si présent, sinon en fin
+                const addBtn = tabsWrap.querySelector(".ws-tab-add");
+                if(addBtn){ tabsWrap.insertBefore(newTab, addBtn); }
+                else { tabsWrap.appendChild(newTab); }
               }
             }
           }
