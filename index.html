@@ -2561,7 +2561,7 @@ async function _openArtInReader(id, pushToHistory = true){
   // ── PATCH FONT + BARRES : forcer Playfair Display + supprimer barres latérales (compatibilité anciens articles stockés) ──
   html = html.replace(
     '</head>',
-    `<style>h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;color:#00cccc !important;}.para-block::before,.para-block::after{display:none !important;}.divider{display:none !important;}</style></head>`
+    `<style>h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;color:#00cccc !important;}.para-block::before,.para-block::after{display:none !important;}.divider{display:none !important;}.cover-img-wrap{max-width:100% !important;padding:0 6rem !important;}</style></head>`
   );
 
   // ── PATCH TABS : transforme les onglets WS en sidebar verticale gauche ──
@@ -5500,7 +5500,7 @@ async function openArt(id){
   // ── PATCH FONT + BARRES : forcer Playfair Display + supprimer barres latérales (compatibilité anciens articles stockés) ──
   html = html.replace(
     '</head>',
-    `<style>h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;color:#00cccc !important;}.para-block::before,.para-block::after{display:none !important;}.divider{display:none !important;}</style></head>`
+    `<style>h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;color:#00cccc !important;}.para-block::before,.para-block::after{display:none !important;}.divider{display:none !important;}.cover-img-wrap{max-width:100% !important;padding:0 6rem !important;}</style></head>`
   );
 
   const blob = new Blob([html], {type:"text/html"});
@@ -7227,7 +7227,7 @@ function mkChip(label,by,fdate,paire){
   if(paire) p.push(paire);
   return p.join(" · ");
 }
-function mkCoverImg(hb,padding="4rem"){
+function mkCoverImg(hb,padding="6rem"){
   if(!hb.image || !hb.image.dataUrl) return "";
   const sub2 = hb.subtitle2 ? `<p class="cover-subtitle2">${hb.subtitle2}</p>` : "";
   return `<div class="cover-img-wrap" style="padding:0 ${padding}"><img src="${hb.image.dataUrl}" alt="" class="cover-img"></div>${sub2}`;
@@ -7340,10 +7340,10 @@ body{background:#02040a;color:#e8edf5;font-family:'Playfair Display',serif;min-h
   background:rgba(${hexToRgb(acc)},.07);border:1px solid rgba(${hexToRgb(acc)},.25);
   padding:4px 14px;border-radius:20px;letter-spacing:.09em;white-space:nowrap;max-width:55vw;overflow:hidden;text-overflow:ellipsis;}
 /* HERO */
-.hero{padding:3.5rem 7rem 2.5rem;max-width:100%;margin:0;position:relative;z-index:1;}
-.hero::before{content:'';position:absolute;top:1.75rem;left:2.5rem;width:28px;height:28px;
+.hero{padding:3.5rem 5rem 2.5rem;max-width:100%;margin:0;position:relative;z-index:1;}
+.hero::before{content:'';position:absolute;top:1.75rem;left:2rem;width:28px;height:28px;
   border-top:2px solid rgba(${hexToRgb(acc)},.45);border-left:2px solid rgba(${hexToRgb(acc)},.45);pointer-events:none;}
-.hero::after{content:'';position:absolute;top:1.75rem;right:2.5rem;width:28px;height:28px;
+.hero::after{content:'';position:absolute;top:1.75rem;right:2rem;width:28px;height:28px;
   border-top:2px solid rgba(${hexToRgb(acc)},.45);border-right:2px solid rgba(${hexToRgb(acc)},.45);pointer-events:none;}
 h1{font-size:clamp(1.6rem,3.8vw,2.5rem);font-weight:800;color:#e8edf5;line-height:1.2;margin-bottom:1.1rem;letter-spacing:.01em;
   animation:titleR .9s cubic-bezier(.22,1,.36,1) both;}
@@ -7352,7 +7352,7 @@ h1{font-size:clamp(1.6rem,3.8vw,2.5rem);font-weight:800;color:#e8edf5;line-heigh
   animation:fadeU .8s .15s cubic-bezier(.22,1,.36,1) both;}
 @keyframes fadeU{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 /* COVER IMG */
-.cover-img-wrap{max-width:80%;margin:2rem auto 0;animation:fadeU .8s .25s both;}
+.cover-img-wrap{max-width:100%;margin:2rem auto 0;animation:fadeU .8s .25s both;}
 .cover-img{width:100%;border-radius:10px;border:1px solid rgba(${hexToRgb(acc)},.15);max-height:420px;object-fit:cover;display:block;box-shadow:0 4px 40px rgba(${hexToRgb(acc)},.07);}
 .cover-subtitle2{font-size:15px;color:#e8edf5;line-height:1.8;max-width:680px;padding:.85rem 7rem 0;animation:fadeU .8s .3s cubic-bezier(.22,1,.36,1) both;}
 /* DIVIDER */
@@ -7362,7 +7362,7 @@ h1{font-size:clamp(1.6rem,3.8vw,2.5rem);font-weight:800;color:#e8edf5;line-heigh
 .div-dot{width:6px;height:6px;background:${acc};border-radius:50%;box-shadow:0 0 8px rgba(${hexToRgb(acc)},.8);animation:dotP 2s ease-in-out infinite;}
 @keyframes dotP{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.5);opacity:.6;}}
 /* CONTENT */
-.content{max-width:100%;margin:0;padding:2rem 7rem 4rem;position:relative;z-index:1;}
+.content{max-width:100%;margin:0;padding:2rem 5rem 4rem;position:relative;z-index:1;}
 /* PARA BLOCKS with bars */
 .para-block{position:relative;padding:1.25rem 1.5rem;margin-bottom:1.5rem;}
 .para-block:last-child{margin-bottom:0;}
@@ -7399,7 +7399,7 @@ function tplUniversal(titre,desc,fdate,paire,hb,paraBlocks,by,acc,catLabel){
 <style>
 ${sharedCSS(acc,"0.025")}
 /* Universal (MR-style) */
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block .para-title::first-letter{
   font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;text-shadow:0 0 20px rgba(${rgb},.35);}
@@ -7444,7 +7444,7 @@ function tplHebdo(titre,desc,fdate,paire,hb,paraBlocks,by){
 <style>
 ${sharedCSS(acc,"0.025")}
 /* Hebdo spécifique */
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 /* Grande initiale sur 1er paragraphe */
 .para-block .para-title::first-letter{
   font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
@@ -7491,7 +7491,7 @@ function tplMonthly(titre,desc,fdate,paire,hb,paraBlocks,by){
 ${sharedCSS(acc,"0.02")}
 /* Monthly spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block .para-title::first-letter{
   font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;}
@@ -7532,7 +7532,7 @@ function tplBankMeeting(titre,desc,fdate,paire,hb,paraBlocks,by){
 ${sharedCSS(acc,"0.025")}
 /* Bank Meeting spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block .para-title::first-letter{
   font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;}
@@ -7568,7 +7568,7 @@ function tplTrade(titre,desc,fdate,paire,blocks,by){
   const coverBlock = blocks.find(b=>b.isInitial)||blocks[0]||{};
   const coverImgSrc = coverBlock.image||null;
   const coverImg = coverImgSrc
-    ? `<div class="cover-img-wrap" style="padding:0 4rem"><img src="${coverImgSrc}" alt="" class="cover-img"></div>`
+    ? `<div class="cover-img-wrap" style="padding:0 6rem"><img src="${coverImgSrc}" alt="" class="cover-img"></div>`
     : "";
   const tradeBlocks = blocks.map((b,i)=>{
     const isFirst = i===0;
@@ -7590,7 +7590,7 @@ function tplTrade(titre,desc,fdate,paire,blocks,by){
 ${sharedCSS(acc,"0.025")}
 /* Trade Admin spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block:not(.para-sep-only) .para-title::first-letter{
   font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;}
@@ -7634,7 +7634,7 @@ function tplTradeInvites(titre,desc,fdate,paire,blocks,by){
   const coverBlock = blocks.find(b=>b.isInitial)||blocks[0]||{};
   const coverImgSrc = coverBlock.image||null;
   const coverImg = coverImgSrc
-    ? `<div class="cover-img-wrap" style="padding:0 4rem"><img src="${coverImgSrc}" alt="" class="cover-img"></div>`
+    ? `<div class="cover-img-wrap" style="padding:0 6rem"><img src="${coverImgSrc}" alt="" class="cover-img"></div>`
     : "";
   const tradeBlocks = blocks.map((b,i)=>{
     const isFirst = i===0;
@@ -7656,7 +7656,7 @@ function tplTradeInvites(titre,desc,fdate,paire,blocks,by){
 ${sharedCSS(acc,"0.025")}
 /* Trades Invités spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block:not(.para-sep-only) .para-title::first-letter{
   font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;}
@@ -7703,7 +7703,7 @@ function tplDefault(titre,desc,fdate,paire,acc,catLbl,hb,paraBlocks,by){
 <style>
 ${sharedCSS(acc,"0.025")}
 .topbar{border-bottom:3px solid ${acc} !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block .para-title::first-letter{
   font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;}
@@ -7757,10 +7757,9 @@ function tplWS(titre, desc, fdate, paire, blocks, author, pages, isPreview=false
     });
   });
 
-  const nonEmptyLeft  = leftPages.filter(p=>(pageGroups[p.id]||[]).length>0);
-  const nonEmptyRight = rightPages.filter(p=>(pageGroups[p.id]||[]).length>0);
-  if(nonEmptyLeft.length===0)  nonEmptyLeft.push(...leftPages);
-  if(nonEmptyRight.length===0 && rightPages.length>0) nonEmptyRight.push(...rightPages);
+  // Toutes les pages sont toujours affichées (même vides) pour THE WEEK et TRADES
+  const nonEmptyLeft  = leftPages.length > 0 ? leftPages : [];
+  const nonEmptyRight = rightPages.length > 0 ? rightPages : [];
 
   const mainBlocks = paraBlocks.filter(b => b.showInMain === true);
   const mainBlocksHtml = mainBlocks.length > 0
@@ -7779,7 +7778,7 @@ function tplWS(titre, desc, fdate, paire, blocks, author, pages, isPreview=false
 
   // ── PAGE "TRADES" — agrège toutes les pages droite dans l'ordre ───────────
   const tradeSourcePages = nonEmptyRight;
-  const hasTradePage = tradeSourcePages.length > 0;
+  const hasTradePage = true; // Toujours afficher la page TRADES
   const tradesAggHtml = tradeSourcePages.map(p => {
     const blks = pageGroups[p.id] || [];
     if(!blks.length) return "";
@@ -7819,8 +7818,8 @@ function tplWS(titre, desc, fdate, paire, blocks, author, pages, isPreview=false
   </div>`
     : "";
 
-  const hasRight = nonEmptyRight.length > 0;
-  const showRightNav = isPreview || hasRight;
+  const hasRight = true; // Toujours afficher la sidenav droite TRADES
+  const showRightNav = true;
 
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${FAVICON}${FONTS}<title>${titre}</title>
 <style>
@@ -7828,7 +7827,7 @@ ${sharedCSS(acc,"0.02")}
 ${PARA_CSS}
 
 .topbar{border-bottom:1px solid rgba(${hexToRgb(acc)},.18) !important;gap:0 !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 
 body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 .ws-layout{display:flex;align-items:flex-start;flex:1;}
@@ -8051,7 +8050,7 @@ function tplWeekAhead(titre,desc,fdate,paire,hb,paraBlocks,by){
 <style>
 ${sharedCSS(acc,"0.02")}
 /* Week Ahead spécifique */
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(2rem,4.5vw,3rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .topbar{border-bottom:3px solid ${acc} !important;}
 /* Grande initiale sur 1er paragraphe */
 .para-block .para-title::first-letter{
