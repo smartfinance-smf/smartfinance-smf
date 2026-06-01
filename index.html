@@ -5658,6 +5658,10 @@ function addWizPage(){
   wizPages.push({ id: maxId + 1, name, side });
   inp.value = "";
   wizActivePage = wizPages.length - 1;
+  // Fermer le popup AVANT wizUpdateUI pour éviter tout conflit de rendu
+  const _pop = document.getElementById("wizAddPagePop");
+  if(_pop){ _pop.remove(); }
+  _wizAddPagePopupOpen = false;
   wizUpdateUI();
   toast(`✓ Page "${name}" ajoutée (${side === "right" ? "paire →" : "← temporelle"})`);
 }
@@ -6409,10 +6413,10 @@ function openWizAddPage(initialSide){
     <input type="hidden" id="wizNewPageSide" value="${side0}">
     <input id="wizNewPageInput" class="wiz-input" type="text" maxlength="40"
       placeholder="Nom de la page… (ex: USDCHF)"
-      onkeydown="if(event.key==='Enter'){addWizPage();closeWizAddPage();}"
+      onkeydown="if(event.key==='Enter'){addWizPage();}"
       style="flex:1;font-size:11px;padding:6px 9px;">
     <div style="display:flex;gap:.35rem;">
-      <button onclick="addWizPage();closeWizAddPage();" style="flex:1;background:var(--accent);border:none;color:#000;font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 12px;border-radius:4px;cursor:pointer;">＋ Ajouter</button>
+      <button onclick="addWizPage();" style="flex:1;background:var(--accent);border:none;color:#000;font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 12px;border-radius:4px;cursor:pointer;">＋ Ajouter</button>
       <button onclick="closeWizAddPage();" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:10px;padding:6px 10px;border-radius:4px;cursor:pointer;">✕</button>
     </div>`;
   const modal = document.getElementById("wizModal");
@@ -6619,6 +6623,35 @@ function openImport(){
   document.body.style.overflow="hidden";
 }
 
+// ── RESTAURATION DES IMAGES depuis le HTML stocké ────────────────────────────
+// Les images base64 sont purgées de arts[].blocks pour alléger Firestore.
+// Cette fonction les récupère depuis le HTML complet (articles_html) et les
+// ré-injecte dans wizBlocks avant édition ou avant régénération du template.
+function restoreBlockImages(blocks, htmlStr){
+  if(!htmlStr || !Array.isArray(blocks)) return;
+  const doc = new DOMParser().parseFromString(htmlStr, "text/html");
+  const imgs = [...doc.querySelectorAll('img[src^="data:"]')].map(i=>i.src);
+  if(!imgs.length) return;
+  let oi = 0;
+  // ✅ FIX : Ne restaure QUE si le slot existait déjà (purgé → {name:""}).
+  // Si obj[key] est null ou absent, c'est qu'il n'y avait PAS d'image → on ne touche pas
+  // au compteur oi, pas de décalage du mapping positionnel.
+  const tryRestore = (obj, key) => {
+    if(!obj || !obj[key]) return;            // null / absent → jamais eu d'image, passer
+    if(obj[key].dataUrl){ oi++; return; }    // dataUrl déjà présent, avancer quand même
+    if(imgs[oi]){ obj[key].dataUrl = imgs[oi]; oi++; }
+  };
+  blocks.forEach(b => {
+    if(b.type === "header"){
+      tryRestore(b, "image");
+      (b.extras || []).forEach(el => { if(el.type === "image") tryRestore(el, "data"); });
+    } else if(b.type === "para"){
+      tryRestore(b, "image");
+      (b.elements || []).forEach(el => { if(el.type === "image") tryRestore(el, "data"); });
+    }
+  });
+}
+
 // ── OUVRIR LE WIZARD EN MODE ÉDITION (KGB uniquement) ────────────────────────
 async function openEditArtWiz(e, id){
   e.stopPropagation();
@@ -6652,6 +6685,11 @@ async function openEditArtWiz(e, id){
     setWizMode("manual");
     wizActivePage = -1;
     wizStep = 3;
+    // ✅ Restaurer les images dès l'ouverture pour qu'elles soient visibles en édition
+    try {
+      const _initHtml = _htmlCache.get(id) || await fbGetHtml(id);
+      if(_initHtml) restoreBlockImages(wizBlocks, _initHtml);
+    } catch(_e){ console.warn("openEditArtWiz: image restore failed", _e); }
 
   } else if(a.blocks && a.blocks.length>0){
     // Articles trade / tradeinvites : format compact {text, image, date, isInitial}
@@ -6823,33 +6861,9 @@ async function wizPublish(){
       const fdate   = date ? new Date(date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})+timeStr : "";
 
       // ✅ FIX : Restaurer les images dans wizBlocks depuis articles_html
-      // Les images sont purgées dans arts[] (collection légère) — il faut les récupérer
-      // depuis le HTML complet avant de régénérer le template, sinon elles disparaissent.
       try {
         const _oldHtml = _htmlCache.get(_wizEditingId) || await fbGetHtml(_wizEditingId);
-        if(_oldHtml){
-          const _oldImgs = [...new DOMParser().parseFromString(_oldHtml,"text/html")
-            .querySelectorAll('img[src^="data:"]')].map(i=>i.src);
-          let _oi = 0;
-          const _tryRestore = (obj, key) => {
-            if(!obj) return;
-            if(obj[key] && obj[key].dataUrl){ _oi++; return; } // image déjà présente, passer
-            if(_oldImgs[_oi]){
-              if(!obj[key]) obj[key] = {};
-              obj[key].dataUrl = obj[key].dataUrl || _oldImgs[_oi];
-              _oi++;
-            }
-          };
-          wizBlocks.forEach(b => {
-            if(b.type === "header"){
-              _tryRestore(b, "image");
-              (b.extras || []).forEach(el => { if(el.type === "image") _tryRestore(el, "data"); });
-            } else if(b.type === "para"){
-              _tryRestore(b, "image");
-              (b.elements || []).forEach(el => { if(el.type === "image") _tryRestore(el, "data"); });
-            }
-          });
-        }
+        if(_oldHtml) restoreBlockImages(wizBlocks, _oldHtml);
       } catch(_imgErr){ console.warn("wizPublish template edit: image restore failed", _imgErr); }
 
       update.html = generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,wizBlocks,adminUsername,wizPages);
