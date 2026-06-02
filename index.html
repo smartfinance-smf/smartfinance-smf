@@ -2987,6 +2987,7 @@ function fmtD(s,t){ const d=new Date(s+"T00:00:00").toLocaleDateString("fr-FR",{
 function fmtSz(b){ return b<1024?"< 1 Ko":b<1048576?(b/1024).toFixed(0)+" Ko":(b/1048576).toFixed(1)+" Mo"; }
 function toast(msg,err=false){
   const t=document.getElementById("toast");
+  if(!t){ console.warn("toast:",msg); return; }
   t.textContent=msg; t.className="toast"+(err?" err":"");
   t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2800);
 }
@@ -5522,10 +5523,19 @@ let _wizEditingId = null;                // si défini → mode "Modifier articl
 let wizPages = []; // [{id, name}] — pages de l'article (toutes catégories)
 let wizActivePage = -1; // -1 = En-tête, 0+ = index dans wizPages
 const WS_DEFAULT_PAGES = [
-  {id:1, name:"SCENARIO DIMANCHE"},
-  {id:2, name:"SCENARIO MARDI"},
-  {id:3, name:"SCENARIO MERCREDI"},
-  {id:4, name:"SCENARIO JEUDI"}
+  {id:1, name:"Analyse USD",   side:"left"},
+  {id:2, name:"Analyse CAD",   side:"left"},
+  {id:3, name:"Analyse EUR",   side:"left"},
+  {id:4, name:"Analyse GBP",   side:"left"},
+  {id:5, name:"Analyse CHF",   side:"left"},
+  {id:6, name:"Analyse JPY",   side:"left"},
+  {id:7, name:"Analyse AUD",   side:"left"},
+  {id:8, name:"Analyse NZD",   side:"left"},
+  {id:9, name:"Analyse GOLD",  side:"right"},
+  {id:10, name:"Analyse US100", side:"right"},
+  {id:11, name:"Analyse US30",  side:"right"},
+  {id:12, name:"Analyse CAC40", side:"right"},
+  {id:13, name:"Analyse DAX",   side:"right"}
 ];
 
 const CAT_COLORS = {hebdo:"#c47a00",weekahead:"#c47a00",mensuel:"#0ff",banques:"#0099aa",trade:"#008a18",tradeinvites:"#0005ff",tradeideas:"#c47a00",wa:"#c47a00",mr:"#c47a00",bm:"#c47a00",tan:"#c47a00"};
@@ -5661,6 +5671,8 @@ function addWizPage(){
   // Fermer le popup AVANT wizUpdateUI pour éviter tout conflit de rendu
   const _pop = document.getElementById("wizAddPagePop");
   if(_pop){ _pop.remove(); }
+  const _ov = document.getElementById("wizAddPageOverlay");
+  if(_ov){ _ov.remove(); }
   _wizAddPagePopupOpen = false;
   wizUpdateUI();
   toast(`✓ Page "${name}" ajoutée (${side === "right" ? "paire →" : "← temporelle"})`);
@@ -6403,31 +6415,44 @@ function openWizAddPage(initialSide){
   const bar = document.getElementById("wizStepsBar");
   pop = document.createElement("div");
   pop.id = "wizAddPagePop";
-  pop.style.cssText = `position:absolute;top:54px;right:0;z-index:600;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:.75rem;display:flex;flex-direction:column;gap:.5rem;box-shadow:0 8px 24px rgba(0,0,0,.10);min-width:280px;`;
+
+  // Overlay fond pour fermer en cliquant dehors
+  const overlay = document.createElement("div");
+  overlay.id = "wizAddPageOverlay";
+  overlay.style.cssText = "position:fixed;inset:0;z-index:9998;background:transparent;";
+  overlay.addEventListener("click", function(){ closeWizAddPage(); });
+  document.body.appendChild(overlay);
+
+  pop.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:.9rem;display:flex;flex-direction:column;gap:.5rem;box-shadow:0 16px 48px rgba(0,0,0,.4);min-width:300px;";
   pop.innerHTML = `
-    <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.1rem;">Position de la page</div>
+    <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.2rem;">Nouvelle page — Position dans la sidebar</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;">
-      <button id="wizSideLeft" onclick="setWizPageSide('left')" style="${side0==='left'?_on:_off}">← TEMPORELLE</button>
-      <button id="wizSideRight" onclick="setWizPageSide('right')" style="${side0==='right'?_on:_off}">PAIRE →</button>
+      <button id="wizSideLeft" style="${side0==='left'?_on:_off}">← GAUCHE</button>
+      <button id="wizSideRight" style="${side0==='right'?_on:_off}">DROITE →</button>
     </div>
     <input type="hidden" id="wizNewPageSide" value="${side0}">
     <input id="wizNewPageInput" class="wiz-input" type="text" maxlength="40"
       placeholder="Nom de la page… (ex: USDCHF)"
-      onkeydown="if(event.key==='Enter'){addWizPage();}"
       style="flex:1;font-size:11px;padding:6px 9px;">
     <div style="display:flex;gap:.35rem;">
-      <button onclick="addWizPage();" style="flex:1;background:var(--accent);border:none;color:#000;font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 12px;border-radius:4px;cursor:pointer;">＋ Ajouter</button>
-      <button onclick="closeWizAddPage();" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:10px;padding:6px 10px;border-radius:4px;cursor:pointer;">✕</button>
+      <button id="wizAddPageBtn" style="flex:1;background:var(--accent);border:none;color:#000;font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 12px;border-radius:4px;cursor:pointer;">＋ Ajouter</button>
+      <button id="wizClosePageBtn" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:10px;padding:6px 10px;border-radius:4px;cursor:pointer;">✕</button>
     </div>`;
-  const modal = document.getElementById("wizModal");
-  modal.style.position = "relative";
-  modal.appendChild(pop);
+  document.body.appendChild(pop);
+  // addEventListener (évite conflits onclick inline avec file://)
+  pop.querySelector("#wizSideLeft").addEventListener("click", function(){ setWizPageSide("left"); });
+  pop.querySelector("#wizSideRight").addEventListener("click", function(){ setWizPageSide("right"); });
+  pop.querySelector("#wizNewPageInput").addEventListener("keydown", function(e){ if(e.key==="Enter"){ addWizPage(); } });
+  pop.querySelector("#wizAddPageBtn").addEventListener("click", function(){ addWizPage(); });
+  pop.querySelector("#wizClosePageBtn").addEventListener("click", function(){ closeWizAddPage(); });
   setTimeout(()=>{ pop.querySelector("#wizNewPageInput").focus(); }, 50);
 }
 
 function closeWizAddPage(){
   const pop = document.getElementById("wizAddPagePop");
   if(pop) pop.remove();
+  const ov = document.getElementById("wizAddPageOverlay");
+  if(ov) ov.remove();
   _wizAddPagePopupOpen = false;
 }
 
