@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="dns-prefetch" href="https://www.gstatic.com">
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet"></noscript>
 <script>window._emailJsLoaded=false;function _loadEmailJs(){if(window._emailJsLoaded)return;window._emailJsLoaded=true;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';s.onload=function(){if(window.EMAILJS_KEY)emailjs.init(window.EMAILJS_KEY);};document.head.appendChild(s);}</script>
 <style>
   :root{
@@ -19,7 +19,7 @@
     --border:#1e2530;--border2:#2a3545;
     --accent:#00cccc;--accent2:#00aadd;--warn:#e09000;--red:#ff4060;--trade:#00cc66;--tradeinv:#4466ff;--weekahead:#e09000;
     --text:#e8edf5;--muted:#8892a0;--dimmed:#4a5568;
-    --mono:'DM Mono',monospace;--sans:'Inter',sans-serif;
+    --mono:'JetBrains Mono',monospace;--sans:'Plus Jakarta Sans',sans-serif;--serif:'Lora',Georgia,serif;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   html{overflow-x:hidden;} /* ← ici et pas sur body pour ne pas bloquer le scroll vertical */
@@ -1130,7 +1130,7 @@
         <!-- Halo pulse -->
         <div class="orbital-hex-glow"></div>
         <!-- Hexagone central avec SMF dedans -->
-        <div class="orbital-hex" style="font-family:'Playfair Display',serif;font-size:7px;font-weight:700;color:#000;display:flex;align-items:center;justify-content:center;letter-spacing:.1em;">S-M-F</div>
+        <div class="orbital-hex" style="font-family:'Lora',serif;font-size:7px;font-weight:700;color:#000;display:flex;align-items:center;justify-content:center;letter-spacing:.1em;">S-M-F</div>
         <!-- Texte qui tourne autour -->
         <svg class="orbital-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -1140,11 +1140,11 @@
             <path id="orbitBot" d="M56,32 a24,24 0 0,1 -48,0"/>
           </defs>
           <!-- SMART en haut, centré -->
-          <text font-family="'Playfair Display',serif" font-size="5.2" font-weight="400" fill="#0099aa" letter-spacing="2">
+          <text font-family="'Lora',serif" font-size="5.2" font-weight="400" fill="#0099aa" letter-spacing="2">
             <textPath href="#orbitTop" startOffset="50%" text-anchor="middle">SMART</textPath>
           </text>
           <!-- FINANCE en bas, centré -->
-          <text font-family="'Playfair Display',serif" font-size="5.2" font-weight="400" fill="#0099aa" letter-spacing="2">
+          <text font-family="'Lora',serif" font-size="5.2" font-weight="400" fill="#0099aa" letter-spacing="2">
             <textPath href="#orbitBot" startOffset="50%" text-anchor="middle">FINANCE</textPath>
           </text>
         </svg>
@@ -2561,7 +2561,7 @@ async function _openArtInReader(id, pushToHistory = true){
   // ── PATCH FONT + BARRES : forcer Playfair Display + supprimer barres latérales (compatibilité anciens articles stockés) ──
   html = html.replace(
     '</head>',
-    `<style>h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;color:#00cccc !important;}.para-block::before,.para-block::after{display:none !important;}.divider{display:none !important;}.cover-img-wrap{max-width:100% !important;padding:0 6rem !important;}</style></head>`
+    `<style>h1{font-family:'Lora',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;color:#00cccc !important;}.para-block::before,.para-block::after{display:none !important;}.divider{display:none !important;}.cover-img-wrap{max-width:100% !important;padding:0 6rem !important;}</style></head>`
   );
 
   // ── PATCH TABS : transforme les onglets WS en sidebar verticale gauche ──
@@ -2583,7 +2583,7 @@ body{display:flex;flex-direction:column;min-height:100vh;margin:0;}
 .ws-main-p{flex:1;min-width:0;padding-right:168px;}
 .ws-home-p{
   display:flex;align-items:center;gap:.55rem;
-  font-family:'Playfair Display',serif;font-size:9px;font-weight:700;
+  font-family:'Lora',serif;font-size:9px;font-weight:700;
   color:#e8edf5;letter-spacing:.1em;text-transform:uppercase;
   background:transparent;border:none;
   border-bottom:1px solid rgba(196,122,0,.12);
@@ -2600,7 +2600,7 @@ body{display:flex;flex-direction:column;min-height:100vh;margin:0;}
 .ws-sidenav-p .ws-tab{
   background:transparent;border:none;
   border-right:2px solid transparent;
-  color:#e8edf5;font-family:'Playfair Display',serif;font-size:9px;font-weight:700;
+  color:#e8edf5;font-family:'Lora',serif;font-size:9px;font-weight:700;
   padding:.8rem 1rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;
   white-space:normal;word-break:break-word;text-align:left;
   transition:color .18s,border-color .18s,background .18s;
@@ -5498,7 +5498,7 @@ async function openArt(id){
   // ── PATCH FONT + BARRES : forcer Playfair Display + supprimer barres latérales (compatibilité anciens articles stockés) ──
   html = html.replace(
     '</head>',
-    `<style>h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;color:#00cccc !important;}.para-block::before,.para-block::after{display:none !important;}.divider{display:none !important;}.cover-img-wrap{max-width:100% !important;padding:0 6rem !important;}</style></head>`
+    `<style>h1{font-family:'Lora',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;font-weight:800 !important;color:#00cccc !important;}.para-block::before,.para-block::after{display:none !important;}.divider{display:none !important;}.cover-img-wrap{max-width:100% !important;padding:0 6rem !important;}</style></head>`
   );
 
   const blob = new Blob([html], {type:"text/html"});
@@ -7144,7 +7144,7 @@ function renderParaHTML(paraBlocks){
 }
 
 // ── FONTS ─────────────────────────────────────────────────────────────────────
-const FONTS=`<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&family=Inter:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">`;
+const FONTS=`<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">`;
 const FAVICON=`<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzEyJyBmaWxsPScjMDIwNDBhJy8+PHJlY3QgeD0nMjInIHk9JzE1JyB3aWR0aD0nNTYnIGhlaWdodD0nNzAnIHJ4PSc0JyBmaWxsPSdub25lJyBzdHJva2U9JyMwMGZmZmYnIHN0cm9rZS13aWR0aD0nNScvPjxsaW5lIHgxPSczMycgeTE9JzM1JyB4Mj0nNjcnIHkyPSczNScgc3Ryb2tlPScjMDBmZmZmJyBzdHJva2Utd2lkdGg9JzUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjxsaW5lIHgxPSczMycgeTE9JzUwJyB4Mj0nNjcnIHkyPSc1MCcgc3Ryb2tlPScjMDBmZmZmJyBzdHJva2Utd2lkdGg9JzUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjxsaW5lIHgxPSczMycgeTE9JzY1JyB4Mj0nNTInIHkyPSc2NScgc3Ryb2tlPScjMDBmZmZmJyBzdHJva2Utd2lkdGg9JzUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjwvc3ZnPg==">`;
 const SHARED_IMGS=`
 <style>
@@ -7209,14 +7209,14 @@ const PARA_CSS=`
 
 /* Titre de la paire */
 .para-title{
-  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
+  font-family:'Lora',serif;font-size:16px;font-weight:700;
   color:#00cccc;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 
 /* Badge ACHAT / VENTE / NEUTRE */
 .para-dir{
   display:flex;align-items:center;gap:5px;
-  font-family:'Playfair Display',serif;font-size:11px;font-weight:700;
+  font-family:'Lora',serif;font-size:11px;font-weight:700;
   letter-spacing:.1em;flex-shrink:0;
 }
 .para-dir-dot{width:10px;height:10px;display:inline-block;background:currentColor;}
@@ -7227,10 +7227,10 @@ const PARA_CSS=`
 /* Corps : texte d'analyse */
 .para-body-wrap{padding:.85rem 1rem 1rem;}
 .para-subtitle{
-  font-family:'Playfair Display',serif;font-size:.82rem;font-weight:700;
+  font-family:'Lora',serif;font-size:.82rem;font-weight:700;
   color:#e8edf5;opacity:.55;margin-bottom:.6rem;letter-spacing:.07em;text-transform:uppercase;
 }
-.art-body{font-size:14.5px;line-height:1.72;color:#e8edf5;margin-bottom:0;text-align:justify;}
+.art-body{font-family:var(--serif);font-size:15px;line-height:1.78;color:#e8edf5;margin-bottom:0;text-align:justify;}
 .art-body p{margin-bottom:.85rem;}
 .art-body p:last-child{margin-bottom:0;}
 .art-body strong{color:#e8edf5;}
@@ -7240,7 +7240,7 @@ const PARA_CSS=`
   padding:.75rem 1rem .8rem;
   border-top:1px dashed #1e2530;
   background:#080c12;
-  font-family:'Playfair Display',serif;font-size:13.5px;font-style:italic;
+  font-family:'Lora',serif;font-size:13.5px;font-style:italic;
   color:#e8edf5;line-height:1.72;text-align:justify;
 }
 .para-invalidation strong{font-style:normal;font-weight:700;color:#e8edf5;}
@@ -7248,7 +7248,7 @@ const PARA_CSS=`
 /* Figures */
 .art-fig{border-radius:6px;overflow:hidden;border:1px solid #2a3545;margin-top:.85rem;}
 .art-fig img{width:100%;display:block;object-fit:cover;}
-.art-fig figcaption{font-family:'Playfair Display',serif;font-size:9px;color:#e8edf5;padding:.4rem .9rem;background:#0d1117;letter-spacing:.06em;}
+.art-fig figcaption{font-family:'Lora',serif;font-size:9px;color:#e8edf5;padding:.4rem .9rem;background:#0d1117;letter-spacing:.06em;}
 .art-side{display:grid;gap:1.5rem;align-items:start;margin-top:.5rem;}
 .art-side-TI{grid-template-columns:1fr 280px;}
 .art-side-IT{grid-template-columns:280px 1fr;}
@@ -7294,7 +7294,7 @@ function mkParaBlocks(paraBlocks,acc){
       const bTime = b.time ? ` · ${b.time}` : "";
       const bBy   = b.addedBy ? ` · ${b.addedBy}` : "";
       sep = `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;
-        font-family:'Playfair Display',serif;font-size:9px;color:#e8edf5;letter-spacing:.14em;
+        font-family:'Lora',serif;font-size:9px;color:#e8edf5;letter-spacing:.14em;
         text-transform:uppercase;margin-bottom:.9rem;padding-bottom:.5rem;
         border-bottom:1px solid rgba(${hexToRgb(acc)},.15);">
         <span>MISE À JOUR${i > 0 ? " " + (i+1) : ""}${bBy}</span>
@@ -7365,19 +7365,19 @@ function mkParaBlocks(paraBlocks,acc){
 function sharedCSS(acc,gridOpacity="0.02"){
   return `
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:#02040a;color:#e8edf5;font-family:'Playfair Display',serif;min-height:100vh;}
+body{background:#02040a;color:#e8edf5;font-family:'Lora',serif;min-height:100vh;}
 /* TOPBAR */
 .topbar{background:rgba(2,4,10,.97);border-bottom:1px solid rgba(${hexToRgb(acc)},.15);padding:.8rem 2.5rem;
   display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(14px);}
 .topbar-spacer{height:60px;flex-shrink:0;}
 .tb-left{display:flex;align-items:center;gap:.8rem;}
 .tb-hex{width:28px;height:28px;background:${acc};clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
-  display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:7px;font-weight:700;color:#e8edf5;
+  display:flex;align-items:center;justify-content:center;font-family:'Lora',serif;font-size:7px;font-weight:700;color:#e8edf5;
   box-shadow:0 0 10px rgba(${hexToRgb(acc)},.4);animation:hexP 3s ease-in-out infinite;}
 @keyframes hexP{0%,100%{box-shadow:0 0 8px rgba(${hexToRgb(acc)},.35);}50%{box-shadow:0 0 20px rgba(${hexToRgb(acc)},.7);}}
-.tb-brand{font-family:'Playfair Display',serif;font-size:10px;font-weight:700;letter-spacing:.15em;color:#e8edf5;}
+.tb-brand{font-family:'Lora',serif;font-size:10px;font-weight:700;letter-spacing:.15em;color:#e8edf5;}
 .tb-brand em{color:#e8edf5;font-style:normal;}
-.tb-chip{font-family:'Playfair Display',serif;font-size:8.5px;color:#e8edf5;
+.tb-chip{font-family:'Lora',serif;font-size:8.5px;color:#e8edf5;
   background:rgba(${hexToRgb(acc)},.07);border:1px solid rgba(${hexToRgb(acc)},.25);
   padding:4px 14px;border-radius:20px;letter-spacing:.09em;white-space:nowrap;max-width:55vw;overflow:hidden;text-overflow:ellipsis;}
 /* HERO */
@@ -7414,10 +7414,10 @@ h1{font-size:clamp(1.6rem,3.8vw,2.5rem);font-weight:800;color:#e8edf5;line-heigh
 .art-body strong{color:#e8edf5;}
 .art-fig{border-radius:8px;overflow:hidden;border:1px solid rgba(${hexToRgb(acc)},.12);margin-top:.75rem;width:80%;margin-left:auto;margin-right:auto;}
 .art-fig img{width:100%;display:block;object-fit:cover;}
-.art-fig figcaption{font-family:'Playfair Display',serif;font-size:9px;color:#e8edf5;padding:.4rem .9rem;background:#0d1117;}
+.art-fig figcaption{font-family:'Lora',serif;font-size:9px;color:#e8edf5;padding:.4rem .9rem;background:#0d1117;}
 /* FOOTER */
 .footer{border-top:1px solid rgba(${hexToRgb(acc)},.08);padding:1rem 4rem;display:flex;justify-content:space-between;align-items:center;max-width:100%;margin:0;position:relative;z-index:1;}
-.footer span{font-family:'Playfair Display',serif;font-size:9px;color:#e8edf5;letter-spacing:.12em;}
+.footer span{font-family:'Lora',serif;font-size:9px;color:#e8edf5;letter-spacing:.12em;}
 .footer em{color:#e8edf5;font-style:normal;}
 .footer-pulse{width:6px;height:6px;border-radius:50%;background:${acc};animation:dotP 2s ease-in-out infinite;box-shadow:0 0 6px rgba(${hexToRgb(acc)},.6);}
 `;
@@ -7440,12 +7440,12 @@ function tplUniversal(titre,desc,fdate,paire,hb,paraBlocks,by,acc,catLabel){
 <style>
 ${sharedCSS(acc,"0.025")}
 /* Universal (MR-style) */
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Lora',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block .para-title::first-letter{
-  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
+  font-family:'Lora',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;text-shadow:0 0 20px rgba(${rgb},.35);}
 .topbar{border-bottom:3px solid ${acc} !important;}
-.week-badge{font-family:'Playfair Display',serif;font-size:9px;color:#e8edf5;background:rgba(${rgb},.07);border:1px solid rgba(${rgb},.2);padding:3px 10px;border-radius:3px;letter-spacing:.12em;margin-left:.75rem;}
+.week-badge{font-family:'Lora',serif;font-size:9px;color:#e8edf5;background:rgba(${rgb},.07);border:1px solid rgba(${rgb},.2);padding:3px 10px;border-radius:3px;letter-spacing:.12em;margin-left:.75rem;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
@@ -7485,14 +7485,14 @@ function tplHebdo(titre,desc,fdate,paire,hb,paraBlocks,by){
 <style>
 ${sharedCSS(acc,"0.025")}
 /* Hebdo spécifique */
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Lora',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 /* Grande initiale sur 1er paragraphe */
 .para-block .para-title::first-letter{
-  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
+  font-family:'Lora',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;text-shadow:0 0 20px rgba(196,122,0,.35);}
 /* Topbar gold border */
 .topbar{border-bottom:3px solid ${acc} !important;}
-.week-badge{font-family:'Playfair Display',serif;font-size:9px;color:#e8edf5;background:rgba(196,122,0,.07);border:1px solid rgba(196,122,0,.2);padding:3px 10px;border-radius:3px;letter-spacing:.12em;margin-left:.75rem;}
+.week-badge{font-family:'Lora',serif;font-size:9px;color:#e8edf5;background:rgba(196,122,0,.07);border:1px solid rgba(196,122,0,.2);padding:3px 10px;border-radius:3px;letter-spacing:.12em;margin-left:.75rem;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
@@ -7532,9 +7532,9 @@ function tplMonthly(titre,desc,fdate,paire,hb,paraBlocks,by){
 ${sharedCSS(acc,"0.02")}
 /* Monthly spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Lora',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block .para-title::first-letter{
-  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
+  font-family:'Lora',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;}
 </style></head><body>
 <div class="topbar">
@@ -7573,9 +7573,9 @@ function tplBankMeeting(titre,desc,fdate,paire,hb,paraBlocks,by){
 ${sharedCSS(acc,"0.025")}
 /* Bank Meeting spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Lora',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block .para-title::first-letter{
-  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
+  font-family:'Lora',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;}
 </style></head><body>
 <div class="topbar">
@@ -7631,18 +7631,18 @@ function tplTrade(titre,desc,fdate,paire,blocks,by){
 ${sharedCSS(acc,"0.025")}
 /* Trade Admin spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Lora',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block:not(.para-sep-only) .para-title::first-letter{
-  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
+  font-family:'Lora',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;}
 .para-sep-only{padding:.5rem 1.5rem !important;margin-bottom:.5rem;}
 .para-sep-only::before,.para-sep-only::after{display:none;}
 .blk-sep{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;
-  font-family:'Playfair Display',serif;font-size:9px;color:rgba(0,138,24,.65);letter-spacing:.15em;text-transform:uppercase;
+  font-family:'Lora',serif;font-size:9px;color:rgba(0,138,24,.65);letter-spacing:.15em;text-transform:uppercase;
   margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(0,138,24,.12);}
 .blk-sep.first{color:rgba(0,138,24,.9);}
 .sep-date{color:#e8edf5;letter-spacing:.06em;text-transform:none;}
-.blk-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:rgba(0,138,24,.9);margin-bottom:.6rem;letter-spacing:.01em;}
+.blk-title{font-family:'Lora',serif;font-size:1.05rem;font-weight:700;color:rgba(0,138,24,.9);margin-bottom:.6rem;letter-spacing:.01em;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
@@ -7697,18 +7697,18 @@ function tplTradeInvites(titre,desc,fdate,paire,blocks,by){
 ${sharedCSS(acc,"0.025")}
 /* Trades Invités spécifique */
 .topbar{border-bottom:3px solid ${acc} !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Lora',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block:not(.para-sep-only) .para-title::first-letter{
-  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
+  font-family:'Lora',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;}
 .para-sep-only{padding:.5rem 1.5rem !important;margin-bottom:.5rem;}
 .para-sep-only::before,.para-sep-only::after{display:none;}
 .blk-sep{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;
-  font-family:'Playfair Display',serif;font-size:9px;color:rgba(0,5,255,.65);letter-spacing:.15em;text-transform:uppercase;
+  font-family:'Lora',serif;font-size:9px;color:rgba(0,5,255,.65);letter-spacing:.15em;text-transform:uppercase;
   margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(0,5,255,.15);}
 .blk-sep.first{color:rgba(0,5,255,.9);}
 .sep-date{color:#e8edf5;letter-spacing:.06em;text-transform:none;}
-.blk-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:rgba(0,5,255,.9);margin-bottom:.6rem;letter-spacing:.01em;}
+.blk-title{font-family:'Lora',serif;font-size:1.05rem;font-weight:700;color:rgba(0,5,255,.9);margin-bottom:.6rem;letter-spacing:.01em;}
 </style></head><body>
 <div class="topbar">
   <div class="tb-left">
@@ -7744,9 +7744,9 @@ function tplDefault(titre,desc,fdate,paire,acc,catLbl,hb,paraBlocks,by){
 <style>
 ${sharedCSS(acc,"0.025")}
 .topbar{border-bottom:3px solid ${acc} !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Lora',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .para-block .para-title::first-letter{
-  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
+  font-family:'Lora',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;}
 </style></head><body>
 <div class="topbar">
@@ -7849,13 +7849,13 @@ function tplWS(titre, desc, fdate, paire, blocks, author, pages, isPreview=false
   const weekPageHtml = `<div class="ws-page active" data-pid="week">
     <div class="hero"><h1>${titre}</h1>${subtitle?`<p class="hero-desc">${subtitle}</p>`:""}</div>
     ${coverImg}${headerExtras}${mainBlocksHtml}
-    ${weekAggHtml || '<div class="content"><p style="color:#999;font-family:\'Playfair Display\',serif;font-size:13px;padding:2rem 0;">Aucun contenu pour l\'instant.</p></div>'}
+    ${weekAggHtml || '<div class="content"><p style="color:#999;font-family:\'Lora\',serif;font-size:13px;padding:2rem 0;">Aucun contenu pour l\'instant.</p></div>'}
   </div>`;
 
   // Page TRADES (pid="trades")
   const tradesPageHtml = hasTradePage
     ? `<div class="ws-page" data-pid="trades">
-    ${tradesAggHtml || '<div class="content"><p style="color:#e8edf5;font-family:\'Playfair Display\',serif;font-size:13px;padding:2rem 0;">Aucun trade pour l\'instant.</p></div>'}
+    ${tradesAggHtml || '<div class="content"><p style="color:#e8edf5;font-family:\'Lora\',serif;font-size:13px;padding:2rem 0;">Aucun trade pour l\'instant.</p></div>'}
   </div>`
     : "";
 
@@ -7868,7 +7868,7 @@ ${sharedCSS(acc,"0.02")}
 ${PARA_CSS}
 
 .topbar{border-bottom:1px solid rgba(${hexToRgb(acc)},.18) !important;gap:0 !important;}
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Lora',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 
 body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 .ws-layout{display:flex;align-items:flex-start;flex:1;}
@@ -7897,7 +7897,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 
 /* Label de section droite */
 .ws-sidenav-r-label{
-  font-family:'Playfair Display',serif;font-size:8px;font-weight:700;
+  font-family:'Lora',serif;font-size:8px;font-weight:700;
   color:#e8edf5;letter-spacing:.18em;text-transform:uppercase;
   padding:.65rem 1rem .4rem;border-bottom:1px solid rgba(${hexToRgb(acc)},.1);
   flex-shrink:0;
@@ -7909,7 +7909,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 /* Bouton Accueil */
 .ws-sidenav-home{
   display:flex;align-items:center;gap:.55rem;
-  font-family:'Playfair Display',serif;font-size:9px;font-weight:700;
+  font-family:'Lora',serif;font-size:9px;font-weight:700;
   color:#e8edf5;letter-spacing:.1em;text-transform:uppercase;
   background:transparent;border:none;border-bottom:1px solid rgba(${hexToRgb(acc)},.12);
   padding:.85rem 1rem;cursor:pointer;
@@ -7928,7 +7928,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 .ws-tab{
   background:transparent;border:none;
   border-right:2px solid transparent;
-  color:rgba(232,237,245,.35);font-family:'Playfair Display',serif;font-size:9px;font-weight:400;
+  color:rgba(232,237,245,.35);font-family:'Lora',serif;font-size:9px;font-weight:400;
   padding:.75rem 1rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;
   white-space:normal;word-break:break-word;text-align:left;
   transition:color .18s,border-color .18s,background .18s;
@@ -7954,7 +7954,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 
 .ws-page-pill{
   display:inline-block;margin-bottom:.5rem;
-  font-family:'Playfair Display',serif;font-size:9px;font-weight:700;
+  font-family:'Lora',serif;font-size:9px;font-weight:700;
   color:#e8edf5;letter-spacing:.12em;text-transform:uppercase;
   border:1px solid rgba(196,122,0,.3);border-radius:3px;padding:2px 8px;background:rgba(196,122,0,.06);
 }
@@ -7986,7 +7986,7 @@ body{padding:0;display:flex;flex-direction:column;min-height:100vh;}
 .ws-trades-section{margin-bottom:2rem;}
 .ws-trades-sep{
   display:flex;align-items:center;gap:.75rem;
-  font-family:'Playfair Display',serif;font-size:9px;font-weight:900;
+  font-family:'Lora',serif;font-size:9px;font-weight:900;
   letter-spacing:.18em;text-transform:uppercase;color:#e8edf5;
   margin:1.5rem 0 .75rem;
 }
@@ -8091,11 +8091,11 @@ function tplWeekAhead(titre,desc,fdate,paire,hb,paraBlocks,by){
 <style>
 ${sharedCSS(acc,"0.02")}
 /* Week Ahead spécifique */
-h1{font-family:'Playfair Display',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
+h1{font-family:'Lora',serif !important;font-size:clamp(1.5rem,3.2vw,2.2rem) !important;letter-spacing:-.01em !important;color:#00cccc !important;}
 .topbar{border-bottom:3px solid ${acc} !important;}
 /* Grande initiale sur 1er paragraphe */
 .para-block .para-title::first-letter{
-  font-family:'Playfair Display',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
+  font-family:'Lora',serif;font-size:2.6em;font-weight:700;color:#e8edf5;
   float:left;line-height:.75;margin:-.35em .18em .05em 0;text-shadow:0 0 20px rgba(196,122,0,.35);}
 </style></head><body>
 <div class="topbar">
@@ -8899,7 +8899,7 @@ async function exportHubHTML(){
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>SMF · Sauvegarde Hub — ${new Date().toLocaleDateString("fr-FR")}</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#02040a;--surface:#0d1117;--surface2:#111820;--border:#1e2530;--border2:#2a3545;--accent:#00cccc;--text:#e8edf5;--muted:#8892a0;--mono:'DM Mono',monospace;--sans:'Inter',sans-serif;}
   *{margin:0;padding:0;box-sizing:border-box;}
