@@ -15,7 +15,7 @@
 <script>window._emailJsLoaded=false;function _loadEmailJs(){if(window._emailJsLoaded)return;window._emailJsLoaded=true;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';s.onload=function(){if(window.EMAILJS_KEY)emailjs.init(window.EMAILJS_KEY);};document.head.appendChild(s);}</script>
 <style>
   :root{
-    --bg:#02040a;--surface:#0d1117;--surface2:#111820;
+    --bg:#000000;--surface:#0d1117;--surface2:#111820;
     --border:#1e2530;--border2:#2a3545;
     --accent:#00cccc;--accent2:#00aadd;--warn:#e09000;--red:#ff4060;--trade:#00cc66;--tradeinv:#4466ff;--weekahead:#e09000;
     --text:#e8edf5;--muted:#8892a0;--dimmed:#4a5568;
@@ -72,7 +72,7 @@
   }
 
   /* HEADER */
-  header{position:fixed;top:0;left:0;right:0;z-index:100;background:#000000;backdrop-filter:none;border-bottom:none;padding:0 2rem;}
+  header{position:fixed;top:0;left:0;right:0;z-index:100;background:#000000;backdrop-filter:none;border-bottom:1px solid rgba(0,204,204,.12);padding:0 2rem;}
   body{padding-top:68px;}
   /* Textes dans le header sur fond noir */
   header .logo-text, header .orbital-smf .o-main{color:#ffffff;}
@@ -2840,8 +2840,8 @@ async function checkEmailVerified(){
         if(ud.exists){
           const udata = ud.data();
           role="guest";
-          sessionStorage.setItem("smf_role","guest");
-          sessionStorage.setItem("smf_username", udata.username);
+          localStorage.setItem("smf_role","guest");
+          localStorage.setItem("smf_username", udata.username);
           currentUser={id:newDocId, username:udata.username, email:udata.email, prenom:udata.prenom||"", nom:udata.nom||"", photoURL:null, bio:""};
           document.getElementById("gateScreen").style.display="none";
           renderHeaderActions(); startRealtimeSync();
@@ -2946,8 +2946,8 @@ async function pushSettings(){
 }
 
 // ── State ────────────────────────────────────────────────────────────────────
-let role        = sessionStorage.getItem("smf_role") || null;
-let currentUser = JSON.parse(sessionStorage.getItem("smf_user")||"null");
+let role        = localStorage.getItem("smf_role") || null;
+let currentUser = JSON.parse(localStorage.getItem("smf_user")||"null");
 let arts        = JSON.parse(localStorage.getItem("smf_hub_v4") || "[]");
 let filt="tous", sq="";
 let authorFilter = null; // { displayName, userId, username }
@@ -3113,7 +3113,7 @@ async function submitCoupon(){
       const usnap = await db.collection("users").doc(userDocId).get();
       if(usnap.exists){
         const ud = usnap.data();
-        role="guest"; sessionStorage.setItem("smf_role","guest"); sessionStorage.setItem("smf_username",ud.username);
+        role="guest"; localStorage.setItem("smf_role","guest"); localStorage.setItem("smf_username",ud.username);
         currentUser={id:userDocId, username:ud.username, email:ud.email, prenom:ud.prenom||"", nom:ud.nom||"", photoURL:null, bio:""};
         document.getElementById("gateScreen").style.display="none";
         renderHeaderActions(); startRealtimeSync();
@@ -3211,12 +3211,12 @@ async function doLogin(){
         db.collection("config").doc("profiles").get().catch(()=>null)
       ]);
       role="admin";
-      sessionStorage.setItem("smf_role","admin");
-      sessionStorage.setItem("smf_username", u);
+      localStorage.setItem("smf_role","admin");
+      localStorage.setItem("smf_username", u);
       if(profilesDoc && profilesDoc.exists){
         const pd = profilesDoc.data()[u] || {};
-        if(pd.photoURL) sessionStorage.setItem("smf_photo", pd.photoURL);
-        if(pd.bio)      sessionStorage.setItem("smf_bio",   pd.bio);
+        if(pd.photoURL) localStorage.setItem("smf_photo", pd.photoURL);
+        if(pd.bio)      localStorage.setItem("smf_bio",   pd.bio);
       }
       document.getElementById("gateScreen").style.display="none";
       renderHeaderActions(); startRealtimeSync();
@@ -3271,15 +3271,15 @@ async function doLogin(){
     // fire & forget : n'attend pas pour afficher le hub
     db.collection("users").doc(userDoc.id).update({online:true, lastSeen: firebase.firestore.FieldValue.serverTimestamp()});
 
-    role="guest"; sessionStorage.setItem("smf_role","guest");
+    role="guest"; localStorage.setItem("smf_role","guest");
     currentUser={id:userDoc.id, username:userData.username, email:userData.email, prenom:userData.prenom||"", nom:userData.nom||"", photoURL:userData.photoURL||null, bio:""};
     if(profilesDoc && profilesDoc.exists){
       const pd = profilesDoc.data()["guest_"+userDoc.id] || {};
-      if(pd.photoURL){ currentUser.photoURL=pd.photoURL; sessionStorage.setItem("smf_photo",pd.photoURL); }
-      if(pd.bio)     { currentUser.bio=pd.bio;           sessionStorage.setItem("smf_bio",pd.bio); }
+      if(pd.photoURL){ currentUser.photoURL=pd.photoURL; localStorage.setItem("smf_photo",pd.photoURL); }
+      if(pd.bio)     { currentUser.bio=pd.bio;           localStorage.setItem("smf_bio",pd.bio); }
     }
-    if(!currentUser.bio && userData.bio){ currentUser.bio=userData.bio; sessionStorage.setItem("smf_bio",userData.bio); }
-    sessionStorage.setItem("smf_user", JSON.stringify(currentUser));
+    if(!currentUser.bio && userData.bio){ currentUser.bio=userData.bio; localStorage.setItem("smf_bio",userData.bio); }
+    localStorage.setItem("smf_user", JSON.stringify(currentUser));
     document.getElementById("gateScreen").style.display="none";
     renderHeaderActions(); startRealtimeSync();
     toast("✓ Bienvenue "+userData.prenom+" !");
@@ -3653,9 +3653,9 @@ async function doLogout(){
     try{ await db.collection("users").doc(currentUser.id).update({online:false}); }catch(e){}
   }
   role=null; currentUser=null;
-  sessionStorage.removeItem("smf_role");
-  sessionStorage.removeItem("smf_user");
-  sessionStorage.removeItem("smf_username");
+  localStorage.removeItem("smf_role");
+  localStorage.removeItem("smf_user");
+  localStorage.removeItem("smf_username");
   if(banWatchUnsub){ banWatchUnsub(); banWatchUnsub=null; }
   if(unsubscribe){ stopSync(); unsubscribe=null; }
   arts=[];
@@ -3682,9 +3682,9 @@ function getInitials(name){
 }
 
 function getProfilePhoto(){
-  // Priorité : photo du currentUser (Firestore) > sessionStorage
+  // Priorité : photo du currentUser (Firestore) > localStorage
   if(currentUser && currentUser.photoURL) return currentUser.photoURL;
-  return sessionStorage.getItem("smf_photo") || null;
+  return localStorage.getItem("smf_photo") || null;
 }
 
 function buildAvatar(initials, color, isGuest, displayName){
@@ -3717,7 +3717,7 @@ function buildProfileMenuContent(initials, isGuest){
   const isGuest_ = role==="guest";
   let name, roleLabel, roleClass;
   if(role==="admin"){
-    name = sessionStorage.getItem("smf_username") || "ADMIN";
+    name = localStorage.getItem("smf_username") || "ADMIN";
     roleLabel = "Administrateur"; roleClass = "admin";
   } else {
     name = currentUser ? (((currentUser.prenom||"")+" "+(currentUser.nom||"")).trim() || currentUser.username || "INVITÉ") : "INVITÉ";
@@ -3741,7 +3741,7 @@ function buildProfileMenuContent(initials, isGuest){
       <div class="pm-role ${roleClass}">● ${roleLabel}</div>
       <div class="pm-hint">Cliquer sur la photo pour changer</div>
       <div class="pm-bio-wrap">
-        <textarea class="pm-bio" id="pmBioField" placeholder="Votre bio..." oninput="onBioInput()" rows="2">${sessionStorage.getItem('smf_bio')||''}</textarea>
+        <textarea class="pm-bio" id="pmBioField" placeholder="Votre bio..." oninput="onBioInput()" rows="2">${localStorage.getItem('smf_bio')||''}</textarea>
         <button class="pm-bio-save" id="pmBioSaveBtn" onclick="saveBio()">✓ SAUVEGARDER LA BIO</button>
       </div>
     </div>
@@ -3781,16 +3781,16 @@ async function saveBio(){
   if(!field) return;
   const bio = field.value.trim();
   btn.disabled = true; btn.textContent = "Sauvegarde...";
-  sessionStorage.setItem("smf_bio", bio);
+  localStorage.setItem("smf_bio", bio);
   try{
     if(role==="guest" && currentUser){
       // Guests : écriture dans leur propre doc users (droits déjà accordés)
       await db.collection("users").doc(currentUser.id).update({bio});
       currentUser.bio = bio;
-      sessionStorage.setItem("smf_user", JSON.stringify(currentUser));
+      localStorage.setItem("smf_user", JSON.stringify(currentUser));
     } else if(role==="admin"){
       // Admins : écriture dans config/profiles (même collection que les settings)
-      const adminUsername = sessionStorage.getItem("smf_username") || "ADMIN";
+      const adminUsername = localStorage.getItem("smf_username") || "ADMIN";
       await db.collection("config").doc("profiles").set(
         { [adminUsername]: { bio } }, { merge: true }
       );
@@ -3838,16 +3838,16 @@ async function onProfilePhotoChange(e){
     // Compression avant tout (garde bien sous 100 Ko pour Firestore)
     const dataUrl = await compressPhoto(file);
     // Sauvegarde locale
-    sessionStorage.setItem("smf_photo", dataUrl);
-    sessionStorage.removeItem(PHOTO_CACHE_KEY); // ✅ Invalider le cache photos
+    localStorage.setItem("smf_photo", dataUrl);
+    localStorage.removeItem(PHOTO_CACHE_KEY); // ✅ Invalider le cache photos
     if(role==="guest" && currentUser){
       // Guests : écriture dans leur propre doc users (droits déjà accordés)
       try{ await db.collection("users").doc(currentUser.id).update({photoURL: dataUrl}); }catch(ex){ console.warn("Photo guest:", ex); }
       currentUser.photoURL = dataUrl;
-      sessionStorage.setItem("smf_user", JSON.stringify(currentUser));
+      localStorage.setItem("smf_user", JSON.stringify(currentUser));
     } else if(role==="admin"){
       // Admins : écriture dans config/profiles (même collection que les settings)
-      const adminUsername = sessionStorage.getItem("smf_username") || "ADMIN";
+      const adminUsername = localStorage.getItem("smf_username") || "ADMIN";
       try{
         await db.collection("config").doc("profiles").set(
           { [adminUsername]: { photoURL: dataUrl } }, { merge: true }
@@ -3857,7 +3857,7 @@ async function onProfilePhotoChange(e){
     // Cache local pour les cartes
     const myName = role==="guest" && currentUser
       ? (((currentUser.prenom||"")+" "+(currentUser.nom||"")).trim() || currentUser.username)
-      : sessionStorage.getItem("smf_username") || "";
+      : localStorage.getItem("smf_username") || "";
     if(myName) userPhotoCache[myName] = dataUrl;
     toast("✓ Photo de profil mise à jour !");
     renderHeaderActions();
@@ -3872,7 +3872,7 @@ function renderHeaderActions(){
   const div=document.getElementById("headerActions");
   const fab=document.getElementById("fabAdd");
   if(role==="admin"){
-    const username = sessionStorage.getItem("smf_username") || "ADMIN";
+    const username = localStorage.getItem("smf_username") || "ADMIN";
     const initials = getInitials(username);
     const gestionBtn = username==="SMF" ? "" : `<button class="btn-export" onclick="openAdminPanel()">⚙ Gestion</button>`;
     div.innerHTML=`
@@ -3931,7 +3931,7 @@ document.addEventListener("click", function(e){
 
 // ── ADMIN PANEL ───────────────────────────────────────────────────────────────
 async function openAdminPanel(){
-  const username = sessionStorage.getItem("smf_username")||"";
+  const username = localStorage.getItem("smf_username")||"";
   // SMF n'a pas accès à la gestion
   if(username==="SMF"){ toast("⚠ Accès à la gestion non autorisé", true); return; }
 
@@ -4542,7 +4542,7 @@ let _eaTargetId   = null;   // id de l'article en cours d'édition
 let _eaNewHTML    = null;   // si un nouveau fichier HTML a été sélectionné
 
 function canEditArt(){
-  const u = sessionStorage.getItem("smf_username");
+  const u = localStorage.getItem("smf_username");
   return role==="admin" && (u==="KGB" || u==="SMFKGB");
 }
 
@@ -4645,7 +4645,7 @@ async function saveEditArt(){
   btn.disabled = false; btn.textContent = "💾 Sauvegarder les modifications";
 
   if(ok){
-    toast("✓ Article mis à jour par " + (sessionStorage.getItem("smf_username")||"Admin") + " !");
+    toast("✓ Article mis à jour par " + (localStorage.getItem("smf_username")||"Admin") + " !");
     closeEditArt();
   } else {
     toast("✕ Erreur lors de la sauvegarde",true);
@@ -4744,13 +4744,13 @@ function closeAdminPanel(){
 // username → photoURL (pour afficher les avatars sur les cartes)
 let userPhotoCache = {};
 
-// ── Clé sessionStorage pour le cache photos ──────────────────────────────────
+// ── Clé localStorage pour le cache photos ──────────────────────────────────
 const PHOTO_CACHE_KEY = "smf_photo_cache_v1";
 
 async function loadUserPhotoCache(){
-  // ✅ Si déjà en sessionStorage, on évite les appels Firestore
+  // ✅ Si déjà en localStorage, on évite les appels Firestore
   try{
-    const cached = sessionStorage.getItem(PHOTO_CACHE_KEY);
+    const cached = localStorage.getItem(PHOTO_CACHE_KEY);
     if(cached){
       userPhotoCache = JSON.parse(cached);
       return;
@@ -4796,8 +4796,8 @@ async function loadUserPhotoCache(){
     }
   }catch(e){}
 
-  // Sauvegarder en sessionStorage pour éviter les rechargements
-  try{ sessionStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(userPhotoCache)); }catch(e){}
+  // Sauvegarder en localStorage pour éviter les rechargements
+  try{ localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(userPhotoCache)); }catch(e){}
 }
 
 // ── FIRESTORE ARTICLES ────────────────────────────────────────────────────────
@@ -4939,8 +4939,8 @@ function forcedLogout(msg){
   if(banWatchUnsub){ banWatchUnsub(); banWatchUnsub=null; }
   if(unsubscribe){ stopSync(); unsubscribe=null; }
   role=null; currentUser=null;
-  sessionStorage.removeItem("smf_role");
-  sessionStorage.removeItem("smf_user");
+  localStorage.removeItem("smf_role");
+  localStorage.removeItem("smf_user");
   arts=[];
   document.getElementById("gateScreen").style.display="flex";
   document.getElementById("loginErr").textContent=msg;
@@ -5169,7 +5169,7 @@ function buildCardAvatar(authorName, cat){
   const isMe = (role==="guest" && currentUser && (
     authorName === ((currentUser.prenom||"")+" "+(currentUser.nom||"")).trim() ||
     authorName === currentUser.username
-  )) || (role==="admin" && authorName === sessionStorage.getItem("smf_username"));
+  )) || (role==="admin" && authorName === localStorage.getItem("smf_username"));
   const cachedPhoto = userPhotoCache[authorName] || null;
   const finalPhoto = isMe ? (myPhoto || cachedPhoto) : cachedPhoto;
   const initials = getInitials(authorName || "SMF");
@@ -5276,7 +5276,7 @@ function _doRenderGrid(){
           ${addBtn}
           ${wsBtn}
           ${editTagBtn}
-          ${(role==="admin"&&sessionStorage.getItem("smf_username")==="KGB")?`<button class="btn-edit-art" onclick="openEditArtWiz(event,'${a.id}')" title="Modifier l'article">✏ Modifier</button>`:""}
+          ${(role==="admin"&&localStorage.getItem("smf_username")==="KGB")?`<button class="btn-edit-art" onclick="openEditArtWiz(event,'${a.id}')" title="Modifier l'article">✏ Modifier</button>`:""}
           ${role==="admin"?`<button class="btn-del" onclick="delArt(event,'${a.id}')" title="Supprimer">🗑</button>`:""}
           ${isMyPost(a)?`<button class="btn-del" onclick="delOwnArt(event,'${a.id}')" title="Supprimer" style="color:var(--red);">🗑</button>`:""}
           <span class="card-open">↗ Lire</span>
@@ -6585,7 +6585,7 @@ function wizBuildPreview(){
   if(wizStep < 3) return;
   const acc    = CAT_COLORS[wizCat]||"#0099aa";
   const catLbl = CAT_LABEL[wizCat]||wizCat||"";
-  const by     = sessionStorage.getItem("smf_username")||"Admin";
+  const by     = localStorage.getItem("smf_username")||"Admin";
   let bodyHTML = "";
 
   if(_wizContinuationId){
@@ -6806,7 +6806,7 @@ async function wizPublish(){
   if(role!=="admin" && role!=="guest"){toast("⚠ Accès requis",true);return;}
   if(role==="guest" && wizCat!=="other") wizCat="other";
 
-  const adminUsername = sessionStorage.getItem("smf_username")||"Admin";
+  const adminUsername = localStorage.getItem("smf_username")||"Admin";
   const btn = document.getElementById("wizBtnPublish");
 
   // ── MODE ÉDITION (KGB — modifier un article existant) ─────────────────────
@@ -7083,7 +7083,7 @@ function updateModeForCat(cat){}
 function generateArticleTemplate(titre,desc,catLbl,acc,fdate,paire,blocks,author,pages,isPreview=false){
   const headerBlock = blocks.find(b=>b.type==="header")||{subtitle:"",image:null};
   const paraBlocks  = blocks.filter(b=>b.type==="para");
-  const by = author || sessionStorage.getItem("smf_username") || "Admin";
+  const by = author || localStorage.getItem("smf_username") || "Admin";
   switch(wizCat){
     case "ws": {
       const resolvedPages = (pages && pages.length) ? pages : WS_DEFAULT_PAGES.map(p=>({...p}));
@@ -7287,19 +7287,15 @@ function mkParaBlocks(paraBlocks,acc){
   return paraBlocks.map((b,i)=>{
     // ── Séparateur MISE À JOUR pour les blocs de continuation ──
     let sep = "";
+    let blockMeta = "";
     if(b.isContinuation){
       const bDate = b.date
         ? new Date(b.date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})
         : "";
       const bTime = b.time ? ` · ${b.time}` : "";
       const bBy   = b.addedBy ? ` · ${b.addedBy}` : "";
-      sep = `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;
-        font-family:'Lora',serif;font-size:9px;color:#e8edf5;letter-spacing:.14em;
-        text-transform:uppercase;margin-bottom:.9rem;padding-bottom:.5rem;
-        border-bottom:1px solid rgba(${hexToRgb(acc)},.15);">
-        <span>MISE À JOUR${i > 0 ? " " + (i+1) : ""}${bBy}</span>
-        <span style="color:#e8edf5;text-transform:none;letter-spacing:.05em;">${bDate}${bTime}</span>
-      </div>`;
+      sep = "";
+      blockMeta = `<span style="font-family:'Lora',serif;font-size:9px;color:rgba(232,237,245,.55);letter-spacing:.05em;text-transform:none;">${bDate}${bTime}</span>`;
     }
 
     // ── EN-TÊTE : nom de la paire + badge direction ──
@@ -7322,7 +7318,7 @@ function mkParaBlocks(paraBlocks,acc){
         </div>
         ${b.title ? `<div class="para-title">${b.title}</div>` : ""}
       </div>
-      ${dirHTML}
+      <div style="display:flex;align-items:center;gap:.55rem;">${blockMeta}${dirHTML}</div>
     </div>` : "";
 
     // ── CORPS : éléments texte/image ──
@@ -7353,7 +7349,7 @@ function mkParaBlocks(paraBlocks,acc){
 
     // ── SECTION INVALIDATION ──
     const invalidHTML = b.invalidation
-      ? `<div class="para-invalidation"><strong>Invalidation :</strong> ${b.invalidation}</div>`
+      ? `<div class="para-invalidation">${b.invalidation}</div>`
       : "";
 
     if(!headHTML && !bodyHTML && !invalidHTML) return "";
@@ -7773,7 +7769,7 @@ function tplWS(titre, desc, fdate, paire, blocks, author, pages, isPreview=false
   const acc = "#c47a00";
   const headerBlock = blocks.find(b=>b.type==="header")||{subtitle:"",image:null,extras:[]};
   const paraBlocks  = blocks.filter(b=>b.type==="para");
-  const by = author || sessionStorage.getItem("smf_username") || "Admin";
+  const by = author || localStorage.getItem("smf_username") || "Admin";
   const subtitle = headerBlock.subtitle||(desc||"");
   // Chip : date uniquement (sans label "WS" ni heure)
   const _dateOnly = fdate ? fdate.replace(/\s*·\s*\d{2}:\d{2}.*$/, "") : "";
@@ -7798,9 +7794,9 @@ function tplWS(titre, desc, fdate, paire, blocks, author, pages, isPreview=false
     });
   });
 
-  // Toutes les pages sont toujours affichées (même vides) pour THE WEEK et TRADES
-  const nonEmptyLeft  = leftPages.length > 0 ? leftPages : [];
-  const nonEmptyRight = rightPages.length > 0 ? rightPages : [];
+  // En lecture : masquer les pages vides. En preview/wizard : toutes affichées
+  const nonEmptyLeft  = isPreview ? leftPages : leftPages.filter(p => (pageGroups[p.id] || []).length > 0);
+  const nonEmptyRight = isPreview ? rightPages : rightPages.filter(p => (pageGroups[p.id] || []).length > 0);
 
   const mainBlocks = paraBlocks.filter(b => b.showInMain === true);
   const mainBlocksHtml = mainBlocks.length > 0
@@ -8584,7 +8580,7 @@ async function submitAddBlock(){
   if(!a){toast("⚠ Article introuvable",true);return;}
   const existingBlocks=a.blocks||[];
   if(existingBlocks.length>=5){toast("⚠ Maximum 5 blocs atteint",true);return;}
-  const adminUsername = sessionStorage.getItem("smf_username") || "Admin";
+  const adminUsername = localStorage.getItem("smf_username") || "Admin";
   const newBlock={title,text,para2:text2,images:_abImgs.map(i=>i.dataUrl),image:_abImgs[0]?.dataUrl||null,date,addedBy:adminUsername};
   // Si l'article n'avait pas encore de blocs (ex: HTML), on initialise avec un bloc vide initial
   let updated;
@@ -8766,22 +8762,38 @@ const QUOTES=[
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async()=>{
+  // Si session déjà connue : afficher le hub immédiatement sans bloquer sur Firestore
+  const _hasSession = !!role;
+  if(_hasSession){
+    document.getElementById("gateScreen").style.display="none";
+    renderHeaderActions();
+    if(parseHash().article){
+      document.getElementById("articlesGrid").style.visibility="hidden";
+      document.getElementById("articlesGrid").style.opacity="0";
+    }
+    // Charger settings + sync en parallèle, sans bloquer l'affichage
+    loadSettings().catch(()=>{});
+    startRealtimeSync();
+    if(!parseHash().article) setTimeout(applyHash, 600);
+    return; // ← court-circuit : pas besoin d'aller plus loin
+  }
+  // Pas de session : chargement normal
   await loadSettings();
   if(role){
     // Restaurer photo/bio si absent de la session
-    const needsPhoto = !sessionStorage.getItem("smf_photo");
-    const needsBio   = !sessionStorage.getItem("smf_bio");
+    const needsPhoto = !localStorage.getItem("smf_photo");
+    const needsBio   = !localStorage.getItem("smf_bio");
     if(needsPhoto || needsBio){
       try{
         if(role==="admin"){
           // Admin → config/profiles avec username comme clé
-          const adminUsername = sessionStorage.getItem("smf_username") || "";
+          const adminUsername = localStorage.getItem("smf_username") || "";
           if(adminUsername){
             const profilesDoc = await db.collection("config").doc("profiles").get();
             if(profilesDoc.exists){
               const pd = profilesDoc.data()[adminUsername] || {};
-              if(pd.photoURL && needsPhoto) sessionStorage.setItem("smf_photo", pd.photoURL);
-              if(pd.bio      && needsBio)   sessionStorage.setItem("smf_bio",   pd.bio);
+              if(pd.photoURL && needsPhoto) localStorage.setItem("smf_photo", pd.photoURL);
+              if(pd.bio      && needsBio)   localStorage.setItem("smf_bio",   pd.bio);
             }
           }
         } else if(role==="guest" && currentUser){
@@ -8789,8 +8801,8 @@ const QUOTES=[
           const userDoc = await db.collection("users").doc(currentUser.id).get();
           if(userDoc.exists){
             const ud = userDoc.data();
-            if(ud.photoURL && needsPhoto) sessionStorage.setItem("smf_photo", ud.photoURL);
-            if(ud.bio      && needsBio)   sessionStorage.setItem("smf_bio",   ud.bio);
+            if(ud.photoURL && needsPhoto) localStorage.setItem("smf_photo", ud.photoURL);
+            if(ud.bio      && needsBio)   localStorage.setItem("smf_bio",   ud.bio);
           }
         }
       }catch(ex){ console.warn("Restore profil:", ex); }
@@ -8901,7 +8913,7 @@ async function exportHubHTML(){
 <title>SMF · Sauvegarde Hub — ${new Date().toLocaleDateString("fr-FR")}</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#02040a;--surface:#0d1117;--surface2:#111820;--border:#1e2530;--border2:#2a3545;--accent:#00cccc;--text:#e8edf5;--muted:#8892a0;--mono:'DM Mono',monospace;--sans:'Inter',sans-serif;}
+  :root{--bg:#000000;--surface:#0d1117;--surface2:#111820;--border:#1e2530;--border2:#2a3545;--accent:#00cccc;--text:#e8edf5;--muted:#8892a0;--mono:'DM Mono',monospace;--sans:'Inter',sans-serif;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
   
